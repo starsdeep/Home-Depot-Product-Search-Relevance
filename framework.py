@@ -95,7 +95,7 @@ if __name__ =='__main__':
                             'txt3': 0.0,
                             'txt4': 0.5
                             },
-                    n_jobs = -1
+                    #n_jobs = -1
                     )),
             ('rfr', rfr)])
     param_grid = {'rfr__max_features': [10], 'rfr__max_depth': [20]}
