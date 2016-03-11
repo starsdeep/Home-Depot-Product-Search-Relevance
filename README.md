@@ -20,6 +20,15 @@
 
 ### idea
 
+* stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer
+* train three classification model to predict 1,2 and 3, output average score of these three as result
+
+### bad case
+
+* query是树，product是修理树的工具, query是mower，product是mower的布
+* query是电池，product是一个工具，同时title中有说不含电池
+
+
 ### performance
 
 | date       | offline | online  |feature            | model                   | other trick       | comments |
