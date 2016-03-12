@@ -1,6 +1,7 @@
 #encoding=utf8
 import re
 from nltk.stem.porter import *
+from nltk.metrics import edit_distance
 stemmer = PorterStemmer()
 
 
@@ -13,7 +14,8 @@ def str_stem(s):
         s = re.sub(r"(\w)\.([A-Z])", r"\1 \2", s) #Split words with a.A
         s = s.lower()
         s = s.replace("  "," ")
-        s = s.replace(",","") #could be number / segment later
+        s = re.sub(r"([0-9]),([0-9])", r"\1\2", s)
+        s = s.replace(","," ") #could be number / segment later
         s = s.replace("$"," ")
         s = s.replace("?"," ")
         s = s.replace("-"," ")
@@ -55,13 +57,13 @@ def str_stem(s):
 
         s = s.lower()
         s = s.replace("toliet","toilet")
-        s = s.replace("airconditioner","air conditioner")
+        s = s.replace("airconditioner","air condition")
         s = s.replace("vinal","vinyl")
         s = s.replace("vynal","vinyl")
         s = s.replace("skill","skil")
         s = s.replace("snowbl","snow bl")
         s = s.replace("plexigla","plexi gla")
-        s = s.replace("rustoleum","rust-oleum")
+        s = s.replace("rustoleum","rust oleum")
         s = s.replace("whirpool","whirlpool")
         s = s.replace("whirlpoolga", "whirlpool ga")
         s = s.replace("whirlpoolstainless","whirlpool stainless")
@@ -119,6 +121,12 @@ def num_common_word(str1, str2):
     for word in words:
         if str2.find(word)>=0:
             cnt+=1
+        # count 0.5 for words unfound but edit distance<2
+        if cnt==0 and len(word)>3:
+            s1 = [z for z in list(set(str2.split(" "))) if abs(len(z)-len(word))<2]
+            t1 = sum([1 for z in s1 if edit_distance(z, word)<2])
+            if t1 > 1:
+                cnt+=0.5
     return cnt
 
 def num_whole_word(word, str):
