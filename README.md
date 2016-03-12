@@ -31,10 +31,10 @@
 
 ### performance
 
-| date       | offline | online  |feature            | model                   | other trick       | comments |
-| ---------- |---------|---------|-------------------|-------------------------|-------------------|----------|
-| 2016-03-03 | 0.47447 | 0.47571 | query_in_title etc| RandomForestRegressor | remove stop words   | base line|
-
-    
+| date       | offline |          | online  |   compare  |feature                  | model                   | other trick                                   | comments |
+| ---------- |-------- | ---------|---------|------------|-------------------------|-------------------------|-----------------------------------------------|----------|
+| 2016-03-03 | 0.47447 |  0       | 0.47571 |    0       |  query_in_title etc     | RandomForestRegressor   | remove stop words                             | base line|
+| 2016-03-11 | 0.47477 |  +0.0003 | 0.47587 |   +.00016  |  query_in_title etc     | RandomForestRegressor   | add binary to True in TfidfVectorizer         | base line|
+| 2016-03-12 | 0.47335 |  -.00112 | 0.47566 |   -.00005  |                         |                         | {'rfr__max_features': 5, 'rfr__max_depth': 30}|          |
 
     
