@@ -14,15 +14,17 @@
     
 ### how to run
 1. put files into input folder including:attributes.csv,sample_submission.csv,product_descriptions.csv, test.csv, train.csv 
-2. run `python3.5 framework.py 1000 ./output/result1`, 1000 means take 1000 instances as train data, you can change it to another number, and -1 means take all instances
+2. run `python3.5 framework.py 1000 ./output/rfr_all`, 1000 means take 1000 instances as train data, you can change it to another number, and -1 means take all instances
 
 
 
 ### idea
 
-* stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer
-* train three classification model to predict 1,2 and 3, output average score of these three as result
-* 加特征，title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为0
+chenqiang
+
+* stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer, not plan yet
+* train three classification model to predict 1,2 and 3, output average score of these three as result, not plan yet
+* 加特征，title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1, doing
 
 
 ### bad case
