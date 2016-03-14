@@ -9,6 +9,7 @@
 
 
 ### 文档管理
+* 关于sklearn pipeline的使用， [这里有一篇很好的文章](http://zacstewart.com/2014/08/05/pipelines-of-featureunions-of-pipelines.html)
 
 #### Idea
 
