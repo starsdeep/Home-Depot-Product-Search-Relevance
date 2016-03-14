@@ -45,7 +45,7 @@
     
 ### how to run
 1. put files into input folder including:attributes.csv,sample_submission.csv,product_descriptions.csv, test.csv, train.csv 
-2. run `python3.5 framework.py 1000 ./output/rfr_all`, 1000 means take 1000 instances as train data, you can change it to another number, and -1 means take all instances
+2. run `python3.5 framework.py 1000 ./output/rfr_all`, 1000 means take 1000 instances as train data, you can change it to another number, and -1 means take all instances (may take 20 minutes)
 
 
 
@@ -72,10 +72,11 @@ chenqiang
 
 ## 实验结果记录
 
-| date       | name | offline |          | online  |   compare  |feature                  | model                   | other trick                                   | comments |
+| submit date | name | offline |          | online  |   compare  |feature                  | model                   | other trick                                   | comments |
 | ---------- |-------- | --------|---------|---------|------------|-------------------------|-------------------------|-----------------------------------------------|----------|
-| 2016-03-03 | chenqiang | 0.47447 |  0       | 0.47571 |    0       |  query_in_title etc     | RandomForestRegressor   | remove stop words                             | base line|
-| 2016-03-11 | chenqiang | 0.47477 |  +0.0003 | 0.47587 |   +.00016  |  query_in_title etc     | RandomForestRegressor   | add binary to True in TfidfVectorizer         | base line|
-| 2016-03-12 | chenqiang | 0.47335 |  -.00112 | 0.47566 |   -.00005  |                         |                         | {'rfr__max_features': 5, 'rfr__max_depth': 30}|          |
+| 2016-03-03  | chenqiang | 0.47447 |  0       | 0.47571 |    0       |  query_in_title etc     | RandomForestRegressor   | remove stop words                             | base line|
+| 2016-03-11  | chenqiang | 0.47477 |  +0.0003 | 0.47587 |   +.00016  |  query_in_title etc     | RandomForestRegressor   | add binary to True in TfidfVectorizer         | base line|
+| 2016-03-12  | chenqiang | 0.47335 |  -.00112 | 0.47566 |   -.00005  |                         |                         | {'rfr__max_features': 5, 'rfr__max_depth': 30}|          |
+| unsubmitted | fenixlin  | 0.49002 |          |          |            |                         | XGBoost Regressor      |                                               |          |
+| unsubmitted | fenixlin  | 4.83365 |          |          |            |                         | RandomForestClassifier | classify once with independent labels(1~13)   |          |
 
-    
