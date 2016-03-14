@@ -27,10 +27,6 @@
 祝博，王博可能会看一下这方面的论文，论文的总结可以放到doc文件夹下。其他人比赛的过程中的遇到的任何值得分享的收获也可以放上来。
 
 
-
-
-
-
 ## 环境配置
 
 
@@ -53,10 +49,10 @@
 
 chenqiang
 
-* stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer, not plan yet
+* stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer, doing
 * train three classification model to predict 1,2 and 3, output average score of these three as result, not plan yet
-* 加特征，title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1, doing
-
+* 加特征, title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1, done
+* 加特征, 加query和title,description,BM25相似度, not plan yet
 
 ## Plan
 

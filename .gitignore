@@ -3,3 +3,7 @@
 input/
 .idea
 __pycache__/
+
+
+# ignore mac system files
+.DS_Store
