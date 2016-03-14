@@ -55,7 +55,7 @@ def random_forest_regression_(x_train, y_train, x_test):
                     #n_jobs = -1
                     )),
             ('rfr', rfr)])
-    param_grid = {'rfr__max_features': [10], 'rfr__max_depth': [20]}
+    param_grid = {'rfr__max_features': (3, 5, 10, 20), 'rfr__max_depth': (15, 20, 30)}
     RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=RMSE)
     model.fit(x_train, y_train)
