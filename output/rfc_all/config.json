@@ -1,0 +1,6 @@
+{   
+    "model": "rfc",
+    "load_exist_feature": false,
+    "exist_feature_file": null,
+    "features": [ "search_term", "title", "description", "brand", "len_of_query", "len_of_title", "len_of_description", "len_of_brand", "tmp_compound_field", "query_in_title", "query_in_description", "query_last_word_in_title", "query_last_word_in_description", "word_in_title", "word_in_description", "word_in_brand", "ratio_title", "ratio_description", "ratio_brand", "search_term_fuzzy_match","len_of_search_term_fuzzy_match" ]
+}
