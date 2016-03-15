@@ -1,5 +1,6 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import mean_squared_error, make_scorer
@@ -7,6 +8,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import pipeline, grid_search
 from sklearn.pipeline import FeatureUnion
 import xgboost as xgb
+
+
 
 def model_predict(model, x_train, y_train, x_test):
     predict_func = ModelDict[model]
@@ -166,9 +169,55 @@ subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1,
             y_pred[i] = 3.0
     return y_pred
 
+
+def gbdt_regression_(x_train, y_train, x_test):
+    #rfr = RandomForestRegressor(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
+
+    gbdtr = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0, max_depth=3, random_state=2016)
+
+    tfidf = TfidfVectorizer(ngram_range=(1, 1), stop_words='english')
+    tsvd = TruncatedSVD(n_components=10, random_state = 2016)
+    clf = pipeline.Pipeline([
+            ('union', FeatureUnion(
+                        transformer_list = [
+                            ('cst',  cust_regression_vals_()),
+                            ('txt1', pipeline.Pipeline([('s1', cust_txt_col_(key='search_term_fuzzy_match')), ('tfidf1', tfidf), ('tsvd1', tsvd)])),
+                            ('txt2', pipeline.Pipeline([('s2', cust_txt_col_(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
+                            ('txt3', pipeline.Pipeline([('s3', cust_txt_col_(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
+                            ('txt4', pipeline.Pipeline([('s4', cust_txt_col_(key='brand')), ('tfidf4', tfidf), ('tsvd4', tsvd)]))
+                            ],
+                        transformer_weights = {
+                            'cst': 1.0,
+                            'txt1': 0.5,
+                            'txt2': 0.25,
+                            'txt3': 0.0,
+                            'txt4': 0.5
+                            },
+                    #n_jobs = -1
+                    )),
+            ('rfr', rfr)])
+
+    param_grid = {'gbdt__n_estimators': (100,), 'gbdt__learning_rate': (0.1, 0.5), 'gbdt__max_features': (3, 10, 20), 'gbdt__max_depth': (5,15,30)}
+    RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
+
+    model = grid_search.GridSearchCV(estimator = gbdtr, param_grid = param_grid, n_jobs = 1, cv = 3, verbose = 20, scoring=RMSE)
+    model.fit(x_train, y_train)
+
+    print("Best parameters found by grid search:")
+    print(model.best_params_)
+    print("Best CV score:")
+    print(model.best_score_)
+
+    y_pred = model.predict(x_test)
+    return y_pred
+
+
+
+
 ModelDict = {
     'rfr': random_forest_regression_,
     'rfc': random_forest_classification_,
     'xgbr': xgboost_regression_,
+    'gbdtr': gbdt_regression_,
 }
 
