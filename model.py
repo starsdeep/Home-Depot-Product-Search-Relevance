@@ -1,3 +1,4 @@
+import os, sys
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
@@ -7,18 +8,29 @@ from sklearn.metrics import mean_squared_error, make_scorer
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import pipeline, grid_search
 from sklearn.pipeline import FeatureUnion
+from sklearn import cross_validation
 import xgboost as xgb
 
 
 
 def model_predict(model, x_train, y_train, x_test):
     predict_func = ModelDict[model]
+def model_predict(config, x_train, y_train, x_test):
+    predict_func = ModelDict[config['model']]
     prediction = predict_func(x_train, y_train, x_test)
     return prediction
 
 def fmean_squared_error_(ground_truth, predictions):
     fmean_squared_error_ = mean_squared_error(ground_truth, predictions)**0.5
     return fmean_squared_error_
+
+def print_badcase_(x_train, y_train, model):
+    train_pred = cross_validation.cross_val_predict(model, x_train, y_train, cv=3)
+    output = x_train.copy(deep=True)
+    output.insert(3, 'pred', pd.Series(train_pred, index=x_train.index))
+    output.insert(3, 'diff', pd.Series(abs(train_pred-y_train), index=x_train.index))
+    output = output.sort_values(by=['diff'], ascending=False)
+    output[:100].to_csv(os.path.join(os.path.abspath(sys.argv[2]),'badcase.csv'), encoding="ISO-8859-1")
 
 RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
 
@@ -66,6 +78,7 @@ def random_forest_regression_(x_train, y_train, x_test):
     RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
 
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=RMSE)
+    print_badcase_(x_train, y_train, model)
     model.fit(x_train, y_train)
 
     print("Best parameters found by grid search:")
@@ -117,6 +130,7 @@ def random_forest_classification_(x_train, y_train, x_test):
             ('rfc', rfc)])
     param_grid = {'rfc__max_features': [10], 'rfc__max_depth': [20]}
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=RMSE)
+    print_badcase_(x_train, y_train, model)
     model.fit(x_train, y_train)
 
     print("Best parameters found by grid search:")
@@ -153,6 +167,7 @@ subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1,
             ('xgb_model', xgb_model)])
     param_grid = {'xgb_model__max_depth': [5], 'xgb_model__n_estimators': [10]}
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = -1, cv = 2, verbose = 20, scoring=RMSE)
+    print_badcase_(x_train, y_train, model)
     model.fit(x_train, y_train)
 
     print("Best parameters found by grid search:")
