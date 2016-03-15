@@ -22,18 +22,18 @@ if __name__ =='__main__':
     train_size = int(sys.argv[1])
     with open(os.path.join(sys.argv[2], 'config.json')) as infile:
         config = json.load(infile)
-    features = config['features']
-    model = config['model']
 
     #data
     df, num_train, num_test = load_data(train_size)
 
     #feature extraction
     start_time = time.time()
-    df_with_feature = build_feature(df, features)
+    df_with_feature = build_feature(df, config['features'])
     print("--- Build Features: %s minutes ---" % round(((time.time() - start_time)/60),2))
-    df.to_csv(file_name=os.path.join(sys.argv[2], 'df.csv'), encoding="ISO-8859-1")
-    #df = pd.read_csv('df_all.csv', encoding="ISO-8859-1", index_col=0)
+    if config['save_feature']:
+        df.to_csv(os.path.join(sys.argv[2], 'df.csv'), encoding="ISO-8859-1")
+    if config['load_exist_feature']:
+        df = pd.read_csv('df_all.csv', encoding="ISO-8859-1", index_col=0)
     df_train = df.iloc[:num_train]
     df_test = df.iloc[num_train:]
     id_test = df_test['id']
@@ -43,6 +43,6 @@ if __name__ =='__main__':
 
     #model
     start_time = time.time()
-    y_pred = model_predict(model, X_train, y_train, X_test)
+    y_pred = model_predict(config, X_train, y_train, X_test)
     print("--- Fit Model: %s minutes ---" % round(((time.time() - start_time)/60),2))
     pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv(os.path.join(sys.argv[2],'submission.csv'),index=False)
