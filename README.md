@@ -54,6 +54,10 @@ chenqiang
 * 加特征, title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1, done
 * 加特征, 加query和title,description,BM25相似度, not plan yet
 
+fenixlin
+
+* train 13 xgboost classifier to classify 'y>12? y>11? ...' 13 times, predict with probablity sum
+
 ## Plan
 
 暂无
