@@ -146,3 +146,29 @@ def num_whole_word(word, str):
             cnt += 1
             i += len(word)
     return cnt
+def num_size_word(word, str):
+    """
+    number of times that words fo number and size appears in str
+    :param word:
+    :param str:
+    :return: cnt
+    """
+    size = ['cm','m','foot','inch']
+    wordlist = word.split(' ')
+    num_size_list = []
+    for i in range(1,len(wordlist)):
+        if wordlist[i] in size and (isinstance(wordlist[i-1],int) or isinstance(wordlist[i-1],float)):
+            num_size_list.add(wordlist[i-1]+' '+wordlist[i]);
+    
+    cnt = 0
+    for word in num_size_list:
+        i = 0
+        while i < len(str):
+            i = str.find(word, i)
+            if i == -1:
+                return cnt
+            else:
+                cnt += 1
+                i += len(word)
+    return cnt
+

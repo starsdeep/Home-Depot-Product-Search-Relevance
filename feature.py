@@ -1,6 +1,6 @@
 #encoding=utf8
 import numpy as np
-from utility import str_stem, len_of_str, num_whole_word, num_common_word, seg_words
+from utility import str_stem, len_of_str, num_whole_word, num_common_word, seg_words, num_size_word
 
 
 
@@ -24,6 +24,12 @@ def query_in_title(df):
 
 def query_in_description(df):
     return df['tmp_compound_field'].map(lambda x: num_whole_word(x.split('\t')[0], x.split('\t')[2]))
+
+def numsize_query_in_title(df):    
+    return df['tmp_compound_field'].map(lambda x: num_size_word(x.split('\t')[0], x.split('\t')[1]))
+
+def numsize_query_in_description(df):
+    return df['tmp_compound_field'].map(lambda x: num_size_word(x.split('\t')[0], x.split('\t')[2]))
 
 def query_last_word_in_title(df):
     return df['tmp_compound_field'].map(lambda x:num_common_word(x.split('\t')[0], x.split('\t')[1]))
@@ -138,8 +144,10 @@ FeatureFuncDict = {
     'len_of_brand': lambda df: df['brand'].map(len_of_str).astype(np.int64),
 
     'tmp_compound_field': lambda df:df['search_term'] + '\t' + df['title'] + '\t' + df['description'] + '\t' + df['brand'], # in order to using map, we need to make several fields into one
-    'query_in_title': query_in_description,
+    'query_in_title': query_in_title,
     'query_in_description': query_in_description,
+    'numsize_query_in_title': numsize_query_in_title,
+    'numsize_query_in_description': numsize_query_in_description,
     'query_last_word_in_title': query_last_word_in_title,
     'query_last_word_in_description': query_last_word_in_description,
     'word_in_title': word_in_title,
