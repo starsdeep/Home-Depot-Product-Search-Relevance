@@ -2,14 +2,39 @@
 import re
 from nltk.stem.porter import *
 from nltk.metrics import edit_distance
+from nltk.stem.wordnet import WordNetLemmatizer
+from nltk import pos_tag
+from nltk import word_tokenize
+import nltk
+from nltk.corpus.reader import wordnet
 stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
 
+def lemmatize(token, tag):
+    try:
+        morphy_tag = {'NN':wordnet.NOUN,'JJ':wordnet.ADJ,'VB':wordnet.VERB,'RB':wordnet.ADV}[tag[:2]]
+        return lemmatizer.lemmatize(token, morphy_tag)
+    except:
+        return token
 
 stop_w = ['for', 'xbi', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'] #'electr','paint','pipe','light','kitchen','wood','outdoor','door','bathroom'
 strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
 
 
 def str_stem(s):
+    """
+    :param s:
+    :return: stemmed s
+
+    stem sentence
+
+    Example:
+    >>> str_stem("I have a gathering")
+    'i have a gathering'
+    >>> str_stem("I am gathering")
+    'i be gather'
+
+    """
     if isinstance(s, str):
         s = re.sub(r"(\w)\.([A-Z])", r"\1 \2", s) #Split words with a.A
         s = s.lower()
@@ -53,7 +78,6 @@ def str_stem(s):
         s = s.replace(" . "," ")
         #s = (" ").join([z for z in s.split(" ") if z not in stop_w])
         s = (" ").join([str(strNum[z]) if z in strNum else z for z in s.split(" ")])
-        s = (" ").join([stemmer.stem(z) for z in s.split(" ")])
 
         s = s.lower()
         s = s.replace("toliet","toilet")
@@ -67,7 +91,9 @@ def str_stem(s):
         s = s.replace("whirpool","whirlpool")
         s = s.replace("whirlpoolga", "whirlpool ga")
         s = s.replace("whirlpoolstainless","whirlpool stainless")
-        return s
+        tagged_corpus = pos_tag(s.split())
+        words = [lemmatize(token, tag) for token, tag in tagged_corpus]
+        return " ".join(words)
     else:
         return "null"
 
@@ -146,3 +172,7 @@ def num_whole_word(word, str):
             cnt += 1
             i += len(word)
     return cnt
+
+if __name__=='__main__':
+    import doctest
+    doctest.testmod()
