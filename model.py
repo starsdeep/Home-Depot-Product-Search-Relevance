@@ -30,7 +30,7 @@ def print_badcase_(x_train, y_train, model):
     output.insert(3, 'pred', pd.Series(train_pred, index=x_train.index))
     output.insert(3, 'diff', pd.Series(abs(train_pred-y_train), index=x_train.index))
     output = output.sort_values(by=['diff'], ascending=False)
-    output[:100].to_csv(os.path.join(os.path.abspath(sys.argv[2]),'badcase.csv'), encoding="ISO-8859-1")
+    output[:1000].to_csv(os.path.join(os.path.abspath(sys.argv[2]),'badcase.csv'), encoding="utf-8")
 
 RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
 
@@ -74,11 +74,14 @@ def random_forest_regression_(x_train, y_train, x_test):
                     )),
             ('rfr', rfr)])
 
-    param_grid = {'rfr__max_features': (3, 5, 10, 20), 'rfr__max_depth': (15, 20, 30)}
+    param_grid = {'rfr__max_features': [10], 'rfr__max_depth': [20]}
     RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
 
+    # grid search cv is done in fitting, so set a param to print badcase
+    print_badcase_(x_train, y_train, clf.set_params(rfr__max_features=10, rfr__max_depth=20))
+    print("Badcase printing done.")
+
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=RMSE)
-    print_badcase_(x_train, y_train, model)
     model.fit(x_train, y_train)
 
     print("Best parameters found by grid search:")
@@ -128,9 +131,12 @@ def random_forest_classification_(x_train, y_train, x_test):
                     #n_jobs = -1
                     )),
             ('rfc', rfc)])
+    # grid search cv is done in fitting, so set a param to print badcase
+    print_badcase_(x_train, y_train, clf.set_params(rfc__max_features=10, rfc__max_depth=20))
+    print("Badcase printing done.")
+
     param_grid = {'rfc__max_features': [10], 'rfc__max_depth': [20]}
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=RMSE)
-    print_badcase_(x_train, y_train, model)
     model.fit(x_train, y_train)
 
     print("Best parameters found by grid search:")
@@ -165,9 +171,12 @@ subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1,
                     #n_jobs = -1
                     )), 
             ('xgb_model', xgb_model)])
+    # grid search cv is done in fitting, so set a param to print badcase
+    print_badcase_(x_train, y_train, clf.set_params(xgb_model__max_depth=5, rfr__xgb_model__n_estimators=10))
+    print("Badcase printing done.")
+
     param_grid = {'xgb_model__max_depth': [5], 'xgb_model__n_estimators': [10]}
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = -1, cv = 2, verbose = 20, scoring=RMSE)
-    print_badcase_(x_train, y_train, model)
     model.fit(x_train, y_train)
 
     print("Best parameters found by grid search:")
