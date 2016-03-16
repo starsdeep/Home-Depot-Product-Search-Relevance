@@ -75,4 +75,4 @@ chenqiang
 | 2016-03-12  | chenqiang | 0.47335 |  -.00112 | 0.47566 |   -.00005  |                         |                         | {'rfr__max_features': 5, 'rfr__max_depth': 30}|          |
 | unsubmitted | fenixlin  | 0.49002 |          |          |            |                         | XGBoost Regressor      |                                               |          |
 | unsubmitted | fenixlin  | 4.83365 |          |          |            |                         | RandomForestClassifier | classify once with independent labels(1~13)   |          |
-
+| 2016-03-16  | chenqiang | 0.47284 |  -.00163 |  0.47566 |   -.00005  |                         | RandomForestRegressor | stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer, fixed bug replacing query_in_description with query_in_title   |
