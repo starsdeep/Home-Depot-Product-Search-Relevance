@@ -39,6 +39,9 @@
     in the requirements.txt
     to install it using : `pip3.5 install -r requirements.txt`
     
+* nltk: you need download nltk models **punkt**,
+
+    
 ### how to run
 1. put files into input folder including:attributes.csv,sample_submission.csv,product_descriptions.csv, test.csv, train.csv 
 2. run `python3.5 framework.py 1000 ./output/rfr_all`, 1000 means take 1000 instances as train data, you can change it to another number, and -1 means take all instances (may take 20 minutes)
@@ -49,10 +52,10 @@
 
 chenqiang
 
-* stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer, chenqaing doing
+* stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer, chenqiang, done
 * train three classification model to predict 1,2 and 3, output average score of these three as result, not plan yet
 * 加特征, title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1, done
-* 加特征, 加query和title,description,BM25相似度, chenqaing doing,
+* 加特征, 加query和title,description,BM25相似度, chen qiang doing,
 
 fenixlin
 
