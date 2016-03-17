@@ -55,7 +55,7 @@ chenqiang
 * stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer, chenqiang, done
 * train three classification model to predict 1,2 and 3, output average score of these three as result, not plan yet
 * 加特征, title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1, done
-* 加特征, 加query和title,description,BM25相似度, chen qiang doing,
+* 加特征, 加query和title,description,BM25相似度, chen qiang done,
 
 fenixlin
 
