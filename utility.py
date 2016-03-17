@@ -21,7 +21,7 @@ stop_w = ['for', 'xbi', 'and', 'in', 'th','on','sku','with','what','from','that'
 strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
 
 
-def str_stem(s, by_pos_tag=True):
+def str_stem(s, by_pos_tag=False):
     """
     :param s:
     :return: stemmed s
