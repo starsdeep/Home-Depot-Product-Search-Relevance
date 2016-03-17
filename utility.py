@@ -5,8 +5,8 @@ from nltk.metrics import edit_distance
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import pos_tag
 from nltk import word_tokenize
-import nltk
 from nltk.corpus.reader import wordnet
+
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 
@@ -21,7 +21,7 @@ stop_w = ['for', 'xbi', 'and', 'in', 'th','on','sku','with','what','from','that'
 strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
 
 
-def str_stem(s):
+def str_stem(s, by_pos_tag=True):
     """
     :param s:
     :return: stemmed s
@@ -91,8 +91,11 @@ def str_stem(s):
         s = s.replace("whirpool","whirlpool")
         s = s.replace("whirlpoolga", "whirlpool ga")
         s = s.replace("whirlpoolstainless","whirlpool stainless")
-        tagged_corpus = pos_tag(s.split())
-        words = [lemmatize(token, tag) for token, tag in tagged_corpus]
+        if by_pos_tag:
+            tagged_corpus = pos_tag(s.split())
+            words = [lemmatize(token, tag) for token, tag in tagged_corpus]
+        else:
+            words = [stemmer.stem(z) for z in s.split()]
         return " ".join(words)
     else:
         return "null"
