@@ -2,8 +2,6 @@
 import numpy as np
 from utility import str_stem, len_of_str, num_whole_word, num_common_word, seg_words, num_size_word
 
-
-
 def build_feature(df, features):
     for feature in features:
         feature_func = FeatureFuncDict[feature]
@@ -163,6 +161,10 @@ FeatureFuncDict = {
     'word_with_er_count_in_query': word_with_er_count_in_query,
     'word_with_er_count_in_title': word_with_er_count_in_title,
     'first_er_in_query_occur_position_in_title': first_er_in_query_occur_position_in_title,
+
+    'title_query_BM25': lambda df: df['title_query_BM25'] ,
+    'description_query_BM25': lambda df: df['description_query_BM25']
+
 }
 
 

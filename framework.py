@@ -31,7 +31,7 @@ if __name__ =='__main__':
     df_with_feature = build_feature(df, config['features'])
     print("--- Build Features: %s minutes ---" % round(((time.time() - start_time)/60),2))
     if config['save_feature']:
-        df.to_csv(os.path.join(sys.argv[2], 'df.csv'), encoding="ISO-8859-1")
+        df.to_csv(os.path.join(sys.argv[2], 'df.csv'), encoding="utf8")
     if config['load_exist_feature']:
         df = pd.read_csv('df_all.csv', encoding="ISO-8859-1", index_col=0)
     df_train = df.iloc[:num_train]

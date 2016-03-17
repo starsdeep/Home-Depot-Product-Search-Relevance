@@ -1,9 +1,11 @@
-*.csv
+# ignore python cache
 *.pyc
-input/
-.idea
 __pycache__/
 
+# ignore large files
+input/attributes.csv
+input/product_descriptions.csv
 
 # ignore mac system files
 .DS_Store
+.idea
