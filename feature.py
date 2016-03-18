@@ -1,5 +1,6 @@
 #encoding=utf8
 import numpy as np
+import re
 from utility import str_stem, len_of_str, num_whole_word, num_common_word, seg_words, num_size_word
 
 def build_feature(df, features):
@@ -11,10 +12,23 @@ def build_feature(df, features):
 def make_func(feature_name, func):
     return lambda df: df[feature_name].map(func)
 
+def search_term_cut_(x):
+    stop_w = ['for', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'] #, 'xbi']
+    #x = (" ").join([z for z in x.split(" ") if z not in stop_w])
 
-def search_term_stem(df):
-    return df['search_term'].map(lambda x:str_stem(x))
+    has_core = False
+    for s in x.split():
+        is_number = re.match(r'^[0-9]+$', s)
+        if (len(s)>2) and (not is_number) and (s not in stop_w):
+            has_core = True
+            break
+    if not has_core:
+        return ''
+    else:
+        return x
 
+def search_term_cut_stem(df):
+    return df['search_term'].map(lambda x:search_term_cut_(str_stem(x)))
 
 def query_in_title(df):
     return df['tmp_compound_field'].map(lambda x: num_whole_word(x.split('\t')[0], x.split('\t')[1]))
@@ -46,7 +60,6 @@ def word_in_brand(df):
 
 def search_term_fuzzy_match(df):
     return df['tmp_compound_field'].map(lambda x: seg_words(x.split('\t')[0], x.split('\t')[1]))
-
 
 
 def count_er_word_in_(x):
@@ -132,7 +145,7 @@ def first_er_in_query_occur_position_in_title(df):
 """
 
 FeatureFuncDict = {
-    'search_term': lambda df: df['search_term'].map(str_stem),
+    'search_term': search_term_cut_stem,
     'title': lambda df: df['product_title'].map(str_stem),
     'description': lambda df:df['product_description'].map(str_stem),
     'brand': lambda df:df['brand'].map(str_stem),
@@ -151,9 +164,9 @@ FeatureFuncDict = {
     'word_in_title': word_in_title,
     'word_in_description': word_in_description,
     'word_in_brand': word_in_brand,
-    'ratio_title': lambda df :df['word_in_title'] / df['len_of_query'],
-    'ratio_description': lambda df :df['word_in_description'] / df['len_of_query'],
-    'ratio_brand': lambda df :df['word_in_brand'] / df['len_of_query'],
+    'ratio_title': lambda df :df['word_in_title'] / (df['len_of_query']+1),
+    'ratio_description': lambda df :df['word_in_description'] / (df['len_of_query']+1),
+    'ratio_brand': lambda df :df['word_in_brand'] / (df['len_of_query']+1),
 
     'search_term_fuzzy_match': search_term_fuzzy_match,
     'len_of_search_term_fuzzy_match': lambda df: df['search_term_fuzzy_match'].map(len_of_str).astype(np.int64),

@@ -74,11 +74,10 @@ def random_forest_regression_(x_train, y_train, x_test):
                     )),
             ('rfr', rfr)])
 
-    param_grid = {'rfr__max_features': [10], 'rfr__max_depth': [20]}
-    RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
+    param_grid = {'rfr__max_features': [5], 'rfr__max_depth': [30]}
 
     # grid search cv is done in fitting, so set a param to print badcase
-    print_badcase_(x_train, y_train, clf.set_params(rfr__max_features=10, rfr__max_depth=20))
+    print_badcase_(x_train, y_train, clf.set_params(rfr__max_features=5, rfr__max_depth=30))
     print("Badcase printing done.")
 
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=RMSE)
@@ -132,10 +131,10 @@ def random_forest_classification_(x_train, y_train, x_test):
                     )),
             ('rfc', rfc)])
     # grid search cv is done in fitting, so set a param to print badcase
-    print_badcase_(x_train, y_train, clf.set_params(rfc__max_features=10, rfc__max_depth=20))
+    print_badcase_(x_train, y_train, clf.set_params(rfc__max_features=5, rfc__max_depth=30))
     print("Badcase printing done.")
 
-    param_grid = {'rfc__max_features': [10], 'rfc__max_depth': [20]}
+    param_grid = {'rfc__max_features': [5], 'rfc__max_depth': [30]}
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=RMSE)
     model.fit(x_train, y_train)
 

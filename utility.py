@@ -167,6 +167,8 @@ def num_whole_word(word, str):
     """
     cnt = 0
     i = 0
+    if len(word.split())==0:
+        return 0
     while i < len(str):
         i = str.find(word, i)
         if i == -1:
