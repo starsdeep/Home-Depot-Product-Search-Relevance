@@ -23,9 +23,8 @@ def get_feature(config):
 
     file_dict = {f.split('_')[0]: int(f.split('_')[1]) for f in os.listdir(feature_path) if os.path.isfile(os.path.join(feature_path, f))}
 
-    num_test = total_test
     if feature_hash in file_dict and num_train <= file_dict[feature_hash]:
-        df = pd.read_csv(os.path.join(feature_path, ), encoding="ISO-8859-1", index_col=0)
+        df = pd.read_csv(os.path.join(feature_path, feature_filename), encoding="ISO-8859-1", index_col=0)
         print("feature: " + feature + " already computed")
         print("load from " + feature_path + "/" + feature_filename)
     else:
@@ -35,8 +34,8 @@ def get_feature(config):
         df = build_feature(df, config['features'])
         print("--- Build Features: %s minutes ---" % round(((time.time() - start_time)/60),2))
         df.to_csv(os.path.join(feature_path, feature_filename), encoding="utf8")
-
-    return df[:num_train], df[-num_test:]
+        # df = pd.read_csv(os.path.join(feature_path, feature_filename), encoding="ISO-8859-1", index_col=0)
+    return df[:num_train], df[num_train:]
 
 def build_feature(df, features):
     for feature in features:

@@ -26,7 +26,8 @@ def print_badcase_(x_train, y_train, model):
     output.insert(3, 'pred', pd.Series(train_pred, index=x_train.index))
     output.insert(3, 'diff', pd.Series(abs(train_pred-y_train), index=x_train.index))
     output = output.sort_values(by=['diff', 'id'], ascending=False)
-    output[:1000].to_csv(os.path.join(os.path.abspath(sys.argv[2]),'badcase.csv'), encoding="utf-8")
+    len_output = len(output)
+    output[:min(1000, len_output)].to_csv(os.path.join(os.path.abspath(sys.argv[1]),'badcase.csv'), encoding="utf-8")
 
 RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
 

@@ -34,4 +34,4 @@ if __name__ =='__main__':
     start_time = time.time()
     y_pred = model_predict(config, X_train, y_train, X_test)
     print("--- Fit Model: %s minutes ---" % round(((time.time() - start_time)/60),2))
-    pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv(os.path.join(sys.argv[2],'submission.csv'),index=False)
+    pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv(os.path.join(sys.argv[1],'submission.csv'),index=False)
