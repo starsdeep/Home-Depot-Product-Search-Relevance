@@ -52,20 +52,26 @@
 
 chenqiang
 
-* stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer, chenqiang, done
-* train three classification model to predict 1,2 and 3, output average score of these three as result, not plan yet
-* 加特征, title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1, done
-* 加特征, 加query和title,description,BM25相似度, chen qiang done,
+* stem with pos tag using nltk.stem.wordnet.WordNetLemmatizer. [done, chenqinag]
+* train three classification model to predict 1,2 and 3, output average score of these three as result. [not recommended, liaoyikang]
+* 加特征, title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1 [done, chenqiang]
+* 加特征, 加query和title,description,BM25相似度 [chen qiang done]
 
 fenixlin
 
-* train 13 xgboost classifier to classify 'y>12? y>11? ...' 13 times, predict with probablity sum, not planned yet
-* introduce stop words and some rules to cut search query, doing
-* use stanford parser to do semantic analysis and build more features, doing
+* train 13 xgboost classifier to classify 'y>12? y>11? ...' 13 times, predict with probablity sum [not planned yet]
+* introduce stop words and some rules to cut search query. [doing, fenixlin]
+* use stanford parser to do semantic analysis and build more features [doing, fenixlin]
 
-## Plan
 
-暂无
+liaoyikang
+
+* 改进feature 计算过程 缩短每次流程运行的时间[doing, liaoyikang]
+* 使用"桶"，将连续值离散化，测试效果[doing, liaoyikang]
+
+
+
+
 
 
 
