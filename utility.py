@@ -98,7 +98,7 @@ def str_stem(s, by_pos_tag=False):
             words = [stemmer.stem(z) for z in s.split()]
         return " ".join(words)
     else:
-        return "null"
+        return ""
 
 
 def len_of_str(str):

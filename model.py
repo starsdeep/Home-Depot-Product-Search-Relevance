@@ -11,10 +11,6 @@ from sklearn.pipeline import FeatureUnion
 from sklearn import cross_validation
 import xgboost as xgb
 
-
-
-def model_predict(model, x_train, y_train, x_test):
-    predict_func = ModelDict[model]
 def model_predict(config, x_train, y_train, x_test):
     predict_func = ModelDict[config['model']]
     prediction = predict_func(x_train, y_train, x_test)
@@ -25,7 +21,7 @@ def fmean_squared_error_(ground_truth, predictions):
     return fmean_squared_error_
 
 def print_badcase_(x_train, y_train, model):
-    train_pred = model.predict(x_train)
+    train_pred = cross_validation.cross_val_predict(model, x_train, y_train, cv=3)
     output = x_train.copy(deep=True)
     output.insert(3, 'pred', pd.Series(train_pred, index=x_train.index))
     output.insert(3, 'diff', pd.Series(abs(train_pred-y_train), index=x_train.index))
@@ -75,11 +71,6 @@ def random_forest_regression_(x_train, y_train, x_test):
             ('rfr', rfr)])
 
     param_grid = {'rfr__max_features': [5], 'rfr__max_depth': [30]}
-
-    # grid search cv is done in fitting, so set a param to print badcase
-    print_badcase_(x_train, y_train, clf.set_params(rfr__max_features=5, rfr__max_depth=30))
-    print("Badcase printing done.")
-
     model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=RMSE)
     model.fit(x_train, y_train)
 
@@ -87,6 +78,12 @@ def random_forest_regression_(x_train, y_train, x_test):
     print(model.best_params_)
     print("Best CV score:")
     print(model.best_score_)
+
+    cvmodel = clf
+    for k, v in model.best_params_.items():
+        cvmodel = cvmodel.set_params(**{k: v})
+    print_badcase_(x_train, y_train, cvmodel)
+    print("Badcase printing done.")
 
     y_pred = model.predict(x_test)
     return y_pred
@@ -144,7 +141,13 @@ def random_forest_classification_(x_train, y_train, x_test):
     print("Best CV score:")
     print(model.best_score_)
 
-    y_pred = model.predict(x_test)
+    cvmodel = clf
+    for k, v in model.best_params_.items():
+        cvmodel = cvmodel.set_params(**{k: v})
+    print_badcase_(x_train, y_train, cvmodel)
+    print("Badcase printing done.")
+
+    y_pred = recover_labels_(model.predict(x_test))
     return y_pred
 
 def xgboost_regression_(x_train, y_train, x_test):
@@ -156,9 +159,9 @@ subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1,
             ('union', FeatureUnion(
                         transformer_list = [
                             ('cst',  cust_regression_vals_()),  
-                            ('txt1', pipeline.Pipeline([('s1', cust_txt_col_(key='search_term')), ('tfidf1', tfidf), ('tsvd1', tsvd)])),
-                            ('txt2', pipeline.Pipeline([('s2', cust_txt_col_(key='product_title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
-                            ('txt3', pipeline.Pipeline([('s3', cust_txt_col_(key='product_description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
+                            ('txt1', pipeline.Pipeline([('s1', cust_txt_col_(key='search_term_fuzzy_match')), ('tfidf1', tfidf), ('tsvd1', tsvd)])),
+                            ('txt2', pipeline.Pipeline([('s2', cust_txt_col_(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
+                            ('txt3', pipeline.Pipeline([('s3', cust_txt_col_(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
                             ('txt4', pipeline.Pipeline([('s4', cust_txt_col_(key='brand')), ('tfidf4', tfidf), ('tsvd4', tsvd)]))
                             ],
                         transformer_weights = {
