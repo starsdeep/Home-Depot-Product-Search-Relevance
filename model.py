@@ -25,11 +25,11 @@ def fmean_squared_error_(ground_truth, predictions):
     return fmean_squared_error_
 
 def print_badcase_(x_train, y_train, model):
-    train_pred = cross_validation.cross_val_predict(model, x_train, y_train, cv=3)
+    train_pred = model.predict(x_train)
     output = x_train.copy(deep=True)
     output.insert(3, 'pred', pd.Series(train_pred, index=x_train.index))
     output.insert(3, 'diff', pd.Series(abs(train_pred-y_train), index=x_train.index))
-    output = output.sort_values(by=['diff'], ascending=False)
+    output = output.sort_values(by=['diff', 'id'], ascending=False)
     output[:1000].to_csv(os.path.join(os.path.abspath(sys.argv[2]),'badcase.csv'), encoding="utf-8")
 
 RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
@@ -107,7 +107,7 @@ def recover_labels_(y_pred):
     return y_pred
 
 def random_forest_classification_(x_train, y_train, x_test):
-    y_train = transform_labels_(y_train)
+    # y_train = transform_labels_(y_train)
     rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
     tfidf = TfidfVectorizer(ngram_range=(1, 1), stop_words='english')
     tsvd = TruncatedSVD(n_components=10, random_state = 2016)
@@ -130,20 +130,21 @@ def random_forest_classification_(x_train, y_train, x_test):
                     #n_jobs = -1
                     )),
             ('rfc', rfc)])
-    # grid search cv is done in fitting, so set a param to print badcase
-    print_badcase_(x_train, y_train, clf.set_params(rfc__max_features=5, rfc__max_depth=30))
-    print("Badcase printing done.")
 
-    param_grid = {'rfc__max_features': [5], 'rfc__max_depth': [30]}
-    model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=RMSE)
+    param_grid = {'rfc__max_features': [1, 2, 3, 5, 8], 'rfc__max_depth': [7, 10, 15, 20, 30]}
+    model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 5, verbose = 20, scoring=RMSE)
     model.fit(x_train, y_train)
+
+    # grid search cv is done in fitting, so set a param to print badcase
+    print_badcase_(x_train, y_train, model)
+    print("Badcase printing done.")
 
     print("Best parameters found by grid search:")
     print(model.best_params_)
     print("Best CV score:")
     print(model.best_score_)
 
-    y_pred = recover_labels_(model.predict(x_test))
+    y_pred = model.predict(x_test)
     return y_pred
 
 def xgboost_regression_(x_train, y_train, x_test):
