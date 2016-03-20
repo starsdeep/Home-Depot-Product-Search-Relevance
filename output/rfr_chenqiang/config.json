@@ -1,9 +1,9 @@
 {   
     "model": "rfr",
-    "load_exist_feature": false,
-    "exist_feature_file": null,
+    "load_exist_feature": true,
     "save_feature": true,
     "save_badcase": false,
+    "num_train": -1,
     "features": [ "search_term", "title", "description", "brand", "len_of_query", "len_of_title"
                     , "len_of_description", "len_of_brand", "tmp_compound_field", "query_in_title"
                     , "query_in_description", "query_last_word_in_title", "query_last_word_in_description"

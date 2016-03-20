@@ -10,10 +10,10 @@ import random
 random.seed(2016)
 from load_data import load_data
 from feature import get_feature
-from model import model_predict
 import sys, os
 import json
 import time
+from model_factory import ModelFactory
 
 if __name__ =='__main__':
     if len(sys.argv) != 2:
@@ -32,6 +32,7 @@ if __name__ =='__main__':
 
     #model
     start_time = time.time()
-    y_pred = model_predict(config, X_train, y_train, X_test)
+    mf = ModelFactory()
+    y_pred = mf.create_model(config).predict(X_train, y_train, X_test)
     print("--- Fit Model: %s minutes ---" % round(((time.time() - start_time)/60),2))
     pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv(os.path.join(sys.argv[1],'submission.csv'),index=False)

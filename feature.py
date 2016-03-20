@@ -17,13 +17,13 @@ def get_feature(config):
     feature_hash = hashlib.sha1(feature.encode('utf-8')).hexdigest()
     num_train = total_train if config['num_train']<0 else config['num_train']
     feature_filename = feature_hash + '_' + str(num_train)
-    feature_path = './output/features/'
+    feature_path = './feature_cache/'
     if not os.path.exists(feature_path):
         os.makedirs(feature_path)
 
     file_dict = {f.split('_')[0]: int(f.split('_')[1]) for f in os.listdir(feature_path) if os.path.isfile(os.path.join(feature_path, f))}
 
-    if feature_hash in file_dict and num_train <= file_dict[feature_hash]:
+    if config['load_exist_feature'] and feature_hash in file_dict and num_train <= file_dict[feature_hash]:
         df = pd.read_csv(os.path.join(feature_path, feature_filename), encoding="ISO-8859-1", index_col=0)
         print("feature: " + feature + " already computed")
         print("load from " + feature_path + "/" + feature_filename)
@@ -33,8 +33,9 @@ def get_feature(config):
         start_time = time.time()
         df = build_feature(df, config['features'])
         print("--- Build Features: %s minutes ---" % round(((time.time() - start_time)/60),2))
-        df.to_csv(os.path.join(feature_path, feature_filename), encoding="utf8")
-        # df = pd.read_csv(os.path.join(feature_path, feature_filename), encoding="ISO-8859-1", index_col=0)
+        if config['save_feature']:
+            df.to_csv(os.path.join(feature_path, feature_filename), encoding="utf8")
+    print()
     return df[:num_train], df[num_train:]
 
 def build_feature(df, features):
