@@ -69,7 +69,9 @@ liaoyikang
 
 * 改进feature 计算过程 缩短每次流程运行的时间[doing, liaoyikang]
 * 使用"桶"，将连续值离散化，测试效果[doing, liaoyikang]
-
+* 增加2-gram的feature，见bad case 4
+* 增加feature，是否是连续匹配。比如hot dog，虽然是匹配但不是连续匹配. 见bad case 4
+* 增加feature, 统计词性匹配，有一些形容词匹配，但主题匹配的并没有用，比如query 是 doubl side stapl， title是Double-Sided Organizer，或者见bad case 3.
 
 
 
@@ -80,6 +82,21 @@ liaoyikang
 
 * query是树，product是修理树的工具, query是mower，product是mower的布
 * query是电池，product是一个工具，同时title中有说不含电池
+
+
+###典型bad case
+
+|编号| query | title |原因|改进方法
+|---|---|---|---|---|
+| 1 |Ryobi ONE+ 18 in. 18-Volt Lithium-Ion Cordless Hedge Trimmer - Battery and Charger Not Included|18volt. batteri charger|主语不一样，反义处理 not included 处理|反义词处理|
+|2|topiari tree|Romano 4 ft. Boxwood Spiral Topiary Tree|query是简单的词，title确是一个很详细的东西，所以应该是一般性匹配|增加query len / title/len|
+|3|bronz green|Green Matters 3-Light Mahogany Bronze Vanity Fixture|主题词不匹配，green 形容词匹配，没啥用||
+|4|hot dog|HealthSmart Digger Dog Reusable Hot and Cold Pack||
+
+
+
+
+
 
 
 ## 实验结果记录
