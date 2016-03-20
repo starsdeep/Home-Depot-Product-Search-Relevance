@@ -75,7 +75,8 @@ liaoyikang
 * 增加feature, 统计词性匹配，有一些形容词匹配，但主题匹配的并没有用，比如query 是 doubl side stapl， title是Double-Sided Organizer，或者见bad case 3.
 
 
-
+beidouwang
+* 测试SVM和SVR，以及各种不同的kernel函数的使用[doing,beidouwang]
 
 
 
