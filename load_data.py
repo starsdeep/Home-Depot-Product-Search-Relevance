@@ -1,4 +1,3 @@
-
 import pandas as pd
 import time
 
@@ -22,7 +21,8 @@ def load_data(num_sample=-1):
     num_train = df_train.shape[0]
     num_test = df_test.shape[0]
     print("load %d training sample, load %d test sample" % (num_train, num_test))
-    print("--- Files Loaded: %s minutes ---" % round(((time.time() - start_time)/60),2))
+    print("--- Files Loaded: %s minutes ---" % round(((time.time() - start_time) / 60), 2))
 
     return df_all, num_train, num_test
+
 

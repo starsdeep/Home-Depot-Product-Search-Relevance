@@ -6,7 +6,8 @@ import pandas as pd
 import time
 from load_data import load_data
 import hashlib
-from utility import str_stem, len_of_str, num_whole_word, num_common_word, seg_words, num_size_word
+from utility import *
+from SpellCorrect import *
 
 total_train = 74067
 total_test = 166693
@@ -21,9 +22,15 @@ def get_feature(config):
     if not os.path.exists(feature_path):
         os.makedirs(feature_path)
 
-    file_dict = {f.split('_')[0]: int(f.split('_')[1]) for f in os.listdir(feature_path) if os.path.isfile(os.path.join(feature_path, f))}
+    file_dict = dict()
+    for f in os.listdir(feature_path):
+        if os.path.isfile(os.path.join(feature_path, f)):
+            hash_value = f.split('_')[0]
+            num_value = int(f.split('_')[1])
+            if hash_value not in file_dict or num_value>file_dict[hash_value]:
+                file_dict[hash_value] = num_value
 
-    if config['load_exist_feature'] and feature_hash in file_dict and num_train <= file_dict[feature_hash]:
+    if feature_hash in file_dict and num_train <= file_dict[feature_hash]:
         df = pd.read_csv(os.path.join(feature_path, feature_filename), encoding="ISO-8859-1", index_col=0)
         print("feature: " + feature + " already computed")
         print("load from " + feature_path + "/" + feature_filename)
@@ -33,9 +40,7 @@ def get_feature(config):
         start_time = time.time()
         df = build_feature(df, config['features'])
         print("--- Build Features: %s minutes ---" % round(((time.time() - start_time)/60),2))
-        if config['save_feature']:
-            df.to_csv(os.path.join(feature_path, feature_filename), encoding="utf8")
-    print()
+        df.to_csv(os.path.join(feature_path, feature_filename), encoding="utf8")
     return df[:num_train], df[num_train:]
 
 def build_feature(df, features):
@@ -46,6 +51,21 @@ def build_feature(df, features):
 
 def make_func(feature_name, func):
     return lambda df: df[feature_name].map(func)
+
+
+
+
+def query_process(df):
+    chkr = SpellCheckGoogleOffline()
+    queries = df['search_term'].copy()
+    for i in range(len(queries)):
+        queries[i] = chkr.spell_correct(queries[i])
+        queries[i] = str_stem(queries[i])
+        queries[i] = str_remove_stopwords(queries[i])
+        queries[i] = queries[i] if str_is_meaningful(queries[i]) else ''
+
+    return queries
+
 
 def search_term_cut_(x):
     stop_w = ['for', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'] #, 'xbi']
@@ -181,15 +201,16 @@ def first_er_in_query_occur_position_in_title(df):
 
 FeatureFuncDict = {
     'search_term': search_term_cut_stem,
+    'search_term_clean': query_process,
     'title': lambda df: df['product_title'].map(str_stem),
     'description': lambda df:df['product_description'].map(str_stem),
     'brand': lambda df:df['brand'].map(str_stem),
-    'len_of_query': lambda df: df['search_term'].map(len_of_str).astype(np.int64),
+    'len_of_query': lambda df: df['search_term_clean'].map(len_of_str).astype(np.int64),
     'len_of_title': lambda df: df['title'].map(len_of_str).astype(np.int64),
     'len_of_description': lambda df: df['description'].map(len_of_str).astype(np.int64),
     'len_of_brand': lambda df: df['brand'].map(len_of_str).astype(np.int64),
 
-    'tmp_compound_field': lambda df:df['search_term'] + '\t' + df['title'] + '\t' + df['description'] + '\t' + df['brand'], # in order to using map, we need to make several fields into one
+    'tmp_compound_field': lambda df:df['search_term_clean'] + '\t' + df['title'] + '\t' + df['description'] + '\t' + df['brand'], # in order to using map, we need to make several fields into one
     'query_in_title': query_in_title,
     'query_in_description': query_in_description,
     'numsize_query_in_title': numsize_query_in_title,

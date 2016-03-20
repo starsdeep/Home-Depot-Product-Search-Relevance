@@ -1,5 +1,6 @@
 #encoding=utf8
 import re
+from nltk.corpus import stopwords
 from nltk.stem.porter import *
 from nltk.metrics import edit_distance
 from nltk.stem.wordnet import WordNetLemmatizer
@@ -10,6 +11,10 @@ from nltk.corpus.reader import wordnet
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 
+stop_w = {'for', 'xbi', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'} #'electr','paint','pipe','light','kitchen','wood','outdoor','door','bathroom'
+strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
+stopwords = set(stopwords.words('english')) | stop_w
+
 def lemmatize(token, tag):
     try:
         morphy_tag = {'NN':wordnet.NOUN,'JJ':wordnet.ADJ,'VB':wordnet.VERB,'RB':wordnet.ADV}[tag[:2]]
@@ -17,8 +22,20 @@ def lemmatize(token, tag):
     except:
         return token
 
-stop_w = ['for', 'xbi', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'] #'electr','paint','pipe','light','kitchen','wood','outdoor','door','bathroom'
-strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
+
+
+
+def str_remove_stopwords(s):
+    word_list = s.split()
+    return ' '.join([word for word in word_list if word not in stopwords])
+
+
+def str_is_meaningful(s):
+    for t in s.split():
+        is_number = re.match(r'^[0-9]+$', t)
+        if (len(t)>2) and (not is_number) and (t not in stopwords):
+            return True
+    return False
 
 
 def str_stem(s, by_pos_tag=False):
