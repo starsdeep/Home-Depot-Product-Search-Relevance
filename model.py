@@ -43,14 +43,19 @@ class Model(object):
         fmean_squared_error_ = mean_squared_error(ground_truth, predictions)**0.5
         return fmean_squared_error_
 
-    def print_badcase_(self, x_train, y_train, model):
+    def print_badcase_(self, x_train, y_train, model, default_output_line=1000):
         train_pred = cross_validation.cross_val_predict(model, x_train, y_train, cv=3)
         output = x_train.copy(deep=True)
+        output.drop('tmp_compound_field', axis=1, inplace=True)
+        output.drop('product_description', axis=1, inplace=True)
+        output.drop('description', axis=1, inplace=True)
+        output.drop('product_title', axis=1, inplace=True)
+
         output.insert(3, 'pred', pd.Series(train_pred, index=x_train.index))
         output.insert(3, 'diff', pd.Series(abs(train_pred-y_train), index=x_train.index))
         output = output.sort_values(by=['diff', 'id'], ascending=False)
         len_output = len(output)
-        output[:min(1000, len_output)].to_csv(os.path.join(os.path.abspath(sys.argv[1]),'badcase.csv'), encoding="utf-8")
+        output[:min(default_output_line, len_output)].to_csv(os.path.join(os.path.abspath(sys.argv[1]),'badcase.csv'), encoding="utf-8")
 
     def grid_search_fit_(self, clf, param_grid, x_train, y_train):
         model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=self.RMSE)
@@ -64,7 +69,7 @@ class Model(object):
             cvmodel = clf
             for k, v in model.best_params_.items():
                 cvmodel = cvmodel.set_params(**{k: v})
-            self.print_badcase_(x_train, y_train, cvmodel)
+            self.print_badcase_(x_train, y_train, cvmodel, 2000)
             print("Badcase printing done.\n")
         return model
 
@@ -118,13 +123,17 @@ class RandomForestClassification(Model):
             y_pred[i] = labels[int(y_pred[i])]
         return y_pred
 
-    def predict(self, x_train, y_train, x_test):
-        y_train = self.transform_labels_(y_train)
+    def predict(self, x_train, y_train, x_test, need_transform_label=False):
+        if need_transform_label:
+            y_train = self.transform_labels_(y_train)
         rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfc', rfc)
         param_grid = {'rfc__max_features': [5], 'rfc__max_depth': [30]}
         model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
-        return self.recover_labels_(model.predict(x_test))
+        result = model.predict(x_test)
+        if need_transform_label:
+            result = self.recover_labels_(result)
+        return result
 
 class XgboostRegression(Model):
 
