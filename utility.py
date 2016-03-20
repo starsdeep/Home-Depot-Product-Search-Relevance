@@ -22,9 +22,6 @@ def lemmatize(token, tag):
     except:
         return token
 
-
-
-
 def str_remove_stopwords(s):
     word_list = s.split()
     return ' '.join([word for word in word_list if word not in stopwords])
@@ -36,7 +33,6 @@ def str_is_meaningful(s):
         if (len(t)>2) and (not is_number) and (t not in stopwords):
             return True
     return False
-
 
 def str_stem(s, by_pos_tag=False):
     """
