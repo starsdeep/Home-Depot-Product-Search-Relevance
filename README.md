@@ -61,8 +61,9 @@ chenqiang
 fenixlin
 
 * train 13 xgboost classifier to classify 'y>12? y>11? ...' 13 times, predict with probablity sum [not planned yet]
-* introduce stop words and some rules to cut search query. [doing, fenixlin]
+* introduce stop words and some rules to cut search query. [done, fenixlin]
 * use stanford parser to do semantic analysis and build more features [doing, fenixlin]
+* use google service to check and fix spelling of search query, see scripts in forum [ not planned yet]
 
 
 liaoyikang
