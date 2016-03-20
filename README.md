@@ -57,6 +57,7 @@ chenqiang
 * train three classification model to predict 1,2 and 3, output average score of these three as result. [done chenqiang, not recommended, liaoyikang]
 * 加特征, title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1 [done, chenqiang]
 * 加特征, 加query和title,description,BM25相似度 [chen qiang done]
+* 有所有product的description和attributes(如果product包含有的话)，我想应该给product做一个聚类，有了各个product的分类，之后，我们对query进行意图分析，看product的分类是否和query意图相匹配 [planning chenqiang]
 
 fenixlin
 
