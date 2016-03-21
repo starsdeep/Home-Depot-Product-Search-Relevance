@@ -129,6 +129,13 @@ def str_stem(s, by_lemmatizer=False):
 def len_of_str(str):
     return len(str.split())
 
+def noun_of_str(s):
+    posdict, cnt = pos_tag(s), 0
+    for key, tag in posdict:
+        if tag=='NN':
+            cnt += 1
+    return cnt
+
 def seg_words(str1, str2):
     str2 = str2.lower()
     str2 = re.sub("[^a-z0-9./]"," ", str2)
@@ -183,9 +190,29 @@ def num_common_word(str1, str2):
                 cnt+=0.5
     return cnt
 
+def num_common_noun(str1, str2):
+    """
+    number of nouns in str1 that also in str2
+    :param str1:
+    :param str2:
+    :return: cnt
+    """
+    words, cnt = str1.split(), .0
+    tagdict = pos_tag(str2.split())
+    for word in words:
+        for key, tag in tagdict:
+            if tag=='NN':
+                if word==key:
+                    cnt += 1
+                    break
+                if edit_distance(word, key)<2:
+                    cnt += 0.5
+                    break
+    return cnt
+
 def num_whole_word(word, str):
     """
-    number of times that word appears in str
+    number of times that word(sentence) appears in str
     :param word:
     :param str:
     :return: cnt

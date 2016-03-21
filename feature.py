@@ -113,6 +113,12 @@ def word_in_description(df):
 def word_in_brand(df):
     return df['tmp_compound_field'].map(lambda x:num_common_word(x.split('\t')[0], x.split('\t')[3]))
 
+def noun_in_title(df):
+    return df['tmp_compound_field'].map(lambda x:num_common_noun(x.split('\t')[0], x.split('\t')[1]))
+
+def noun_in_description(df):
+    return df['tmp_compound_field'].map(lambda x:num_common_noun(x.split('\t')[0], x.split('\t')[2]))
+
 def search_term_fuzzy_match(df):
     return df['tmp_compound_field'].map(lambda x: seg_words(x.split('\t')[0], x.split('\t')[1]))
 
@@ -209,6 +215,9 @@ FeatureFuncDict = {
     'len_of_title': lambda df: df['title'].map(len_of_str).astype(np.int64),
     'len_of_description': lambda df: df['description'].map(len_of_str).astype(np.int64),
     'len_of_brand': lambda df: df['brand'].map(len_of_str).astype(np.int64),
+    'noun_of_query': lambda df: df['search_term'].map(noun_of_str).astype(np.int64),
+    'noun_of_title': lambda df: df['title'].map(noun_of_str).astype(np.int64),
+    'noun_of_description': lambda df: df['description'].map(noun_of_str).astype(np.int64),
 
     'tmp_compound_field': lambda df:df['search_term_clean'] + '\t' + df['title'] + '\t' + df['description'] + '\t' + df['brand'], # in order to using map, we need to make several fields into one
     'query_in_title': query_in_title,
@@ -220,6 +229,8 @@ FeatureFuncDict = {
     'word_in_title': word_in_title,
     'word_in_description': word_in_description,
     'word_in_brand': word_in_brand,
+    'noun_in_title': noun_in_title,
+    'noun_in_description': noun_in_description,
     'ratio_title': lambda df :df['word_in_title'] / (df['len_of_query']+1),
     'ratio_description': lambda df :df['word_in_description'] / (df['len_of_query']+1),
     'ratio_brand': lambda df :df['word_in_brand'] / (df['len_of_query']+1),
