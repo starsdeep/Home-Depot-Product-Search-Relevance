@@ -64,6 +64,7 @@ fenixlin
 * introduce stop words and some rules to cut search query. [done, fenixlin]
 * use stanford parser to do semantic analysis and build more features [doing, fenixlin]
 * use google service to check and fix spelling of search query, see scripts in forum [ done, liaoyikang ]
+* 用加权和作为特征来表达共有词匹配的位置信息（越后面的匹配越重要），标题和搜索词都可以做 [not planned yet]
 
 
 liaoyikang

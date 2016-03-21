@@ -106,6 +106,7 @@ def str_stem(s, by_lemmatizer=False):
     s = (" ").join([str(strNum[z]) if z in strNum else z for z in s.split(" ")])
 
     # fix typos
+    s = s.replace("&amp;", "&") # most '&' in title are turned to "&amp;"
     s = s.replace("toliet","toilet")
     s = s.replace("airconditioner","air condition")
     s = s.replace("vinal","vinyl")
