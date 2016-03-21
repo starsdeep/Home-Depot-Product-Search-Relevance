@@ -46,10 +46,10 @@ class Model(object):
     def print_badcase_(self, x_train, y_train, model, default_output_line=1000):
         train_pred = cross_validation.cross_val_predict(model, x_train, y_train, cv=3)
         output = x_train.copy(deep=True)
-        output.drop('tmp_compound_field', axis=1, inplace=True)
-        output.drop('product_description', axis=1, inplace=True)
-        output.drop('description', axis=1, inplace=True)
-        output.drop('product_title', axis=1, inplace=True)
+        #output.drop('tmp_compound_field', axis=1, inplace=True)
+        #output.drop('product_description', axis=1, inplace=True)
+        #output.drop('description', axis=1, inplace=True)
+        #output.drop('product_title', axis=1, inplace=True)
 
         output.insert(3, 'pred', pd.Series(train_pred, index=x_train.index))
         output.insert(3, 'diff', pd.Series(abs(train_pred-y_train), index=x_train.index))
