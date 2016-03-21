@@ -6,6 +6,7 @@ feature_cache/
 
 # ignore date files 
 # please upload data/feature file to QQ group, and do not mess with git
+input/
 *.csv
 
 # ignore mac system files

@@ -63,7 +63,7 @@ fenixlin
 * train 13 xgboost classifier to classify 'y>12? y>11? ...' 13 times, predict with probablity sum [not planned yet]
 * introduce stop words and some rules to cut search query. [done, fenixlin]
 * use stanford parser to do semantic analysis and build more features [doing, fenixlin]
-* use google service to check and fix spelling of search query, see scripts in forum [ not planned yet]
+* use google service to check and fix spelling of search query, see scripts in forum [ done, liaoyikang ]
 
 
 liaoyikang
@@ -76,8 +76,10 @@ liaoyikang
 
 
 beidouwang
-* 测试SVM和SVR，以及各种不同的kernel函数的使用[doing,beidouwang]
 
+* 测试SVM和SVR，以及各种不同的kernel函数的使用[doing,beidouwang]
+* sampling解决skew问题(训练数据中高分数据偏多)，可参考Oversampling（重复sample negative feedback直到和数量和postive相等），undersampling（sample和negative feedback一样多的postive feedback），另外专门有论文讲cost sensitive sampling [ not planned yet ]
+* 使用scikit-learn的feature selection模块减少无用feature [ not planned yet ]
 
 
 ## Bad case 分析
@@ -116,4 +118,4 @@ beidouwang
 | 2016-03-18  | fenixlin  | 0.47249 |  -.00198 |  0.47484 |   -.00087  |  rfr_all{5,30}+删除无主体的搜索词  　  |  RandomForestRegressor|                |          |
 | 2016-03-19  | chenqiang | 0.6, 0.6, 0.6|     |  0.50780 |   +.3209   | BM25, no er, get optimised depth and features|  train three classification model |   |                 |
 | 2016-03-19  | liaoyikang |0.47265|     |   |      | add search_term_clean 做了拼写纠错好去除stopwords| rfr |   |                 |
-
+| 2016-03-21  | fenixlin  | 0.46908 |  -.00569 |  0.46966 |   -.00605  |  rfr {5, 30}+postag统计标题+search_term_clean  　  |  RandomForestRegressor|                |          |
