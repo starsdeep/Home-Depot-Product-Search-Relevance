@@ -8,10 +8,11 @@ from load_data import load_data
 import hashlib
 from utility import *
 from SpellCorrect import *
+from collections import OrderedDict
+from nltk import pos_tag
 
 total_train = 74067
 total_test = 166693
-
 
 def get_feature(config):
     feature = ' '.join(sorted(config['features']))
@@ -44,209 +45,87 @@ def get_feature(config):
     return df[:num_train], df[num_train:]
 
 def build_feature(df, features):
-    for feature in features:
-        feature_func = FeatureFuncDict[feature]
-        df[feature] = feature_func(df)
+    # iterate features in order, use apply() to update in time
+    for feature in list(FirstFeatureFuncDict.keys()):
+        if feature in features:
+            print('calculating feature: '+feature+' ...')
+            feature_func = FirstFeatureFuncDict[feature]
+            df[feature] = df.apply(feature_func, axis=1)
+
+    # iterate features in order (iterrows cannot update in time)
+    print('calculating pos_tag features...')
+    for index, row in df.iterrows():
+        tags = {'search_term': pos_tag(row['search_term'].split()), 
+                'title': pos_tag(row['title'].split())}
+        # caution: takes a long time
+        if ('noun_of_description' in features) or ('noun_in_description' in features):
+            tags['description'] = pos_tag(row['description'].split())
+        for feature in list(PostagFeatureFuncDict.keys()):
+            if feature in features:
+                feature_func = PostagFeatureFuncDict[feature]
+                df.loc[index, feature] = feature_func(row, tags)
+        if index%300==0:
+            print(str(index)+' rows calculated...')
     return df
 
-def make_func(feature_name, func):
-    return lambda df: df[feature_name].map(func)
+chkr = SpellCheckGoogleOffline()
+def search_term_clean(query):
+    query = chkr.spell_correct(query)
+    query = str_stem(query)
+    query = str_remove_stopwords(query)
+    query = query if str_is_meaningful(query) else ''
+    return query
 
+def last_word_in_title(s, t):
+    words = s.split()
+    if len(words)==0:
+        return 0
+    return num_common_word(words[-1], t)
 
+# Following features in dicts will be calculated from top to bottom
 
+# Features can be calculated by raw input in order
+FirstFeatureFuncDict = OrderedDict([
+    ('search_term', lambda row: search_term_clean(row['search_term'])),
+    ('title', lambda row: str_stem(row['product_title'])),
+    ('description', lambda row: str_stem(row['product_description'])),
+    ('brand', lambda row: str_stem(row['brand'])),
 
-def query_process(df):
-    chkr = SpellCheckGoogleOffline()
-    queries = df['search_term'].copy()
-    for i in range(len(queries)):
-        queries[i] = chkr.spell_correct(queries[i])
-        queries[i] = str_stem(queries[i])
-        queries[i] = str_remove_stopwords(queries[i])
-        queries[i] = queries[i] if str_is_meaningful(queries[i]) else ''
+    ('query_in_title', lambda row: num_whole_word(row['search_term'], row['title'])),
+    ('query_in_description', lambda row: num_whole_word(row['search_term'], row['description'])),
+    ('numsize_query_in_title', lambda row: num_size_word(row['search_term'], row['title'])),
+    ('numsize_query_in_description', lambda row: num_size_word(row['search_term'], row['description'])),
+    ('query_last_word_in_title', lambda row: last_word_in_title(row['search_term'], row['title'])),
+    ('query_last_word_in_description', lambda row: last_word_in_title(row['search_term'], row['description'])),
+    ('word_in_title', lambda row: num_common_word(row['search_term'], row['title'])),
+    ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
+    ('word_in_brand', lambda row: num_common_word(row['search_term'], row['brand'])),
+    ('search_term_fuzzy_match', lambda row: seg_words(row['search_term'], row['title'])),
+    ('word_with_er_count_in_query', lambda row: count_er_word_in_(row['search_term'])),
+    ('word_with_er_count_in_title', lambda row: count_er_word_in_(row['title'])),
+    ('first_er_in_query_occur_position_in_title', lambda row: find_er_position(row['search_term'], row['title'])),
+    ('len_of_query', lambda row: words_of_str(row['search_term'])),
+    ('len_of_title', lambda row: words_of_str(row['title'])),
+    ('len_of_description', lambda row: words_of_str(row['description'])),
+    ('len_of_brand', lambda row: words_of_str(row['brand'])),
+    ('chars_of_query', lambda row: len(row['search_term'])),
+    ('ratio_title', lambda row :row['word_in_title'] / (row['len_of_query']+1)),
+    ('ratio_description', lambda row :row['word_in_description'] / (row['len_of_query']+1)),
+    ('ratio_brand', lambda row :row['word_in_brand'] / (row['len_of_query']+1)),
+    ('len_of_search_term_fuzzy_match', lambda row: words_of_str(row['search_term_fuzzy_match'])),
 
-    return queries
+    ('title_query_BM25', lambda row: row['title_query_BM25']),
+    ('description_query_BM25', lambda row: row['description_query_BM25'])
+])
 
-
-def search_term_cut_(x):
-    stop_w = ['for', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'] #, 'xbi']
-    #x = (" ").join([z for z in x.split(" ") if z not in stop_w])
-
-    has_core = False
-    for s in x.split():
-        is_number = re.match(r'^[0-9]+$', s)
-        if (len(s)>2) and (not is_number) and (s not in stop_w):
-            has_core = True
-            break
-    if not has_core:
-        return ''
-    else:
-        return x
-
-def search_term_cut_stem(df):
-    return df['search_term'].map(lambda x:search_term_cut_(str_stem(x)))
-
-def query_in_title(df):
-    return df['tmp_compound_field'].map(lambda x: num_whole_word(x.split('\t')[0], x.split('\t')[1]))
-
-
-def query_in_description(df):
-    return df['tmp_compound_field'].map(lambda x: num_whole_word(x.split('\t')[0], x.split('\t')[2]))
-
-def numsize_query_in_title(df):    
-    return df['tmp_compound_field'].map(lambda x: num_size_word(x.split('\t')[0], x.split('\t')[1]))
-
-def numsize_query_in_description(df):
-    return df['tmp_compound_field'].map(lambda x: num_size_word(x.split('\t')[0], x.split('\t')[2]))
-
-def query_last_word_in_title(df):
-    return df['tmp_compound_field'].map(lambda x:num_common_word(x.split('\t')[0], x.split('\t')[1]))
-
-def query_last_word_in_description(df):
-    return df['tmp_compound_field'].map(lambda x:num_common_word(x.split('\t')[0], x.split('\t')[2]))
-
-def word_in_title(df):
-    return df['tmp_compound_field'].map(lambda x:num_common_word(x.split('\t')[0], x.split('\t')[1]))
-
-def word_in_description(df):
-    return df['tmp_compound_field'].map(lambda x:num_common_word(x.split('\t')[0], x.split('\t')[2]))
-
-def word_in_brand(df):
-    return df['tmp_compound_field'].map(lambda x:num_common_word(x.split('\t')[0], x.split('\t')[3]))
-
-def noun_in_title(df):
-    return df['tmp_compound_field'].map(lambda x:num_common_noun(x.split('\t')[0], x.split('\t')[1]))
-
-def noun_in_description(df):
-    return df['tmp_compound_field'].map(lambda x:num_common_noun(x.split('\t')[0], x.split('\t')[2]))
-
-def search_term_fuzzy_match(df):
-    return df['tmp_compound_field'].map(lambda x: seg_words(x.split('\t')[0], x.split('\t')[1]))
-
-
-def count_er_word_in_(x):
-    """
-    function to count word which end with er x
-
-    Example:
-
-    >>> count_er_word_in_("col1 qfeqer 12 er adfer a")
-    3
-    >>> count_er_word_in_("col2 afdas 12")
-    0
-    """
-    count = 0
-    for word in x.split():
-        if word[-2:] == "er":
-            count += 1
-    return count
-
-
-def count_er_word(x, column):
-    """
-    function to count word which end with er,in column of x data frame
-
-    Example:
-
-    >>> import pandas as pd
-    >>> ts1 = ("132er", "123123af", "13213afaer", "er", "12")
-    >>> ts2 = ("132", "123123", "13213", "123", "123")
-    >>> d = {'col1': ts1, 'col2': ts2}
-    >>> df = pd.DataFrame(data=d)
-    >>> count_er_word(df, "col1")
-    0    1
-    1    0
-    2    1
-    3    1
-    4    0
-    Name: col1, dtype: int64
-    >>> count_er_word(df, "col2")
-    0    0
-    1    0
-    2    0
-    3    0
-    4    0
-    Name: col2, dtype: int64
-    """
-    return x[column].map(count_er_word_in_)
-
-
-def word_with_er_count_in_query(df):
-    return df['tmp_compound_field'].map(lambda x: count_er_word_in_(x.split('\t')[0]))
-
-
-def word_with_er_count_in_title(df):
-    return df['tmp_compound_field'].map(lambda x: count_er_word_in_(x.split('\t')[1]))
-
-
-def find_er_position(query, title):
-    position = -1
-    first_er_in_title = ""
-    for word in query.split():
-        if word[-2:] == "er":
-            first_er_in_title = word[-2:]
-            break
-    if first_er_in_title == "":
-        return position
-
-    for index, word in enumerate(title.split()):
-        if word == first_er_in_title:
-            position = index
-            break
-    return position
-
-
-def first_er_in_query_occur_position_in_title(df):
-    return df['tmp_compound_field'].map(lambda x: find_er_position(x.split("\t")[0], x.split("\t")[1]))
-
-
-
-"""
-现在这里有个做的不太好的地方，就是对column的处理采取map的形式，因此对某些feature的计算，如果需要2列以上，我们需要先把需要的那几列合起来，就是tmp_compound_column
-以后再查查pandas的文档，看有没什么更好的方法
-"""
-
-FeatureFuncDict = {
-    'search_term': search_term_cut_stem,
-    'search_term_clean': query_process,
-    'title': lambda df: df['product_title'].map(str_stem),
-    'description': lambda df:df['product_description'].map(str_stem),
-    'brand': lambda df:df['brand'].map(str_stem),
-    'len_of_query': lambda df: df['search_term_clean'].map(len_of_str).astype(np.int64),
-    'len_of_title': lambda df: df['title'].map(len_of_str).astype(np.int64),
-    'len_of_description': lambda df: df['description'].map(len_of_str).astype(np.int64),
-    'len_of_brand': lambda df: df['brand'].map(len_of_str).astype(np.int64),
-    'noun_of_query': lambda df: df['search_term'].map(noun_of_str).astype(np.int64),
-    'noun_of_title': lambda df: df['title'].map(noun_of_str).astype(np.int64),
-    'noun_of_description': lambda df: df['description'].map(noun_of_str).astype(np.int64),
-
-    'tmp_compound_field': lambda df:df['search_term_clean'] + '\t' + df['title'] + '\t' + df['description'] + '\t' + df['brand'], # in order to using map, we need to make several fields into one
-    'query_in_title': query_in_title,
-    'query_in_description': query_in_description,
-    'numsize_query_in_title': numsize_query_in_title,
-    'numsize_query_in_description': numsize_query_in_description,
-    'query_last_word_in_title': query_last_word_in_title,
-    'query_last_word_in_description': query_last_word_in_description,
-    'word_in_title': word_in_title,
-    'word_in_description': word_in_description,
-    'word_in_brand': word_in_brand,
-    'noun_in_title': noun_in_title,
-    'noun_in_description': noun_in_description,
-    'ratio_title': lambda df :df['word_in_title'] / (df['len_of_query']+1),
-    'ratio_description': lambda df :df['word_in_description'] / (df['len_of_query']+1),
-    'ratio_brand': lambda df :df['word_in_brand'] / (df['len_of_query']+1),
-
-    'search_term_fuzzy_match': search_term_fuzzy_match,
-    'len_of_search_term_fuzzy_match': lambda df: df['search_term_fuzzy_match'].map(len_of_str).astype(np.int64),
-
-    'word_with_er_count_in_query': word_with_er_count_in_query,
-    'word_with_er_count_in_title': word_with_er_count_in_title,
-    'first_er_in_query_occur_position_in_title': first_er_in_query_occur_position_in_title,
-
-    'title_query_BM25': lambda df: df['title_query_BM25'] ,
-    'description_query_BM25': lambda df: df['description_query_BM25']
-
-}
-
+# Features dependending on pos_tag dict
+PostagFeatureFuncDict = OrderedDict([
+    ('noun_of_query', lambda row, tags: noun_of_str(tags['search_term'])),
+    ('noun_of_title', lambda row, tags: noun_of_str(tags['title'])),
+    ('noun_of_description', lambda row, tags: noun_of_str(tags['description'])),
+    ('noun_in_title', lambda row, tags: num_common_noun(row['search_term'], tags['title'])),
+    ('noun_in_description', lambda row, tags: num_common_noun(row['search_term'], tags['description']))
+])
 
 if __name__=='__main__':
     import doctest

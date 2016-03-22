@@ -107,6 +107,7 @@ def str_stem(s, by_lemmatizer=False):
 
     # fix typos
     s = s.replace("&amp;", "&") # most '&' in title are turned to "&amp;"
+    s = s.replace("&#39;", "'") # escaped in title
     s = s.replace("toliet","toilet")
     s = s.replace("airconditioner","air condition")
     s = s.replace("vinal","vinyl")
@@ -127,12 +128,12 @@ def str_stem(s, by_lemmatizer=False):
         words = [stemmer.stem(z) for z in s.split()]
     return " ".join(words)
 
-def len_of_str(str):
+def words_of_str(str):
     return len(str.split())
 
-def noun_of_str(s):
-    posdict, cnt = pos_tag(s), 0
-    for key, tag in posdict:
+def noun_of_str(tags):
+    cnt = 0
+    for key, tag in tags:
         if tag=='NN':
             cnt += 1
     return cnt
@@ -191,17 +192,16 @@ def num_common_word(str1, str2):
                 cnt+=0.5
     return cnt
 
-def num_common_noun(str1, str2):
+def num_common_noun(s, tags):
     """
-    number of nouns in str1 that also in str2
+    number of nouns in s that also in str2(tags is pos_tag of str2)
     :param str1:
-    :param str2:
+    :param tags:
     :return: cnt
     """
-    words, cnt = str1.split(), .0
-    tagdict = pos_tag(str2.split())
+    words, cnt = s.split(), .0
     for word in words:
-        for key, tag in tagdict:
+        for key, tag in tags:
             if tag=='NN':
                 if word==key:
                     cnt += 1
@@ -257,6 +257,39 @@ def num_size_word(word, str):
                 cnt += 1
                 i += len(word)
     return cnt
+
+def count_er_word_in_(x):
+    """
+    function to count word which end with er x
+
+    Example:
+
+    >>> count_er_word_in_("col1 qfeqer 12 er adfer a")
+    3
+    >>> count_er_word_in_("col2 afdas 12")
+    0
+    """
+    count = 0
+    for word in x.split():
+        if word[-2:] == "er":
+            count += 1
+    return count
+
+def find_er_position(query, title):
+    position = -1
+    first_er_in_title = ""
+    for word in query.split():
+        if word[-2:] == "er":
+            first_er_in_title = word
+            break
+    if first_er_in_title == "":
+        return position
+
+    for index, word in enumerate(title.split()):
+        if word == first_er_in_title:
+            position = index
+            break
+    return position
 
 if __name__=='__main__':
     import doctest
