@@ -8,6 +8,7 @@ feature_cache/
 # please upload data/feature file to QQ group, and do not mess with git
 input/
 *.csv
+*.pkl
 
 # ignore mac system files
 .DS_Store
