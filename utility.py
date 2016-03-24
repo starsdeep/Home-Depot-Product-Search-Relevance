@@ -25,10 +25,10 @@ def lemmatize(token, tag):
 def main_title_extract(title):
     title = re.sub(r'\(.*\)', '', title) # remove brackets
     title = re.sub(r' [w|W]ith .* [a|A]nd .*$', '', title) # remove str 'with... and ...'
-    title = re.sub(r' - .* [n|N]ot [i|I]ncluded\s*$', '', title) # remove str 'with... and ...'
+    title = re.sub(r' - .* [n|N]ot [i|I]ncluded\s*$', '', title) # remove str ' - ... not included'
     title = re.sub(r' - \D+\s*\D*\s*$', '', title) # remove ' - ' followed by 1 or 2 words
     prepositions=['([^\d\s]+) in ', ' with ', ' for ', '([^\d\s]+) In ', ' With ',' For ' ] # sorted by occurences
-    # if str behind 'preposition' is shorter, it may be not important
+    # if str behind a 'preposition' is shorter than str before, it may be not important
     for regex in prepositions: 
         m = list(re.finditer(regex, title) or [])
         regex_len = len(regex.split()) - 1
@@ -222,10 +222,13 @@ def match_last_noun(s, tags):
     :param tags:
     :return: cnt
     """
+    last_noun = ''
     for key, tag in reversed(tags):
         if tag=='NN':
             last_noun = key
             break
+    if last_noun == '':
+        return 0
     if s.find(last_noun)>=0:
         return 1
     for word in s.split():

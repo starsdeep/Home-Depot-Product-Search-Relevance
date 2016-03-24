@@ -82,16 +82,16 @@ class Model(object):
                                 ('txt1', pipeline.Pipeline([('s1', CustTxtCol(key='search_term_fuzzy_match')), ('tfidf1', tfidf), ('tsvd1', tsvd)])),
                                 ('txt2', pipeline.Pipeline([('s2', CustTxtCol(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
                                 ('txt3', pipeline.Pipeline([('s3', CustTxtCol(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
-                                ('txt4', pipeline.Pipeline([('s4', CustTxtCol(key='brand')), ('tfidf4', tfidf), ('tsvd4', tsvd)]))
-#                                ('txt5', pipeline.Pipeline([('s5', CustTxtCol(key='main_title')), ('tfidf5', tfidf), ('tsvd5', tsvd)]))
+                                ('txt4', pipeline.Pipeline([('s4', CustTxtCol(key='brand')), ('tfidf4', tfidf), ('tsvd4', tsvd)])),
+                                ('txt5', pipeline.Pipeline([('s5', CustTxtCol(key='main_title')), ('tfidf5', tfidf), ('tsvd5', tsvd)]))
                                 ],
                             transformer_weights = {
                                 'cst': 1.0,
                                 'txt1': 0.5,
-                                'txt2': 0.25,
+                                'txt2': 0.0,
                                 'txt3': 0.0,
-                                'txt4': 0.5
-                                #'txt5': 0.2 # split the 0.25 of txt2?
+                                'txt4': 0.5,
+                                'txt5': 0.25 # split the 0.25 of txt2 get worse result
                                 },
                         #n_jobs = -1
                         )),
@@ -103,7 +103,7 @@ class RandomForestRegression(Model):
     def predict(self, x_train, y_train, x_test):
         rfr = RandomForestRegressor(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfr', rfr)
-        param_grid = {'rfr__max_features': [5], 'rfr__max_depth': [30]}
+        param_grid = {'rfr__max_features': [10], 'rfr__max_depth': [30]}
         model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
         return model.predict(x_test)
 
