@@ -56,6 +56,7 @@ def build_feature(df, features):
     print('calculating pos_tag features...')
     for index, row in df.iterrows():
         tags = {'search_term': pos_tag(row['search_term'].split()), 
+                'main_title': pos_tag(row['main_title'].split()), 
                 'title': pos_tag(row['title'].split())}
         # caution: takes a long time
         if ('noun_of_description' in features) or ('noun_in_description' in features):
@@ -87,16 +88,20 @@ def last_word_in_title(s, t):
 # Features can be calculated by raw input in order
 FirstFeatureFuncDict = OrderedDict([
     ('search_term', lambda row: search_term_clean(row['search_term'])),
+    ('main_title', lambda row: str_stem(main_title_extract(row['product_title']))),
     ('title', lambda row: str_stem(row['product_title'])),
     ('description', lambda row: str_stem(row['product_description'])),
     ('brand', lambda row: str_stem(row['brand'])),
 
+    ('query_in_main_title', lambda row: num_whole_word(row['search_term'], row['main_title'])),
     ('query_in_title', lambda row: num_whole_word(row['search_term'], row['title'])),
     ('query_in_description', lambda row: num_whole_word(row['search_term'], row['description'])),
     ('numsize_query_in_title', lambda row: num_size_word(row['search_term'], row['title'])),
     ('numsize_query_in_description', lambda row: num_size_word(row['search_term'], row['description'])),
+    ('query_last_word_in_main_title', lambda row: last_word_in_title(row['search_term'], row['main_title'])),
     ('query_last_word_in_title', lambda row: last_word_in_title(row['search_term'], row['title'])),
     ('query_last_word_in_description', lambda row: last_word_in_title(row['search_term'], row['description'])),
+    ('word_in_main_title', lambda row: num_common_word(row['search_term'], row['main_title'])),
     ('word_in_title', lambda row: num_common_word(row['search_term'], row['title'])),
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
     ('word_in_brand', lambda row: num_common_word(row['search_term'], row['brand'])),
@@ -105,6 +110,7 @@ FirstFeatureFuncDict = OrderedDict([
     ('word_with_er_count_in_title', lambda row: count_er_word_in_(row['title'])),
     ('first_er_in_query_occur_position_in_title', lambda row: find_er_position(row['search_term'], row['title'])),
     ('len_of_query', lambda row: words_of_str(row['search_term'])),
+    ('len_of_main_title', lambda row: words_of_str(row['main_title'])),
     ('len_of_title', lambda row: words_of_str(row['title'])),
     ('len_of_description', lambda row: words_of_str(row['description'])),
     ('len_of_brand', lambda row: words_of_str(row['brand'])),
@@ -122,9 +128,12 @@ FirstFeatureFuncDict = OrderedDict([
 PostagFeatureFuncDict = OrderedDict([
     ('noun_of_query', lambda row, tags: noun_of_str(tags['search_term'])),
     ('noun_of_title', lambda row, tags: noun_of_str(tags['title'])),
+    ('noun_of_main_title', lambda row, tags: noun_of_str(tags['main_title'])),
     ('noun_of_description', lambda row, tags: noun_of_str(tags['description'])),
-    ('noun_in_title', lambda row, tags: num_common_noun(row['search_term'], tags['title'])),
-    ('noun_in_description', lambda row, tags: num_common_noun(row['search_term'], tags['description']))
+    ('noun_match_main_title', lambda row, tags: num_common_noun(row['search_term'], tags['main_title'])),
+    ('noun_match_title', lambda row, tags: num_common_noun(row['search_term'], tags['title'])),
+    ('noun_match_description', lambda row, tags: num_common_noun(row['search_term'], tags['description'])),
+    ('match_last_noun_main', lambda row, tags: match_last_noun(row['search_term'], tags['main_title']))
 ])
 
 if __name__=='__main__':

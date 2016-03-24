@@ -22,6 +22,29 @@ def lemmatize(token, tag):
     except:
         return token
 
+def main_title_extract(title):
+    title = re.sub(r'\(.*\)', '', title) # remove brackets
+    title = re.sub(r' [w|W]ith .* [a|A]nd .*$', '', title) # remove str 'with... and ...'
+    title = re.sub(r' - .* [n|N]ot [i|I]ncluded\s*$', '', title) # remove str 'with... and ...'
+    title = re.sub(r' - \D+\s*\D*\s*$', '', title) # remove ' - ' followed by 1 or 2 words
+    prepositions=['([^\d\s]+) in ', ' with ', ' for ', '([^\d\s]+) In ', ' With ',' For ' ] # sorted by occurences
+    # if str behind 'preposition' is shorter, it may be not important
+    for regex in prepositions: 
+        m = list(re.finditer(regex, title) or [])
+        regex_len = len(regex.split()) - 1
+        while len(m)>0:
+            str_left = title[:m[-1].start()]
+            for i in range(1, regex_len+1):
+                str_left += m[-1].group(i)
+            if (len(str_left.split()) + regex_len) * 2 > len(title.split()):
+                title = str_left
+            else:
+                break
+            m = list(re.finditer(regex, title) or [])
+
+    title = re.sub(r'\s+$', '', title) # remove endings spaces
+    return title
+
 def str_remove_stopwords(s):
     word_list = s.split()
     return ' '.join([word for word in word_list if word not in stopwords])
@@ -191,6 +214,24 @@ def num_common_word(str1, str2):
             if t1 > 1:
                 cnt+=0.5
     return cnt
+
+def match_last_noun(s, tags):
+    """
+    1 if s has last noun in str2(tags is pos_tag of str2)
+    :param str1:
+    :param tags:
+    :return: cnt
+    """
+    for key, tag in reversed(tags):
+        if tag=='NN':
+            last_noun = key
+            break
+    if s.find(last_noun)>=0:
+        return 1
+    for word in s.split():
+        if edit_distance(word, last_noun)<2:
+            return 0.5
+    return 0
 
 def num_common_noun(s, tags):
     """

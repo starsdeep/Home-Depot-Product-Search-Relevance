@@ -15,7 +15,7 @@ class CustRegressionVals(BaseEstimator, TransformerMixin):
     def fit(self, x, y=None):
         return self
     def transform(self, hd_searches):
-        d_col_drops=['id','relevance','search_term','search_term_fuzzy_match','product_title','title','product_description','description','brand']
+        d_col_drops=['id','relevance','search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand']
         hd_searches = hd_searches.drop(d_col_drops, axis=1, errors='ignore').values
         return hd_searches
 
@@ -46,7 +46,6 @@ class Model(object):
     def print_badcase_(self, x_train, y_train, model, default_output_line=1000):
         train_pred = cross_validation.cross_val_predict(model, x_train, y_train, cv=3)
         output = x_train.copy(deep=True)
-        #output.drop('tmp_compound_field', axis=1, inplace=True)
         #output.drop('product_description', axis=1, inplace=True)
         #output.drop('description', axis=1, inplace=True)
         #output.drop('product_title', axis=1, inplace=True)
@@ -84,6 +83,7 @@ class Model(object):
                                 ('txt2', pipeline.Pipeline([('s2', CustTxtCol(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
                                 ('txt3', pipeline.Pipeline([('s3', CustTxtCol(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
                                 ('txt4', pipeline.Pipeline([('s4', CustTxtCol(key='brand')), ('tfidf4', tfidf), ('tsvd4', tsvd)]))
+#                                ('txt5', pipeline.Pipeline([('s5', CustTxtCol(key='main_title')), ('tfidf5', tfidf), ('tsvd5', tsvd)]))
                                 ],
                             transformer_weights = {
                                 'cst': 1.0,
@@ -91,6 +91,7 @@ class Model(object):
                                 'txt2': 0.25,
                                 'txt3': 0.0,
                                 'txt4': 0.5
+                                #'txt5': 0.2 # split the 0.25 of txt2?
                                 },
                         #n_jobs = -1
                         )),
