@@ -36,7 +36,7 @@ def main_title_extract(title):
             str_left = title[:m[-1].start()]
             for i in range(1, regex_len+1):
                 str_left += m[-1].group(i)
-            if (len(str_left.split()) + regex_len) * 2 > len(title.split()):
+            if (len(str_left.split()) + regex_len) * 2 >= len(title.split()):
                 title = str_left
             else:
                 break
@@ -215,26 +215,37 @@ def num_common_word(str1, str2):
                 cnt+=0.5
     return cnt
 
-def match_last_noun(s, tags):
+def num_common_word_ordered(str1, str2):
     """
-    1 if s has last noun in str2(tags is pos_tag of str2)
+    number of words in str1 that also in str2, occuring in same order
+    :param str1:
+    :param str2:
+    :return: cnt
+    """
+    words, cnt = str1.split(), 0
+    for word in words:
+        if str2.find(word)>=0:
+            cnt+=1
+            str2 = str2[str2.find(word)+len(word):]
+    return cnt
+
+def match_last_k_noun(s, tags, k):
+    """
+    total number of noun(s) which is both in s and last k noun(s) of str2(tags is pos_tag of str2)
     :param str1:
     :param tags:
     :return: cnt
     """
-    last_noun = ''
+    nouns, cnt = [], 0
     for key, tag in reversed(tags):
         if tag=='NN':
-            last_noun = key
-            break
-    if last_noun == '':
-        return 0
-    if s.find(last_noun)>=0:
-        return 1
-    for word in s.split():
-        if edit_distance(word, last_noun)<2:
-            return 0.5
-    return 0
+            nouns.append(key)
+            if len(nouns)>=k:
+                break
+    for noun in nouns:
+        if s.find(noun)>=0:
+            cnt += 1
+    return cnt
 
 def num_common_noun(s, tags):
     """
@@ -253,6 +264,22 @@ def num_common_noun(s, tags):
                 if edit_distance(word, key)<2:
                     cnt += 0.5
                     break
+    return cnt
+
+def num_common_noun_ordered(s, tags):
+    """
+    number of nouns in s that also in str2(tags is pos_tag of str2)
+    :param str1:
+    :param tags:
+    :return: cnt
+    """
+    words, cnt, idx = s.split(), .0, 0
+    for word in words:
+        for i in range(idx, len(tags)):
+            if tags[i][1]=='NN' and word==tags[i][0]:
+                cnt += 1
+                idx = i+1
+                break
     return cnt
 
 def num_whole_word(word, str):

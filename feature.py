@@ -42,6 +42,7 @@ def get_feature(config):
         df = build_feature(df, config['features'])
         print("--- Build Features: %s minutes ---" % round(((time.time() - start_time)/60),2))
         df.to_csv(os.path.join(feature_path, feature_filename), encoding="utf8")
+
     return df[:num_train], df[num_train:]
 
 def build_feature(df, features):
@@ -102,7 +103,9 @@ FirstFeatureFuncDict = OrderedDict([
     ('query_last_word_in_title', lambda row: last_word_in_title(row['search_term'], row['title'])),
     ('query_last_word_in_description', lambda row: last_word_in_title(row['search_term'], row['description'])),
     ('word_in_main_title', lambda row: num_common_word(row['search_term'], row['main_title'])),
+    ('word_in_main_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['main_title'])),
     ('word_in_title', lambda row: num_common_word(row['search_term'], row['title'])),
+    ('word_in_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['title'])),
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
     ('word_in_brand', lambda row: num_common_word(row['search_term'], row['brand'])),
     ('search_term_fuzzy_match', lambda row: seg_words(row['search_term'], row['title'])),
@@ -115,7 +118,10 @@ FirstFeatureFuncDict = OrderedDict([
     ('len_of_description', lambda row: words_of_str(row['description'])),
     ('len_of_brand', lambda row: words_of_str(row['brand'])),
     ('chars_of_query', lambda row: len(row['search_term'])),
+    ('ratio_main_title', lambda row :row['word_in_main_title'] / (row['len_of_query']+1)),
     ('ratio_title', lambda row :row['word_in_title'] / (row['len_of_query']+1)),
+    ('ratio_main_title_ordered', lambda row :row['word_in_main_title_ordered'] / (row['len_of_query']+1)),
+    ('ratio_title_ordered', lambda row :row['word_in_title_ordered'] / (row['len_of_query']+1)),
     ('ratio_description', lambda row :row['word_in_description'] / (row['len_of_query']+1)),
     ('ratio_brand', lambda row :row['word_in_brand'] / (row['len_of_query']+1)),
     ('len_of_search_term_fuzzy_match', lambda row: words_of_str(row['search_term_fuzzy_match'])),
@@ -132,8 +138,22 @@ PostagFeatureFuncDict = OrderedDict([
     ('noun_of_description', lambda row, tags: noun_of_str(tags['description'])),
     ('noun_match_main_title', lambda row, tags: num_common_noun(row['search_term'], tags['main_title'])),
     ('noun_match_title', lambda row, tags: num_common_noun(row['search_term'], tags['title'])),
+    ('noun_match_main_title_ordered', lambda row, tags: num_common_noun_ordered(row['search_term'], tags['main_title'])),
+    ('noun_match_title_ordered', lambda row, tags: num_common_noun_ordered(row['search_term'], tags['title'])),
     ('noun_match_description', lambda row, tags: num_common_noun(row['search_term'], tags['description'])),
-    ('match_last_noun_main', lambda row, tags: match_last_noun(row['search_term'], tags['main_title']))
+    ('match_last_noun_main', lambda row, tags: match_last_k_noun(row['search_term'], tags['main_title'], 1)),
+    ('match_last_2_noun_main', lambda row, tags: match_last_k_noun(row['search_term'], tags['main_title'], 2)),
+    ('match_last_3_noun_main', lambda row, tags: match_last_k_noun(row['search_term'], tags['main_title'], 3)),
+    ('match_last_5_noun_main', lambda row, tags: match_last_k_noun(row['search_term'], tags['main_title'], 5)) # average nouns in main of all data: 5.3338
+])
+
+# Statistical Features
+LastFeatureFuncDict = OrderedDict([
+    ('ratio_noun_match_title', lambda row: row['noun_match_title'] / (row['noun_of_query']+1)),
+    ('ratio_noun_match_main_title', lambda row: row['noun_match_main_title'] / (row['noun_of_query']+1)),
+    ('ratio_noun_match_title', lambda row: row['noun_match_title_ordered'] / (row['noun_of_query']+1)),
+    ('ratio_noun_match_main_title', lambda row: row['noun_match_main_title_ordered'] / (row['noun_of_query']+1)),
+    ('ratio_noun_match_description', lambda row: row['noun_match_decription'] / (row['noun_of_query']+1)),
 ])
 
 if __name__=='__main__':
