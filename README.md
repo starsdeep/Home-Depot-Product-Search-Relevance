@@ -1,5 +1,6 @@
-#[Home Depot Product Search Relevance](https://www.kaggle.com/c/home-depot-product-search-relevance) on Kaggle
+#Home Depot Product Search Relevance Competition
 
+[Home Depot Product Search Relevance](https://www.kaggle.com/c/home-depot-product-search-relevance) on Kaggle
 
 ## 组织形式与目标
 
@@ -61,9 +62,9 @@ chenqiang
 
 fenixlin
 
-* train 13 xgboost classifier to classify 'y>12? y>11? ...' 13 times, predict with probablity sum [not planned yet]
+* train 13 xgboost classifier to classify 'y>12? y>11? ...' 13 times, predict with probablity sum [doing, gaoben]
 * introduce stop words and some rules to cut search query. [done, fenixlin]
-* use stanford parser to do semantic analysis and build more features [doing, fenixlin]
+* use stanford parser to do semantic analysis and build more features [done, fenixlin]
 * use google service to check and fix spelling of search query, see scripts in forum [ done, liaoyikang ]
 * 用加权和作为特征来表达共有词匹配的位置信息（越后面的匹配越重要），标题和搜索词都可以做 [not planned yet]
 
@@ -72,7 +73,7 @@ liaoyikang
 
 * 改进feature 计算过程 缩短每次流程运行的时间[doing, liaoyikang]
 * 使用"桶"，将连续值离散化，测试效果[doing, liaoyikang]
-* 增加2-gram的feature，见bad case 4
+* 增加2-gram的feature，见bad case 4[doing, zhuyu]
 * 增加feature，是否是连续匹配。比如hot dog，虽然是匹配但不是连续匹配. 见bad case 4
 * 增加feature, 统计词性匹配，有一些形容词匹配，但主题匹配的并没有用，比如query 是 doubl side stapl， title是Double-Sided Organizer，或者见bad case 3.
 
@@ -80,29 +81,25 @@ liaoyikang
 beidouwang
 
 * 测试SVM和SVR，以及各种不同的kernel函数的使用[doing,beidouwang]
-* sampling解决skew问题(训练数据中高分数据偏多)，可参考Oversampling（重复sample negative feedback直到和数量和postive相等），undersampling（sample和negative feedback一样多的postive feedback），另外专门有论文讲cost sensitive sampling [ not planned yet ]
+* sampling解决skew问题(训练数据中高分数据偏多)，可参考Oversampling（重复sample negative feedback直到和数量和postive相等），undersampling（sample和negative feedback一样多的postive feedback），另外专门有论文讲cost sensitive sampling [ doing, zhuyu ]
 * 使用scikit-learn的feature selection模块减少无用feature [ not planned yet ]
 
 
 ## Bad case 分析
 
 * query是树，product是修理树的工具, query是mower，product是mower的布
-* query是电池，product是一个工具，同时title中有说不含电池
 
 
 ###典型bad case
 
-|编号| query | title |原因|改进方法
-|---|---|---|---|---|
-| 1 |Ryobi ONE+ 18 in. 18-Volt Lithium-Ion Cordless Hedge Trimmer - Battery and Charger Not Included|18volt. batteri charger|主语不一样，反义处理 not included 处理|反义词处理|
-|2|topiari tree|Romano 4 ft. Boxwood Spiral Topiary Tree|query是简单的词，title确是一个很详细的东西，所以应该是一般性匹配|增加query len / title/len|
-|3|bronz green|Green Matters 3-Light Mahogany Bronze Vanity Fixture|主题词不匹配，green 形容词匹配，没啥用||
-|4|hot dog|HealthSmart Digger Dog Reusable Hot and Cold Pack||
+注意有些badcase就是数据里面的噪音，就是标错了，不必强行分析
 
-
-
-
-
+|编号| query | title |原因|改进方法|解决情况|
+|---|---|---|---|---|---|
+| 1 |Ryobi ONE+ 18 in. 18-Volt Lithium-Ion Cordless Hedge Trimmer - Battery and Charger Not Included|18volt. batteri charger|主语不一样，反义处理 not included 处理|标题主体提取|已解决|
+|2|topiari tree|Romano 4 ft. Boxwood Spiral Topiary Tree|query是简单的词，title确是一个很详细的东西，所以应该是一般性匹配|增加query len / title/len||
+|3|bronz green|Green Matters 3-Light Mahogany Bronze Vanity Fixture|主题词不匹配，green 形容词匹配，没啥用|名词匹配|已解决|
+|4|hot dog|HealthSmart Digger Dog Reusable Hot and Cold Pack|2-gram||
 
 
 ## 实验结果记录
@@ -121,3 +118,4 @@ beidouwang
 | 2016-03-19  | chenqiang | 0.6, 0.6, 0.6|     |  0.50780 |   +.3209   | BM25, no er, get optimised depth and features|  train three classification model |   |                 |
 | 2016-03-19  | liaoyikang |0.47265|     |   |      | add search_term_clean 做了拼写纠错好去除stopwords| rfr |   |                 |
 | 2016-03-21  | fenixlin  | 0.46908 |  -.00569 |  0.46966 |   -.00605  |  rfr {5, 30}+postag统计标题+search_term_clean  　  |  RandomForestRegressor|                |          |
+| 2016-03-24  | fenixlin  | 0.46297 |  -.01180 |  0.46366 |   -.01205  |  rfr {10, 30}+标题主题提取，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
