@@ -395,4 +395,4 @@ if __name__=='__main__':
     word = 'asdasdzxc 0.2in.  asdzxcz21x32qt. asdasdasd 3/4ft.asdasdaszxc 23watt.'
     str = 'asdasdzczxczxc 0.2in.  asdzxccxcz21x32qt. adasd 3/4ft.asd3/4ft.aasczxc3/4ft.'
     cnt = num_size_word(word, str)
-    print cnt
+    #print cnt
