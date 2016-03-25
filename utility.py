@@ -24,36 +24,58 @@ def lemmatize(token, tag):
 
 def main_title_extract(title):
     title = re.sub(r'\(.*\)', '', title) # remove brackets
-    title = re.sub(r' [w|W]ith .* [a|A]nd .*$', '', title) # remove str 'with... and ...'
+    title = re.sub(r' [w|W]ith .* [a|A]nd .*$', '', title) # remove str 'with ... and ...'
+    #title = re.sub(r' [f|F]or .* [a|A]nd .*$', '', title) # remove str 'for ... and ...'
+    #title = re.sub(r' [o|O]nly [f|F]or .*$', '', title) # remove str 'only for'
+    title = re.sub(r' [f|F]or .*$', '', title) # remove str 'for ...'
     title = re.sub(r' - .* [n|N]ot [i|I]ncluded\s*$', '', title) # remove str ' - ... not included'
-    title = re.sub(r' - \D+\s*\D*\s*$', '', title) # remove ' - ' followed by 1 or 2 words
-    prepositions=['([^\d\s]+) in ', ' with ', ' for ', '([^\d\s]+) In ', ' With ',' For ' ] # sorted by occurences
-    # if str behind a 'preposition' is shorter than str before, it may be not important
-    for regex in prepositions: 
+    title = re.sub(r'  ', ' ', title) # remove spaces introduced
+
+    prepositions=[(' - \S+\s*\S*\s*\S*\s*$', 0), (' - \D', 0), ('(\S+), ', 1), (' [u|U]p [t|T]o ', 0), (',* [w|W]ith ', 0), ('([^\d\s]+) [i|I]n ', 1), (',* [w|W]ith ', 0)] # sorted by occurences and confidence
+   # if str behind a 'preposition' is shorter than str before, it may be not important
+    for regex, preceding in prepositions: 
         m = list(re.finditer(regex, title) or [])
-        regex_len = len(regex.split()) - 1
         while len(m)>0:
             str_left = title[:m[-1].start()]
-            for i in range(1, regex_len+1):
+            for i in range(1, preceding + 1):
                 str_left += m[-1].group(i)
-            if (len(str_left.split()) + regex_len) * 2 >= len(title.split()):
+            if len(str_left.split()) * 2 + 1 >= len(title.split()):
                 title = str_left
             else:
                 break
-            m = list(re.finditer(regex, title) or [])
+            if regex[-1]=='$':
+                m = list(re.finditer(regex, title) or [])
+            else:
+                m = m[:-1]
+
+    kick_words = ['L', 'W', 'O\.D\.', 'OD', 'O\.C\.', 'OC', 'in\.', 'lb\.', 'lbs\.', 'x', '\d+[/\d]*', 'ft\.\.', 'ft\.', 'Lumens', 'CRI', 'Thick', '\+', 'AWG', 'oz.', 'Gauge', 'and', '\S+-\S']
+    for i in range(len(kick_words)):
+        kick_words[i] = '^'+kick_words[i]+'$' # require full match
+    title = title.split()
+    while len(title)>0:
+        matched = False
+        for word in kick_words:
+            if re.match(word, title[-1]):
+                matched = True
+                break
+        if matched:
+            title = title[:-1]
+        else:
+            break
+    title = " ".join(title)
 
     title = re.sub(r'\s+$', '', title) # remove endings spaces
     return title
 
 def str_remove_stopwords(s):
     word_list = s.split()
-    return ' '.join([word for word in word_list if word not in stopwords])
+    return ' '.join([word for word in word_list if word not in stop_w])
 
 
 def str_is_meaningful(s):
     for t in s.split():
         is_number = re.match(r'^[0-9]+$', t)
-        if (len(t)>2) and (not is_number) and (t not in stopwords):
+        if (len(t)>2) and (not is_number) and (t not in stop_w):
             return True
     return False
 
@@ -91,14 +113,17 @@ def str_stem(s, by_lemmatizer=False):
     s = s.replace(" / "," ")
     s = s.replace(" \\ "," ")
     s = s.replace("."," . ")
-    s = re.sub(r"(^\.|/)", r"", s)
+    s = re.sub(r"^(\.|/)", r"", s)
     s = re.sub(r"(\.|/)$", r"", s)
 
     # remove seperators
-    s = re.sub(r"([0-9])( *)\.( *)([0-9])", r"\1.\4", s)
+    s = re.sub(r"(\w)\.([A-Z])", r"\1 \2", s) #Split words with a.A
+    s = re.sub(r"([0-9])([a-z])", r"\1 \2", s)
+    s = re.sub(r"([a-z])([0-9])", r"\1 \2", s)
     s = re.sub(r"([0-9]),([0-9])", r"\1\2", s)
     s = re.sub(r"([a-z])( *)\.( *)([a-z])", r"\1 \4", s)
     s = re.sub(r"([a-z])( *)/( *)([a-z])", r"\1 \4", s)
+    s = re.sub(r"([0-9])( *)\.( *)([0-9])", r"\1.\4", s)
     s = s.replace(" . "," ")
 
     # transform prepositions and measurements

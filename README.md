@@ -96,9 +96,9 @@ beidouwang
 |编号| query | title |原因|改进方法|解决情况|
 |---|---|---|---|---|---|
 | 1 |Ryobi ONE+ 18 in. 18-Volt Lithium-Ion Cordless Hedge Trimmer - Battery and Charger Not Included|18volt. batteri charger|主语不一样，反义处理 not included 处理|标题主体提取|已解决|
-|2|topiari tree|Romano 4 ft. Boxwood Spiral Topiary Tree|query是简单的词，title确是一个很详细的东西，所以应该是一般性匹配|增加query len / title/len||
+|2|topiari tree|Romano 4 ft. Boxwood Spiral Topiary Tree|query是简单的词，title却是一个很详细的东西，所以应该是一般性匹配|增加query len / title/len||
 |3|bronz green|Green Matters 3-Light Mahogany Bronze Vanity Fixture|主题词不匹配，green 形容词匹配，没啥用|名词匹配|已解决|
-|4|hot dog|HealthSmart Digger Dog Reusable Hot and Cold Pack|2-gram||
+|4|hot dog|HealthSmart Digger Dog Reusable Hot and Cold Pack||2-gram||
 
 
 ## 实验结果记录
@@ -119,3 +119,4 @@ beidouwang
 | 2016-03-21  | fenixlin  | 0.46908 |  -.00569 |  0.46966 |   -.00605  |  rfr {5, 30}+postag统计标题+search_term_clean  　  |  RandomForestRegressor|                |          |
 | 2016-03-24  | fenixlin  | 0.46297 |  -.01180 |  0.46366 |   -.01205  |  rfr {10, 30}+标题主题提取，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
 | 2016-03-25  | fenixlin  | 0.46195 |  -.01282 |  0.46188 |   -.01383  |  rfr {2000, 12, 35}+ratio/按序匹配特征，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
+| 2016-03-27  | fenixlin  | 0.45982 |  -.01465 |  0.45953 |   -.01618  |  rfr {2000, 12, 38}+标题主题提取改进，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
