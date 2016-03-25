@@ -34,19 +34,16 @@
  
 ### program environment
 
-* python 3.5
-* python library:
+* python 3.5.1 (python 3.4.3 works now as well)
+* python library & nltk packges:
 
-    in the requirements.txt
-    to install it using : `pip3.5 install -r requirements.txt`
-    
-* nltk: you need download nltk models **punkt**,
-
+    in the requirements.md
+    to install pip packages use : `pip3.5 install -r pip_packages.txt`
     
 ### how to run
-1. put files into input folder including:attributes.csv,product_descriptions.csv 
-2. run `python3.5 framework.py 1000 ./output/rfr_all`, 1000 means take 1000 instances as train data, you can change it to another number, and -1 means take all instances (may take 20 minutes)
-
+1. put files into input folder including : train.csv, test.csv, attributes.csv, product_descriptions.csv google_spell_check_dict.json(typo fixing dict revised from https://www.kaggle.com/steubk/home-depot-product-search-relevance/fixing-typos/notebook)
+2. write configurations 'config.json' in your directory for experiments. You may copy / refer to other well written configs. For 'num_train' 1000 means take 1000 instances as train data, you can change it to another number, and -1 means take all instances (may take a long time)
+3. run `python3.5 framework.py __your_directory__` (e.g. to run baseline, `python3.5 framework.py ./output/rfr_all`).
 
 
 ## Idea
@@ -66,7 +63,8 @@ fenixlin
 * introduce stop words and some rules to cut search query. [done, fenixlin]
 * use stanford parser to do semantic analysis and build more features [done, fenixlin]
 * use google service to check and fix spelling of search query, see scripts in forum [ done, liaoyikang ]
-* 用加权和作为特征来表达共有词匹配的位置信息（越后面的匹配越重要），标题和搜索词都可以做 [not planned yet]
+* 用加权和作为特征来表达共有词匹配的位置信息（越后面的匹配越重要），标题和搜索词都可以做 [ doing, fenixlin]
+* 预处理，判断搜索词中每个词在所有搜索词中出现的频繁程度(额外做一个tfidf) [ not planned yet ]
 
 
 liaoyikang
@@ -74,8 +72,8 @@ liaoyikang
 * 改进feature 计算过程 缩短每次流程运行的时间[doing, liaoyikang]
 * 使用"桶"，将连续值离散化，测试效果[doing, liaoyikang]
 * 增加2-gram的feature，见bad case 4[doing, zhuyu]
-* 增加feature，是否是连续匹配。比如hot dog，虽然是匹配但不是连续匹配. 见bad case 4
-* 增加feature, 统计词性匹配，有一些形容词匹配，但主题匹配的并没有用，比如query 是 doubl side stapl， title是Double-Sided Organizer，或者见bad case 3.
+* 增加feature，是否是连续匹配。比如hot dog，虽然是匹配但不是连续匹配. 见bad case 4 [ not planned yet ]
+* 增加feature, 统计词性匹配，有一些形容词匹配，但主题匹配的并没有用，比如query 是 doubl side stapl， title是Double-Sided Organizer，或者见bad case 3. [ done, fenixlin ]
 
 
 beidouwang
@@ -92,7 +90,7 @@ beidouwang
 
 ###典型bad case
 
-注意有些badcase就是数据里面的噪音，就是标错了，不必强行分析
+注意有些badcase就是数据里面的噪音，就是标错了，可能同样的情况很多sample是３分就它是１分，不必强行分析
 
 |编号| query | title |原因|改进方法|解决情况|
 |---|---|---|---|---|---|
@@ -119,3 +117,4 @@ beidouwang
 | 2016-03-19  | liaoyikang |0.47265|     |   |      | add search_term_clean 做了拼写纠错好去除stopwords| rfr |   |                 |
 | 2016-03-21  | fenixlin  | 0.46908 |  -.00569 |  0.46966 |   -.00605  |  rfr {5, 30}+postag统计标题+search_term_clean  　  |  RandomForestRegressor|                |          |
 | 2016-03-24  | fenixlin  | 0.46297 |  -.01180 |  0.46366 |   -.01205  |  rfr {10, 30}+标题主题提取，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
+| 2016-03-25  | fenixlin  | 0.46195 |  -.01282 |  0.46188 |   -.01383  |  rfr {2000, 12, 35}+ratio/按序匹配特征，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |

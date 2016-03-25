@@ -60,7 +60,7 @@ def build_feature(df, features):
                 'main_title': pos_tag(row['main_title'].split()), 
                 'title': pos_tag(row['title'].split())}
         # caution: takes a long time
-        if ('noun_of_description' in features) or ('noun_in_description' in features):
+        if ('noun_of_description' in features) or ('noun_match_description' in features):
             tags['description'] = pos_tag(row['description'].split())
         for feature in list(PostagFeatureFuncDict.keys()):
             if feature in features:
@@ -68,6 +68,13 @@ def build_feature(df, features):
                 df.loc[index, feature] = feature_func(row, tags)
         if index%300==0:
             print(str(index)+' rows calculated...')
+
+    # iterate features in order, use apply() to update in time
+    for feature in list(LastFeatureFuncDict.keys()):
+        if feature in features:
+            print('calculating feature: '+feature+' ...')
+            feature_func = LastFeatureFuncDict[feature]
+            df[feature] = df.apply(feature_func, axis=1)
     return df
 
 chkr = SpellCheckGoogleOffline()
@@ -88,6 +95,7 @@ def last_word_in_title(s, t):
 
 # Features can be calculated by raw input in order
 FirstFeatureFuncDict = OrderedDict([
+    ('origin_search_term', lambda row: row['search_term']),
     ('search_term', lambda row: search_term_clean(row['search_term'])),
     ('main_title', lambda row: str_stem(main_title_extract(row['product_title']))),
     ('title', lambda row: str_stem(row['product_title'])),
@@ -153,7 +161,7 @@ LastFeatureFuncDict = OrderedDict([
     ('ratio_noun_match_main_title', lambda row: row['noun_match_main_title'] / (row['noun_of_query']+1)),
     ('ratio_noun_match_title', lambda row: row['noun_match_title_ordered'] / (row['noun_of_query']+1)),
     ('ratio_noun_match_main_title', lambda row: row['noun_match_main_title_ordered'] / (row['noun_of_query']+1)),
-    ('ratio_noun_match_description', lambda row: row['noun_match_decription'] / (row['noun_of_query']+1)),
+    ('ratio_noun_match_description', lambda row: row['noun_match_description'] / (row['noun_of_query']+1)),
 ])
 
 if __name__=='__main__':
