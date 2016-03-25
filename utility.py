@@ -305,28 +305,30 @@ def num_whole_word(word, str):
 
 def num_size_word(word, str):
     """
-    number of times that words fo number and size appears in str
+    number of times that words of number and size appears in str
     :param word:
     :param str:
     :return: cnt
     """
-    size = ['cm','m','foot','inch']
-    wordlist = word.split(' ')
-    num_size_list = []
-    for i in range(1,len(wordlist)):
-        if wordlist[i] in size and (isinstance(wordlist[i-1],int) or isinstance(wordlist[i-1],float)):
-            num_size_list.add(wordlist[i-1]+' '+wordlist[i]);
-    
+    #size = ['cm.','in.','ft.','watt.','qt.','gal.','oz.','sq.ft.','cu.ft.','mm.','lb.','volt.','amp.']
+    #reObj can match three types of strings, such as 2.3in. |  2.5x3sq.ft.  |   23x23
+    reObj = re.compile('(([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
+                        ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
+                        ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+))')
+
+    num_size_list = reObj.findall(word)  
+
     cnt = 0
-    for word in num_size_list:
+    for num_size in num_size_list:
         i = 0
+        #print num_size[0]
         while i < len(str):
-            i = str.find(word, i)
+            i = str.find(num_size[0],i)
             if i == -1:
-                return cnt
+                break
             else:
                 cnt += 1
-                i += len(word)
+                i += len(num_size[0])
     return cnt
 
 def count_er_word_in_(x):
@@ -363,5 +365,9 @@ def find_er_position(query, title):
     return position
 
 if __name__=='__main__':
-    import doctest
-    doctest.testmod()
+#    import doctest
+#    doctest.testmod()
+    word = 'asdasdzxc 0.2in.  asdzxcz21x32qt. asdasdasd 3/4ft.asdasdaszxc 23watt.'
+    str = 'asdasdzczxczxc 0.2in.  asdzxccxcz21x32qt. adasd 3/4ft.asd3/4ft.aasczxc3/4ft.'
+    cnt = num_size_word(word, str)
+    print cnt
