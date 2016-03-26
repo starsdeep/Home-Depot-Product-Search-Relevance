@@ -25,7 +25,7 @@ if __name__ == '__main__':
     with open(os.path.join(sys.argv[1], 'config.json')) as infile:
         config = json.load(infile)
 
-    if config["load_feature_from"] and os.path.isfile(config["load_feature_from"]):
+    if "load_feature_from" in config and os.path.isfile(config["load_feature_from"]):
         df_train, df_test = load_feature(config)
     else:
         # feature extraction
