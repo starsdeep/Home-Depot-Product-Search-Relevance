@@ -56,6 +56,7 @@ chenqiang
 * 加特征, title中时否有几个er结尾的单词，query是否有er结尾的单词，query中第一个er结尾的单词出现在title中那些er结尾单词列表的第几个，如果没有出现则为-1 [done, chenqiang]
 * 加特征, 加query和title,description,BM25相似度 [chen qiang done]
 * add query features,  该query是否之前出现过, 该query的历史平均relevance, 考虑如果query没有出现如何取平均relevance(平均值，或者其它)
+* 观察数据，web 平台， http://139.129.12.69:8088/index.php, search case中relevance为0的数据来自于test.csv,非0的数据来自于train.csv, badcase观察 [chenqiang doing]
 
 fenixlin
 
