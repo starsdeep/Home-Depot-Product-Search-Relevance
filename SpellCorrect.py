@@ -68,7 +68,7 @@ class SpellCheckGoogleOnline():
             search = search[1:]
         else:
             search = sentence
-        return search;
+        return search
 
 
 if __name__ == '__main__':

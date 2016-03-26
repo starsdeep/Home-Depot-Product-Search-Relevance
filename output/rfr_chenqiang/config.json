@@ -2,5 +2,6 @@
     "model": "rfr",
     "save_badcase": true,
     "num_train": -1,
+    "load_feature_from": "/Users/fucus/Documents/buaa/projects/kaggle_home_spot_search/Home_Depot_Product_Search_Relevance_code/input/feature160325_lin.csv",
     "features": [ "search_term", "main_title", "title", "description", "brand", "len_of_query", "len_of_main_title", "len_of_title", "len_of_description", "len_of_brand", "query_in_main_title", "query_in_title", "query_in_description", "query_last_word_in_main_title", "query_last_word_in_title", "query_last_word_in_description", "word_in_main_title", "word_in_title", "word_in_description", "word_in_brand", "ratio_title", "ratio_description", "ratio_brand", "search_term_fuzzy_match","len_of_search_term_fuzzy_match", "chars_of_query", "len_of_search_term_fuzzy_match", "noun_of_query", "noun_of_title", "noun_of_main_title", "noun_of_description", "noun_match_main_title", "noun_match_title", "noun_match_description", "match_last_noun_main" ]
 }

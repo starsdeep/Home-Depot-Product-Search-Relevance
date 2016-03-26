@@ -10,12 +10,14 @@ import random
 random.seed(2016)
 from load_data import load_data
 from feature import get_feature
-import sys, os
+from feature import load_feature
+import sys
+import os
 import json
 import time
 from model_factory import ModelFactory
 
-if __name__ =='__main__':
+if __name__ == '__main__':
     if len(sys.argv) != 2:
         print("<output directory>")
         sys.exit()
@@ -23,11 +25,14 @@ if __name__ =='__main__':
     with open(os.path.join(sys.argv[1], 'config.json')) as infile:
         config = json.load(infile)
 
-    #feature extraction
-    df_train, df_test = get_feature(config)
+    if config["load_feature_from"] and os.path.isfile(config["load_feature_from"]):
+        df_train, df_test = load_feature(config)
+    else:
+        # feature extraction
+        df_train, df_test = get_feature(config)
     id_test = df_test['id']
     y_train = df_train['relevance'].values
-    X_train =df_train[:]
+    X_train = df_train[:]
     X_test = df_test[:]
 
     #model

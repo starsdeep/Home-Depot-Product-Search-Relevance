@@ -14,10 +14,17 @@ from nltk import pos_tag
 total_train = 74067
 total_test = 166693
 
+
+def load_feature(config):
+    df = pd.read_csv(config["load_feature_from"], encoding="ISO-8859-1", index_col=0)
+    num_train = total_train if config['num_train'] < 0 else config['num_train']
+    return df[:num_train], df[total_test * -1:]
+
+
 def get_feature(config):
     feature = ' '.join(sorted(config['features']))
     feature_hash = hashlib.sha1(feature.encode('utf-8')).hexdigest()
-    num_train = total_train if config['num_train']<0 else config['num_train']
+    num_train = total_train if config['num_train'] < 0 else config['num_train']
     feature_filename = feature_hash + '_' + str(num_train)
     feature_path = './feature_cache/'
     if not os.path.exists(feature_path):
