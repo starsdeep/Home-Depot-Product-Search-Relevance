@@ -1,9 +1,11 @@
 __author__ = 'fucus'
 
-project_path = "/Users/fucus/Documents/buaa/projects/Home_Depot_Product_Search_Relevance/"
+project_path = "/Users/fucus/Documents/buaa/projects/kaggle_home_spot_search/Home_Depot_Product_Search_Relevance_code/"
 original_train_file = "%s/input/train.csv" % project_path
 original_test_file = "%s/input/test.csv" % project_path
 original_product_descriptions = "%s/input/product_descriptions.csv" % project_path
+
+original_attr_file = "%s/input/attributes.csv" % project_path
 
 original_train_file_part = "%s/input/train_top_100.csv" % project_path
 original_test_file_part = "%s/input/test_top_100.csv" % project_path
