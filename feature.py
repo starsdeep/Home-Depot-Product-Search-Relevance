@@ -88,8 +88,8 @@ chkr = SpellCheckGoogleOffline()
 def search_term_clean(query):
     query = chkr.spell_correct(query)
     query = str_stem(query)
-    query = str_remove_stopwords(query)
     query = query if str_is_meaningful(query) else ''
+    query = str_remove_stopwords(query)
     return query
 
 def last_word_in_title(s, t):
@@ -103,12 +103,14 @@ def last_word_in_title(s, t):
 # Features can be calculated by raw input in order
 FirstFeatureFuncDict = OrderedDict([
     ('origin_search_term', lambda row: row['search_term']),
+    ('ori_stem_search_term', lambda row: str_stem(row['search_term'])),
     ('search_term', lambda row: search_term_clean(row['search_term'])),
     ('main_title', lambda row: str_stem(main_title_extract(row['product_title']))),
     ('title', lambda row: str_stem(row['product_title'])),
     ('description', lambda row: str_stem(row['product_description'])),
     ('brand', lambda row: str_stem(row['brand'])),
 
+    ('ori_query_in_title', lambda row: num_whole_word(row['ori_stem_search_term'], row['title'])),
     ('query_in_main_title', lambda row: num_whole_word(row['search_term'], row['main_title'])),
     ('query_in_title', lambda row: num_whole_word(row['search_term'], row['title'])),
     ('query_in_description', lambda row: num_whole_word(row['search_term'], row['description'])),
@@ -120,6 +122,7 @@ FirstFeatureFuncDict = OrderedDict([
     ('word_in_main_title', lambda row: num_common_word(row['search_term'], row['main_title'])),
     ('word_in_main_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['main_title'])),
     ('word_in_title', lambda row: num_common_word(row['search_term'], row['title'])),
+    ('ori_word_in_title_ordered', lambda row: num_common_word_ordered(row['ori_stem_search_term'], row['title'])),
     ('word_in_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['title'])),
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
     ('word_in_brand', lambda row: num_common_word(row['search_term'], row['brand'])),
