@@ -14,43 +14,106 @@ from nltk import pos_tag
 total_train = 74067
 total_test = 166693
 
+feature_path = './output/features/'
 
-def load_feature(config):
-    df = pd.read_csv(config["load_feature_from"], encoding="ISO-8859-1", index_col=0)
-    num_train = total_train if config['num_train'] < 0 else config['num_train']
-    return df[:num_train], df[total_test * -1:]
+
+# def load_feature(config):
+#     df = pd.read_csv(config["load_feature_from"], encoding="ISO-8859-1", index_col=0)
+#     num_train = total_train if config['num_train'] < 0 else config['num_train']
+#     return df[:num_train], df[total_test * -1:]
+#
+#
+#
+#     names = [os.path.splitext(filename)[0] for filename in filenames]
+#
+#     return names, paths
+
+
+
+def load_feature(features):
+    """
+    read features from existing files, and then concat those features into a big frame using pd.concat,
+    concat a list of frames can improve efficiency see http://pandas.pydata.org/pandas-docs/stable/merging.html
+    for more info.
+    :param features: features to load
+    :return: df contains the features
+    """
+    frames = []
+    files = [os.path.join(feature_path, feature + '.csv') for feature in features]
+    frames = [pd.read_csv(file, encoding="ISO-8859-1", index_col=0) for file in files]
+    df = pd.concat(frames, axis=1)
+    return df
+
+
+
+def write_feature(df, features):
+    for feature in features:
+        tmp_df = df[[feature]]
+        tmp_df.to_csv(os.path.join(feature_path, feature + '.csv'), encoding="utf8")
+    return
 
 
 def get_feature(config):
-    feature = ' '.join(sorted(config['features']))
-    feature_hash = hashlib.sha1(feature.encode('utf-8')).hexdigest()
-    num_train = total_train if config['num_train'] < 0 else config['num_train']
-    feature_filename = feature_hash + '_' + str(num_train)
-    feature_path = './feature_cache/'
-    if not os.path.exists(feature_path):
-        os.makedirs(feature_path)
+    all_exist_features = set([os.path.splitext(f)[0] for f in os.listdir(feature_path) if os.path.isfile(os.path.join(feature_path,f)) and f.endswith('.csv')])
+    total_features = set(config['features'])
+    exist_features = total_features & all_exist_features
+    recompute_features = set(config['recompute_features']) if 'recomputed_features' in config else set()
+    new_features = total_features - exist_features
 
-    file_dict = dict()
-    for f in os.listdir(feature_path):
-        if os.path.isfile(os.path.join(feature_path, f)):
-            hash_value = f.split('_')[0]
-            num_value = int(f.split('_')[1])
-            if hash_value not in file_dict or num_value>file_dict[hash_value]:
-                file_dict[hash_value] = num_value
+    to_load_features = exist_features - recompute_features
+    to_compute_features = recompute_features | new_features
 
-    if feature_hash in file_dict and num_train <= file_dict[feature_hash]:
-        df = pd.read_csv(os.path.join(feature_path, feature_filename), encoding="ISO-8859-1", index_col=0)
-        print("feature: " + feature + " already computed")
-        print("load from " + feature_path + "/" + feature_filename)
+    df_basic, num_train, num_test = load_data(config['num_train'])
+    if to_load_features:
+        df_all = load_feature(to_load_features)
+        df_train = df_all[:num_train]
+        df_test = df_all[num_test:]
+        df = pd.concat([df_train, df_test], axis=0)
+        for column in df_basic.columns.values:
+            if column not in df:
+                df[column] = df_basic[column].copy()
     else:
-        df, num_train, num_test = load_data(config['num_train'])
-        print("feature not computed yet, start computing")
-        start_time = time.time()
-        df = build_feature(df, config['features'])
-        print("--- Build Features: %s minutes ---" % round(((time.time() - start_time)/60),2))
-        df.to_csv(os.path.join(feature_path, feature_filename), encoding="utf8")
+        df = df_basic
+
+    print("feature: \n" + ' '.join(to_load_features) + "\n loading done.")
+
+    df = build_feature(df, to_compute_features)
+    write_feature(df, to_compute_features)
+
 
     return df[:num_train], df[num_train:]
+
+
+# def get_feature(config):
+#     feature = ' '.join(sorted(config['features']))
+#     feature_hash = hashlib.sha1(feature.encode('utf-8')).hexdigest()
+#     num_train = total_train if config['num_train'] < 0 else config['num_train']
+#     feature_filename = feature_hash + '_' + str(num_train)
+#     feature_path = './feature_cache/'
+#     if not os.path.exists(feature_path):
+#         os.makedirs(feature_path)
+#
+#     file_dict = dict()
+#     for f in os.listdir(feature_path):
+#         if os.path.isfile(os.path.join(feature_path, f)):
+#             hash_value = f.split('_')[0]
+#             num_value = int(f.split('_')[1])
+#             if hash_value not in file_dict or num_value>file_dict[hash_value]:
+#                 file_dict[hash_value] = num_value
+#
+#     if feature_hash in file_dict and num_train <= file_dict[feature_hash]:
+#         df = pd.read_csv(os.path.join(feature_path, feature_filename), encoding="ISO-8859-1", index_col=0)
+#         print("feature: " + feature + " already computed")
+#         print("load from " + feature_path + "/" + feature_filename)
+#     else:
+#         df, num_train, num_test = load_data(config['num_train'])
+#         print("feature not computed yet, start computing")
+#         start_time = time.time()
+#         df = build_feature(df, config['features'])
+#         print("--- Build Features: %s minutes ---" % round(((time.time() - start_time)/60),2))
+#         df.to_csv(os.path.join(feature_path, feature_filename), encoding="utf8")
+#
+#     return df[:num_train], df[num_train:]
 
 def build_feature(df, features):
     # iterate features in order, use apply() to update in time
@@ -129,6 +192,9 @@ FirstFeatureFuncDict = OrderedDict([
     ('word_in_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['title'])),
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
     ('word_in_brand', lambda row: num_common_word(row['search_term'], row['brand'])),
+    ('bigram_in_main_title', lambda  row: num_common_word(row['search_term'], row['main_title'], ngram=2)),
+    ('bigram_in_description', lambda  row: num_common_word(row['search_term'], row['description'], ngram=2)),
+
     ('search_term_fuzzy_match', lambda row: seg_words(row['search_term'], row['title'])),
     ('word_with_er_count_in_query', lambda row: count_er_word_in_(row['search_term'])),
     ('word_with_er_count_in_title', lambda row: count_er_word_in_(row['title'])),
@@ -146,6 +212,7 @@ FirstFeatureFuncDict = OrderedDict([
     ('ratio_description', lambda row :row['word_in_description'] / (row['len_of_query']+1)),
     ('ratio_brand', lambda row :row['word_in_brand'] / (row['len_of_query']+1)),
     ('len_of_search_term_fuzzy_match', lambda row: words_of_str(row['search_term_fuzzy_match'])),
+
 
     ('title_query_BM25', lambda row: row['title_query_BM25']),
     ('description_query_BM25', lambda row: row['description_query_BM25'])

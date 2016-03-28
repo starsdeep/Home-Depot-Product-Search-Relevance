@@ -7,6 +7,7 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import pos_tag
 from nltk import word_tokenize
 from nltk.corpus.reader import wordnet
+from sklearn.feature_extraction.text import CountVectorizer
 
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
@@ -14,6 +15,9 @@ lemmatizer = WordNetLemmatizer()
 stop_w = {'for', 'xbi', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'} #'electr','paint','pipe','light','kitchen','wood','outdoor','door','bathroom'
 strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
 stopwords = set(stopwords.words('english')) | stop_w
+
+bigram_vectorizer = CountVectorizer(ngram_range=(2, 2),token_pattern=r'\b\w+\b')
+bigram_analyzer = bigram_vectorizer.build_analyzer()
 
 def lemmatize(token, tag):
     try:
@@ -227,14 +231,22 @@ def segmentit(s, txt_arr, t):
     return r
 
 
-def num_common_word(str1, str2):
+def num_common_word(str1, str2, ngram=1):
     """
     number of words in str1 that also in str2
     :param str1:
     :param str2:
     :return: cnt
     """
-    words, cnt = str1.split(), 0
+    words = []
+    if ngram == 1:
+        words = str1.split()
+    elif ngram == 2:
+        words = bigram_analyzer(str1)
+    else:
+        print(str(ngram) + " not supported yet")
+
+    cnt = 0
     for word in words:
         if str2.find(word)>=0:
             cnt+=1
