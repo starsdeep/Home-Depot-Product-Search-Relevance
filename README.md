@@ -119,5 +119,9 @@ beidouwang
 | 2016-03-21  | fenixlin  | 0.46908 |  -.00569 |  0.46966 |   -.00605  |  rfr {5, 30}+postag统计标题+search_term_clean  　  |  RandomForestRegressor|                |          |
 | 2016-03-24  | fenixlin  | 0.46297 |  -.01180 |  0.46366 |   -.01205  |  rfr {10, 30}+标题主题提取，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
 | 2016-03-25  | fenixlin  | 0.46195 |  -.01282 |  0.46188 |   -.01383  |  rfr {2000, 12, 35}+ratio/按序匹配特征，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
+| 2016-03-26  | chenqiang | 0.32271 |  -.15176 |  0.51258 |   +.03687  |  rfr {2000, 12, 35} add ,"query_count_in_train" ,"query_relevance_vg_in_train" base last submission  　  |  RandomForestRegressor|                |  over fitting absolutely |
+| 2016-03-26  | chenqiang | 0.46305 |  -.01142 |  0.51258 |   +.03687  |  rfr {2000, 12, 35} add ,"query_count_in_train" base last submission  　  |  RandomForestRegressor|                |  over fitting absolutely |
 | 2016-03-27  | fenixlin  | 0.45982 |  -.01465 |  0.45953 |   -.01618  |  rfr {2000, 12, 38}+标题主题提取改进，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
 | 2016-03-28  | liaoyikang  | 0.45978 |  -0.01468 |  0.45946 |   -0.01625  |  rfr {2000, 12, 38}+bigram_feature，详见config  　  |  RandomForestRegressor|                | Runtime: 10min |
+
+
