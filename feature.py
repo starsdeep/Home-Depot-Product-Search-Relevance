@@ -42,6 +42,7 @@ def load_feature(features):
     files = [os.path.join(feature_path, feature + '.csv') for feature in features]
     frames = [pd.read_csv(file, encoding="ISO-8859-1", index_col=0) for file in files]
     df = pd.concat(frames, axis=1)
+
     # read_csv() fills empty string with nan, which will cause a problem in build_feature, so we need to replace nan to '', see https://github.com/pydata/pandas/issues/10205 for detail
     df.fillna('', inplace=True)
     return df
@@ -59,25 +60,27 @@ def get_feature(config):
     all_exist_features = set([os.path.splitext(f)[0] for f in os.listdir(feature_path) if os.path.isfile(os.path.join(feature_path,f)) and f.endswith('.csv')])
     total_features = set(config['features'])
     exist_features = total_features & all_exist_features
-    recompute_features = set(config['recompute_features']) if 'recomputed_features' in config else set()
+    recompute_features = set(config['recompute_features']) if 'recompute_features' in config else set()
     new_features = total_features - exist_features
 
     to_load_features = exist_features - recompute_features
     to_compute_features = recompute_features | new_features
 
     df_basic, num_train, num_test = load_data(config['num_train'])
+    print("feature already exists, loading: \n" + ' '.join(to_load_features))
     if to_load_features:
         df_all = load_feature(to_load_features)
+        print("length of loaded datafame %d" % df_all.shape[0])
         df_train = df_all[:num_train]
-        df_test = df_all[num_test:]
-        df = pd.concat([df_train, df_test], axis=0)
+        df_test = df_all[-num_test:]
+        df = pd.concat((df_train, df_test), axis=0, ignore_index=True)
+        print("length of datafame after trimed with num_train %d" % df.shape[0])
         for column in df_basic.columns.values:
             if column not in df:
                 df[column] = df_basic[column].copy()
     else:
         df = df_basic
-
-    print("feature already exists, loading: \n" + ' '.join(to_load_features) + "\n loading done.")
+    print("loading done")
     print("start computing feature: " + ' '.join(to_compute_features))
     df = build_feature(df, to_compute_features)
     write_feature(df, to_compute_features)
@@ -128,27 +131,28 @@ def build_feature(df, features):
             df[feature] = df.apply(feature_func, axis=1)
 
     # iterate features in order (iterrows cannot update in time)
-    print('calculating pos_tag features...')
-    for index, row in df.iterrows():
-        tags = {'search_term': pos_tag(row['search_term'].split()), 
-                'main_title': pos_tag(row['main_title'].split()), 
-                'title': pos_tag(row['title'].split())}
-        # caution: takes a long time
-        if ('noun_of_description' in features) or ('noun_match_description' in features):
-            tags['description'] = pos_tag(row['description'].split())
-        for feature in list(PostagFeatureFuncDict.keys()):
-            if feature in features:
-                feature_func = PostagFeatureFuncDict[feature]
-                df.loc[index, feature] = feature_func(row, tags)
-        if index%300==0:
-            print(str(index)+' rows calculated...')
+    if set(features) & set(PostagFeatureFuncDict.keys()):
+        print('calculating pos_tag features...')
+        for index, row in df.iterrows():
+            tags = {'search_term': pos_tag(row['search_term'].split()),
+                    'main_title': pos_tag(row['main_title'].split()),
+                    'title': pos_tag(row['title'].split())}
+            # caution: takes a long time
+            if ('noun_of_description' in features) or ('noun_match_description' in features):
+                tags['description'] = pos_tag(row['description'].split())
+            for feature in list(PostagFeatureFuncDict.keys()):
+                if feature in features:
+                    feature_func = PostagFeatureFuncDict[feature]
+                    df.loc[index, feature] = feature_func(row, tags)
+            if index%300==0:
+                print(str(index)+' rows calculated...')
 
-    # iterate features in order, use apply() to update in time
-    for feature in list(LastFeatureFuncDict.keys()):
-        if feature in features:
-            print('calculating feature: '+feature+' ...')
-            feature_func = LastFeatureFuncDict[feature]
-            df[feature] = df.apply(feature_func, axis=1)
+            # iterate features in order, use apply() to update in time
+            for feature in list(LastFeatureFuncDict.keys()):
+                if feature in features:
+                    print('calculating feature: '+feature+' ...')
+                    feature_func = LastFeatureFuncDict[feature]
+                    df[feature] = df.apply(feature_func, axis=1)
     return df
 
 chkr = SpellCheckGoogleOffline()
@@ -196,8 +200,11 @@ FirstFeatureFuncDict = OrderedDict([
     ('word_in_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['title'])),
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
     ('word_in_brand', lambda row: num_common_word(row['search_term'], row['brand'])),
-    ('bigram_in_main_title', lambda  row: num_common_word(row['search_term'], row['main_title'], ngram=2)),
-    ('bigram_in_description', lambda  row: num_common_word(row['search_term'], row['description'], ngram=2)),
+
+    ('bigram_in_title', lambda row: num_common_word(row['search_term'], row['title'], ngram=2)),
+    ('bigram_in_main_title', lambda row: num_common_word(row['search_term'], row['main_title'], ngram=2)),
+    ('bigram_in_description', lambda row: num_common_word(row['search_term'], row['description'], ngram=2)),
+    ('bigram_in_brand', lambda row: num_common_word(row['search_term'], row['brand'], ngram=2)),
 
     ('search_term_fuzzy_match', lambda row: seg_words(row['search_term'], row['title'])),
     ('word_with_er_count_in_query', lambda row: count_er_word_in_(row['search_term'])),
