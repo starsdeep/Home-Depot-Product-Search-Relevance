@@ -65,8 +65,8 @@ fenixlin
 * use stanford parser to do semantic analysis and build more features [done, fenixlin]
 * use google service to check and fix spelling of search query, see scripts in forum [ done, liaoyikang ]
 * 用加权和作为特征来表达共有词匹配的位置信息（越后面的匹配越重要），标题和搜索词都可以做 [ doing, fenixlin]
-* 预处理，判断搜索词中每个词在所有搜索词中出现的频繁程度(额外做一个tfidf) [ not planned yet ]
-
+* 预处理，判断搜索词中每个词在所有搜索词中出现的频繁程度(目前tfidf应该只是行内的tfidf?) [ not planned yet ]
+* 将数字和尺寸从标题中单独拿出来作为“副标题”，将型号从标题中单独拿出来作为“副标题” [ not planned yet ]
 
 liaoyikang
 

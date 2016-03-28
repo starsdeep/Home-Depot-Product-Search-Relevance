@@ -93,6 +93,9 @@ def search_term_clean(query):
     return query
 
 def last_word_in_title(s, t):
+    """
+        How many times last word of s occurs in t 
+    """
     words = s.split()
     if len(words)==0:
         return 0

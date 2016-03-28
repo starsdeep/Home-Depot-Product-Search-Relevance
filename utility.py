@@ -48,7 +48,7 @@ def main_title_extract(title):
             else:
                 m = m[:-1]
 
-    kick_words = ['L', 'W', 'O\.D\.', 'OD', 'O\.C\.', 'OC', 'in\.', 'lb\.', 'lbs\.', 'x', '\d+[/\d]*', 'ft\.\.', 'ft\.', 'Lumens', 'CRI', 'Thick', '\+', 'AWG', 'oz.', 'Gauge', 'and', '\S+-\S']
+    kick_words = ['L', 'W', 'O\.D\.', 'OD', 'O\.C\.', 'OC', 'in\.', 'lb\.', 'lbs\.', 'x', '\d+[/\d]*', 'ft\.\.', 'ft\.', 'Lumens', 'CRI', 'Thick', '\+', 'AWG', 'oz.', 'Gauge', 'and', '\S+-\S+']
     for i in range(len(kick_words)):
         kick_words[i] = '^'+kick_words[i]+'$' # require full match
     title = title.split()
@@ -104,9 +104,11 @@ def str_stem(s, by_lemmatizer=False):
     s = s.replace("  "," ")
 
     # remove punctuations
+    s = re.sub(r"([0-9]),([0-9])", r"\1\2", s)
     s = s.replace(","," ") #could be number / segment later
     s = s.replace("$"," ")
     s = s.replace("?"," ")
+    s = re.sub(r"([A-Za-z])-([A-Za-z])", r"\1\2", s)
     s = s.replace("-"," ") #could be use to find less important parts in sentence later
     s = s.replace("//","/")
     s = s.replace("..",".")
@@ -120,7 +122,6 @@ def str_stem(s, by_lemmatizer=False):
     s = re.sub(r"(\w)\.([A-Z])", r"\1 \2", s) #Split words with a.A
     s = re.sub(r"([0-9])([a-z])", r"\1 \2", s)
     s = re.sub(r"([a-z])([0-9])", r"\1 \2", s)
-    s = re.sub(r"([0-9]),([0-9])", r"\1\2", s)
     s = re.sub(r"([a-z])( *)\.( *)([a-z])", r"\1 \4", s)
     s = re.sub(r"([a-z])( *)/( *)([a-z])", r"\1 \4", s)
     s = re.sub(r"([0-9])( *)\.( *)([0-9])", r"\1.\4", s)
@@ -130,21 +131,26 @@ def str_stem(s, by_lemmatizer=False):
     s = s.replace(" x "," xbi ")
     s = s.replace("*"," xbi ")
     s = s.replace(" by "," xbi ")
-    s = re.sub(r"([0-9]+)( *)(inches|inch|in|')\.?", r"\1in. ", s)
-    s = re.sub(r"([0-9]+)( *)(foot|feet|ft|'')\.?", r"\1ft. ", s)
-    s = re.sub(r"([0-9]+)( *)(pounds|pound|lbs|lb)\.?", r"\1lb. ", s)
-    s = re.sub(r"([0-9]+)( *)(square|sq) ?\.?(feet|foot|ft)\.?", r"\1sq.ft. ", s)
-    s = re.sub(r"([0-9]+)( *)(cubic|cu) ?\.?(feet|foot|ft)\.?", r"\1cu.ft. ", s)
-    s = re.sub(r"([0-9]+)( *)(gallons|gallon|gal)\.?", r"\1gal. ", s)
-    s = re.sub(r"([0-9]+)( *)(ounces|ounce|oz)\.?", r"\1oz. ", s)
-    s = re.sub(r"([0-9]+)( *)(centimeters|cm)\.?", r"\1cm. ", s)
-    s = re.sub(r"([0-9]+)( *)(milimeters|mm)\.?", r"\1mm. ", s)
+    s = re.sub(r"([0-9]+)( *)(inches|inch|in|')\.? ", r"\1in. ", s)
+    s = re.sub(r"([0-9]+)( *)(foot|feet|ft|'')\.? ", r"\1ft. ", s)
+    s = re.sub(r"([0-9]+)( *)(pounds|pound|lbs|lb)\.? ", r"\1lb. ", s)
+    s = re.sub(r"([0-9]+)( *)(square|sq) ?\.?(feet|foot|ft)\.? ", r"\1sq.ft. ", s)
+    s = re.sub(r"([0-9]+)( *)(cubic|cu) ?\.?(feet|foot|ft)\.? ", r"\1cu.ft. ", s)
+    s = re.sub(r"([0-9]+)( *)(gallons|gallon|gal)\.? ", r"\1gal. ", s)
+    s = re.sub(r"([0-9]+)( *)(ounces|ounce|oz)\.? ", r"\1oz. ", s)
+    s = re.sub(r"([0-9]+)( *)(fl)\.? ?(oz)\.? ", r"\1fl.oz. ", s)
+    s = re.sub(r"([0-9]+)( *)(centimeters|cm)\.? ", r"\1cm. ", s)
+    s = re.sub(r"([0-9]+)( *)(milimeters|mm)\.? ", r"\1mm. ", s)
     s = s.replace("°"," degrees ")
-    s = re.sub(r"([0-9]+)( *)(degrees|degree)\.?", r"\1deg. ", s)
-    s = s.replace(" v "," volts ")
-    s = re.sub(r"([0-9]+)( *)(volts|volt)\.?", r"\1volt. ", s)
-    s = re.sub(r"([0-9]+)( *)(watts|watt)\.?", r"\1watt. ", s)
-    s = re.sub(r"([0-9]+)( *)(amperes|ampere|amps|amp)\.?", r"\1amp. ", s)
+    s = re.sub(r"([0-9]+)( *)(degrees|degree)\.? ", r"\1deg. ", s)
+    s = re.sub(r"([0-9]+)( *)(volts|volt|v)\.? ", r"\1volt. ", s)
+    s = re.sub(r"([0-9]+)( *)(watts|watt|w)\.? ", r"\1watt. ", s)
+    s = re.sub(r"([0-9]+)( *)(amperes|ampere|amps|amp)\.? ", r"\1amp. ", s)
+    measures=['hour','year','gauge','gpm','psi','hp','kw','qt','cfm','cc','vdc','btu','gpf','grit','ton','seer','tpi','tvl','awg']#pvc, od, oc
+    for m in measures:
+        regex1 = "([0-9]+)( *)" + m + "\.? "
+        regex2 = r"\1" + m + ". "
+        re.sub(regex1, regex2, s)
 
     s = s.replace("  "," ") # consequent space may be added by above rules
     #s = (" ").join([z for z in s.split(" ") if z not in stop_w])
