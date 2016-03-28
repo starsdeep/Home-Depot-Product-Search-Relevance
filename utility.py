@@ -112,8 +112,7 @@ def str_stem(s, by_lemmatizer=False):
     s = s.replace(","," ") #could be number / segment later
     s = s.replace("$"," ")
     s = s.replace("?"," ")
-    s = re.sub(r"([A-Za-z])-([A-Za-z])", r"\1\2", s)
-    s = s.replace("-"," ") #could be use to find less important parts in sentence later
+    s = s.replace("-"," ") 
     s = s.replace("//","/")
     s = s.replace("..",".")
     s = s.replace(" / "," ")
@@ -154,7 +153,7 @@ def str_stem(s, by_lemmatizer=False):
     for m in measures:
         regex1 = "([0-9]+)( *)" + m + "\.? "
         regex2 = r"\1" + m + ". "
-        re.sub(regex1, regex2, s)
+        s = re.sub(regex1, regex2, s)
 
     s = s.replace("  "," ") # consequent space may be added by above rules
     #s = (" ").join([z for z in s.split(" ") if z not in stop_w])
