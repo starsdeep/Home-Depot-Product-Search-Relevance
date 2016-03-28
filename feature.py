@@ -147,12 +147,12 @@ def build_feature(df, features):
             if index%300==0:
                 print(str(index)+' rows calculated...')
 
-            # iterate features in order, use apply() to update in time
-            for feature in list(LastFeatureFuncDict.keys()):
-                if feature in features:
-                    print('calculating feature: '+feature+' ...')
-                    feature_func = LastFeatureFuncDict[feature]
-                    df[feature] = df.apply(feature_func, axis=1)
+    # iterate features in order, use apply() to update in time
+    for feature in list(LastFeatureFuncDict.keys()):
+        if feature in features:
+            print('calculating feature: '+feature+' ...')
+            feature_func = LastFeatureFuncDict[feature]
+            df[feature] = df.apply(feature_func, axis=1)
     return df
 
 chkr = SpellCheckGoogleOffline()
