@@ -42,6 +42,8 @@ def load_feature(features):
     files = [os.path.join(feature_path, feature + '.csv') for feature in features]
     frames = [pd.read_csv(file, encoding="ISO-8859-1", index_col=0) for file in files]
     df = pd.concat(frames, axis=1)
+    # read_csv() fills empty string with nan, which will cause a problem in build_feature, so we need to replace nan to '', see https://github.com/pydata/pandas/issues/10205 for detail
+    df.fillna('', inplace=True)
     return df
 
 
@@ -75,8 +77,8 @@ def get_feature(config):
     else:
         df = df_basic
 
-    print("feature: \n" + ' '.join(to_load_features) + "\n loading done.")
-
+    print("feature already exists, loading: \n" + ' '.join(to_load_features) + "\n loading done.")
+    print("start computing feature: " + ' '.join(to_compute_features))
     df = build_feature(df, to_compute_features)
     write_feature(df, to_compute_features)
 
@@ -117,6 +119,8 @@ def get_feature(config):
 
 def build_feature(df, features):
     # iterate features in order, use apply() to update in time
+    if not features:
+        return df
     for feature in list(FirstFeatureFuncDict.keys()):
         if feature in features:
             print('calculating feature: '+feature+' ...')
