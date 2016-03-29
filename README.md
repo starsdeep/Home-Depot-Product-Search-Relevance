@@ -65,8 +65,8 @@ fenixlin
 * use stanford parser to do semantic analysis and build more features [done, fenixlin]
 * use google service to check and fix spelling of search query, see scripts in forum [ done, liaoyikang ]
 * 用加权和作为特征来表达共有词匹配的位置信息（越后面的匹配越重要），标题和搜索词都可以做 [ doing, fenixlin]
-* 预处理，判断搜索词中每个词在所有搜索词中出现的频繁程度(额外做一个tfidf) [ not planned yet ]
-
+* 预处理，判断搜索词中每个词在所有搜索词中出现的频繁程度(目前tfidf应该只是行内的tfidf?) [ not planned yet ]
+* 将数字和尺寸从标题中单独拿出来作为“副标题”，将型号从标题中单独拿出来作为“副标题” [ not planned yet ]
 
 liaoyikang
 
@@ -120,3 +120,4 @@ beidouwang
 | 2016-03-24  | fenixlin  | 0.46297 |  -.01180 |  0.46366 |   -.01205  |  rfr {10, 30}+标题主题提取，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
 | 2016-03-25  | fenixlin  | 0.46195 |  -.01282 |  0.46188 |   -.01383  |  rfr {2000, 12, 35}+ratio/按序匹配特征，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
 | 2016-03-27  | fenixlin  | 0.45982 |  -.01465 |  0.45953 |   -.01618  |  rfr {2000, 12, 38}+标题主题提取改进，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
+| 2016-03-28  | liaoyikang  | 0.45978 |  -0.01468 |  0.45946 |   -0.01625  |  rfr {2000, 12, 38}+bigram_feature，详见config  　  |  RandomForestRegressor|                | Runtime: 10min |

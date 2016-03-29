@@ -7,6 +7,7 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import pos_tag
 from nltk import word_tokenize
 from nltk.corpus.reader import wordnet
+from sklearn.feature_extraction.text import CountVectorizer
 
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
@@ -14,6 +15,9 @@ lemmatizer = WordNetLemmatizer()
 stop_w = {'for', 'xbi', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'} #'electr','paint','pipe','light','kitchen','wood','outdoor','door','bathroom'
 strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
 stopwords = set(stopwords.words('english')) | stop_w
+
+bigram_vectorizer = CountVectorizer(ngram_range=(2, 2),token_pattern=r'\b\w+\b')
+bigram_analyzer = bigram_vectorizer.build_analyzer()
 
 def lemmatize(token, tag):
     try:
@@ -23,11 +27,12 @@ def lemmatize(token, tag):
         return token
 
 def main_title_extract(title):
-    title = re.sub(r'\(.*\)', '', title) # remove brackets
+    title = re.sub(r'\([^\)]*\)', '', title) # remove brackets
+    title = re.sub(r'-DISCONTINUED$', '', title)
     title = re.sub(r' [w|W]ith .* [a|A]nd .*$', '', title) # remove str 'with ... and ...'
-    #title = re.sub(r' [f|F]or .* [a|A]nd .*$', '', title) # remove str 'for ... and ...'
-    #title = re.sub(r' [o|O]nly [f|F]or .*$', '', title) # remove str 'only for'
     title = re.sub(r' [f|F]or .*$', '', title) # remove str 'for ...'
+    title = re.sub(r' [i|I]ncludes .*$', '', title) # remove str 'includes ...'
+    title = re.sub(r' [w|W]ithout .*$', '', title) # remove str 'includes ...'
     title = re.sub(r' - .* [n|N]ot [i|I]ncluded\s*$', '', title) # remove str ' - ... not included'
     title = re.sub(r'  ', ' ', title) # remove spaces introduced
 
@@ -48,7 +53,7 @@ def main_title_extract(title):
             else:
                 m = m[:-1]
 
-    kick_words = ['L', 'W', 'O\.D\.', 'OD', 'O\.C\.', 'OC', 'in\.', 'lb\.', 'lbs\.', 'x', '\d+[/\d]*', 'ft\.\.', 'ft\.', 'Lumens', 'CRI', 'Thick', '\+', 'AWG', 'oz.', 'Gauge', 'and', '\S+-\S']
+    kick_words = ['L', 'W', 'O\.D\.', 'OD', 'O\.C\.', 'OC', 'in\.', 'lb\.', 'lbs\.', 'x', '\d+[/\d]*', 'ft\.\.', 'ft\.', 'Lumens', 'CRI', 'Thick', '\+', 'AWG', 'oz.', 'Gauge', 'and', '\S+-\S+']
     for i in range(len(kick_words)):
         kick_words[i] = '^'+kick_words[i]+'$' # require full match
     title = title.split()
@@ -66,6 +71,10 @@ def main_title_extract(title):
 
     title = re.sub(r'\s+$', '', title) # remove endings spaces
     return title
+
+def model_number_extract(title):
+    regex = "(?<=\s)#*[A-Z]+\d*-?\d+-*[A-Z]?(?=\s|$)"
+    return " ".join(re.findall(regex, title))
 
 def str_remove_stopwords(s):
     word_list = s.split()
@@ -104,10 +113,11 @@ def str_stem(s, by_lemmatizer=False):
     s = s.replace("  "," ")
 
     # remove punctuations
+    s = re.sub(r"([0-9]),([0-9])", r"\1\2", s)
     s = s.replace(","," ") #could be number / segment later
     s = s.replace("$"," ")
     s = s.replace("?"," ")
-    s = s.replace("-"," ") #could be use to find less important parts in sentence later
+    s = s.replace("-"," ") 
     s = s.replace("//","/")
     s = s.replace("..",".")
     s = s.replace(" / "," ")
@@ -120,38 +130,43 @@ def str_stem(s, by_lemmatizer=False):
     s = re.sub(r"(\w)\.([A-Z])", r"\1 \2", s) #Split words with a.A
     s = re.sub(r"([0-9])([a-z])", r"\1 \2", s)
     s = re.sub(r"([a-z])([0-9])", r"\1 \2", s)
-    s = re.sub(r"([0-9]),([0-9])", r"\1\2", s)
     s = re.sub(r"([a-z])( *)\.( *)([a-z])", r"\1 \4", s)
     s = re.sub(r"([a-z])( *)/( *)([a-z])", r"\1 \4", s)
     s = re.sub(r"([0-9])( *)\.( *)([0-9])", r"\1.\4", s)
     s = s.replace(" . "," ")
 
+    # eliminate single number
+    strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
+    s = (" ").join([str(strNum[z]) if z in strNum else z for z in s.split(" ")])
+
     # transform prepositions and measurements
     s = s.replace(" x "," xbi ")
     s = s.replace("*"," xbi ")
     s = s.replace(" by "," xbi ")
-    s = re.sub(r"([0-9]+)( *)(inches|inch|in|')\.?", r"\1in. ", s)
-    s = re.sub(r"([0-9]+)( *)(foot|feet|ft|'')\.?", r"\1ft. ", s)
-    s = re.sub(r"([0-9]+)( *)(pounds|pound|lbs|lb)\.?", r"\1lb. ", s)
-    s = re.sub(r"([0-9]+)( *)(square|sq) ?\.?(feet|foot|ft)\.?", r"\1sq.ft. ", s)
-    s = re.sub(r"([0-9]+)( *)(cubic|cu) ?\.?(feet|foot|ft)\.?", r"\1cu.ft. ", s)
-    s = re.sub(r"([0-9]+)( *)(gallons|gallon|gal)\.?", r"\1gal. ", s)
-    s = re.sub(r"([0-9]+)( *)(ounces|ounce|oz)\.?", r"\1oz. ", s)
-    s = re.sub(r"([0-9]+)( *)(centimeters|cm)\.?", r"\1cm. ", s)
-    s = re.sub(r"([0-9]+)( *)(milimeters|mm)\.?", r"\1mm. ", s)
-    s = s.replace("°"," degrees ")
-    s = re.sub(r"([0-9]+)( *)(degrees|degree)\.?", r"\1deg. ", s)
-    s = s.replace(" v "," volts ")
-    s = re.sub(r"([0-9]+)( *)(volts|volt)\.?", r"\1volt. ", s)
-    s = re.sub(r"([0-9]+)( *)(watts|watt)\.?", r"\1watt. ", s)
-    s = re.sub(r"([0-9]+)( *)(amperes|ampere|amps|amp)\.?", r"\1amp. ", s)
+    s = re.sub(r"([0-9]+)( *)(inches|inch|in|')\.?(?=\s|$)", r"\1in. ", s)
+    s = re.sub(r"([0-9]+)( *)(foot|feet|ft|'')\.?(?=\s|$)", r"\1ft. ", s)
+    s = re.sub(r"([0-9]+)( *)(pounds|pound|lbs|lb)\.?(?=\s|$)", r"\1lb. ", s)
+    s = re.sub(r"([0-9]+)( *)(square|sq) ?\.?(feet|foot|ft)\.?(?=\s|$)", r"\1sq.ft. ", s)
+    s = re.sub(r"([0-9]+)( *)(cubic|cu) ?\.?(feet|foot|ft)\.?(?=\s|$)", r"\1cu.ft. ", s)
+    s = re.sub(r"([0-9]+)( *)(gallons|gallon|gal)\.?(?=\s|$)", r"\1gal. ", s)
+    s = re.sub(r"([0-9]+)( *)(ounces|ounce|oz)\.?(?=\s|$)", r"\1oz. ", s)
+    s = re.sub(r"([0-9]+)( *)(fl)\.? ?(oz)\.?(?=\s|$)", r"\1fl.oz. ", s)
+    s = re.sub(r"([0-9]+)( *)(centimeters|cm)\.?(?=\s|$)", r"\1cm. ", s)
+    s = re.sub(r"([0-9]+)( *)(milimeters|mm)\.?(?=\s|$)", r"\1mm. ", s)
+    s = s.replace("°"," degrees(?=\s|$)")
+    s = re.sub(r"([0-9]+)( *)(degrees|degree)\.?(?=\s|$)", r"\1deg. ", s)
+    s = re.sub(r"([0-9]+)( *)(volts|volt|v)\.?(?=\s|$)", r"\1volt. ", s)
+    s = re.sub(r"([0-9]+)( *)(watts|watt|w)\.?(?=\s|$)", r"\1watt. ", s)
+    s = re.sub(r"([0-9]+)( *)(yd|yds)\.?(?=\s|$)", r"\1yd. ", s)
+    s = re.sub(r"([0-9]+)( *)(amperes|ampere|amps|amp)\.?(?=\s|$)", r"\1amp. ", s)
+    measures=['hour','year','gauge','gpm','psi','hp','kw','qt','cfm','cc','vdc','btu','gpf','grit','ton','seer','tpi','tvl','awg','swe','mph','cri','lumens']#pvc, od, oc
+    for m in measures:
+        regex1 = "([0-9]+)( *)" + m + "\.?(?=\s|$)"
+        regex2 = r"\1" + m + ". "
+        s = re.sub(regex1, regex2, s)
 
     s = s.replace("  "," ") # consequent space may be added by above rules
     #s = (" ").join([z for z in s.split(" ") if z not in stop_w])
-
-    # eliminate single number
-    strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
-    s = (" ").join([str(strNum[z]) if z in strNum else z for z in s.split(" ")])
 
     # fix typos
     s = s.replace("&amp;", "&") # most '&' in title are turned to "&amp;"
@@ -221,14 +236,22 @@ def segmentit(s, txt_arr, t):
     return r
 
 
-def num_common_word(str1, str2):
+def num_common_word(str1, str2, ngram=1):
     """
     number of words in str1 that also in str2
     :param str1:
     :param str2:
     :return: cnt
     """
-    words, cnt = str1.split(), 0
+    words = []
+    if ngram == 1:
+        words = str1.split()
+    elif ngram == 2:
+        words = bigram_analyzer(str1)
+    else:
+        print(str(ngram) + " not supported yet")
+
+    cnt = 0
     for word in words:
         if str2.find(word)>=0:
             cnt+=1

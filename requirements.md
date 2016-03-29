@@ -10,6 +10,10 @@ sqlite3
 libsqlite3-dev
 libenchant1c2a
 gfortran
+libssl-dev
+libblas-dev
+liblapack-dev
+libatlas-base-dev
 
 ## By pip3 install
 
