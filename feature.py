@@ -187,15 +187,18 @@ FirstFeatureFuncDict = OrderedDict([
     ('ori_query_in_title', lambda row: num_whole_word(row['ori_stem_search_term'], row['title'])),
     ('query_in_main_title', lambda row: num_whole_word(row['search_term'], row['main_title'])),
     ('query_in_title', lambda row: num_whole_word(row['search_term'], row['title'])),
-    ('query_in_description', lambda row: num_whole_word(row['search_term'], row['description'])),
-    ('numsize_query_in_title', lambda row: num_size_word(row['search_term'], row['title'])),
-    ('numsize_query_in_description', lambda row: num_size_word(row['search_term'], row['description'])),
+    ('query_in_description', lambda row: num_whole_word(row['search_term'], row['description'])),   
     ('query_last_word_in_main_title', lambda row: last_word_in_title(row['search_term'], row['main_title'])),
     ('query_last_word_in_title', lambda row: last_word_in_title(row['search_term'], row['title'])),
     ('query_last_word_in_description', lambda row: last_word_in_title(row['search_term'], row['description'])),
     ('word_in_main_title', lambda row: num_common_word(row['search_term'], row['main_title'])),
     ('word_in_main_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['main_title'])),
     ('word_in_title', lambda row: num_common_word(row['search_term'], row['title'])),
+
+    ('numsize_word_in_main_title', lambda row: num_size_word(row['search_term'], row['main_title'])),
+    ('numsize_word_in_title', lambda row: num_size_word(row['search_term'], row['title'])),
+    ('numsize_word_in_description', lambda row: num_size_word(row['search_term'], row['description'])),
+
     ('ori_word_in_title_ordered', lambda row: num_common_word_ordered(row['ori_stem_search_term'], row['title'])),
     ('word_in_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['title'])),
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
@@ -214,6 +217,12 @@ FirstFeatureFuncDict = OrderedDict([
     ('len_of_main_title', lambda row: words_of_str(row['main_title'])),
     ('len_of_title', lambda row: words_of_str(row['title'])),
     ('len_of_description', lambda row: words_of_str(row['description'])),
+
+    ('len_of_numsize_query', lambda row: words_of_numsize_str(row['search_term'])),
+    ('len_of_numsize_main_title', lambda row: words_of_numsize_str(row['main_title'])),
+    ('len_of_numsize_title', lambda row: words_of_numsize_str(row['title'])),
+    ('len_of_numsize_description', lambda row: words_of_numsize_str(row['description'])),
+
     ('len_of_brand', lambda row: words_of_str(row['brand'])),
     ('chars_of_query', lambda row: len(row['search_term'])),
     ('ratio_main_title', lambda row :row['word_in_main_title'] / (row['len_of_query']+1)),
@@ -222,6 +231,11 @@ FirstFeatureFuncDict = OrderedDict([
     ('ratio_title_ordered', lambda row :row['word_in_title_ordered'] / (row['len_of_query']+1)),
     ('ratio_description', lambda row :row['word_in_description'] / (row['len_of_query']+1)),
     ('ratio_brand', lambda row :row['word_in_brand'] / (row['len_of_query']+1)),
+
+    ('ratio_numsize_main_title', lambda row :row['numsize_word_in_main_title'] / (row['len_of_numsize_query']+1)),
+    ('ratio_numsize_title', lambda row :row['numsize_word_in_title'] / (row['len_of_numsize_query']+1)),
+    ('ratio_numsize_description', lambda row :row['numsize_word_in_description'] / (row['len_of_numsize_query']+1)),
+
     ('len_of_search_term_fuzzy_match', lambda row: words_of_str(row['search_term_fuzzy_match'])),
 
 

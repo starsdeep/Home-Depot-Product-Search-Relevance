@@ -1,5 +1,6 @@
 import os, sys
 import pandas as pd
+import numpy as np
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.decomposition import TruncatedSVD
@@ -160,3 +161,35 @@ class GbdtRegression(Model):
         param_grid = {'gbdtr__n_estimators': (100,), 'gbdtr__learning_rate': (0.1, 0.5), 'gbdtr__max_features': (3, 10, 20), 'gbdtr__max_depth': (5,15,30)}
         model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
         return model.predict(x_test)
+
+class MultiClassifier(Model):
+    ''' 7 clf for 1~3 : 0.333 skip '''
+    labels=[1., 1.33, 1.67, 2., 2.33, 2.67, 3.]
+
+    def transform_labels_(self, y_pred, label_index):
+        ''' y_value to binary 
+            cut pos : 1|1.3|1.6|2|2.3|2.6|3
+        '''
+        y_each = np.asarray([ int(x==self.labels[label_index]) for x in y_pred ])
+        return y_each
+
+
+    def predict( self, x_train, y_train, x_test):
+        #base _ is a number : 2 classifier base on this number
+        rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
+        clf = self.make_pipeline_('rfc', rfc)
+        param_grid = {'rfc__max_features': [5], 'rfc__max_depth': [30]}
+        model = [None]*len(self.labels)
+        result = [None]*len(self.labels)
+        for i in range(len(self.labels)):
+            y_each = self.transform_labels_(y_train, i)
+            model[i] = self.grid_search_fit_(clf, param_grid, x_train, y_each)
+            classes_order = model[i].best_estimator_.named_steps['rfc'].classes_
+            result[i] = model[i].predict_proba(x_test)[:,classes_order[1]]
+
+        result = np.asarray(result).argmax(axis=0)
+        for i in range( len(result)):
+            result[i] = self.labels[result[i]]
+
+        return result
+

@@ -80,7 +80,7 @@ liaoyikang
 beidouwang
 
 * 测试SVM和SVR，以及各种不同的kernel函数的使用[doing,beidouwang]
-* sampling解决skew问题(训练数据中高分数据偏多)，可参考Oversampling（重复sample negative feedback直到和数量和postive相等），undersampling（sample和negative feedback一样多的postive feedback），另外专门有论文讲cost sensitive sampling [ doing, zhuyu ]
+* sampling解决skew问题(训练数据中高分数据偏多)，可参考Oversampling（重复sample negative feedback直到和数量和postive相等），undersampling（sample和negative feedback一样多的postive feedback），另外专门有论文讲cost sensitive sampling [ done, zhuyu ]
 * 使用scikit-learn的feature selection模块减少无用feature [ not planned yet ]
 
 
@@ -123,5 +123,5 @@ beidouwang
 | 2016-03-26  | chenqiang | 0.46305 |  -.01142 |  0.51258 |   +.03687  |  rfr {2000, 12, 35} add ,"query_count_in_train" base last submission  　  |  RandomForestRegressor|                |  over fitting absolutely |
 | 2016-03-27  | fenixlin  | 0.45982 |  -.01465 |  0.45953 |   -.01618  |  rfr {2000, 12, 38}+标题主题提取改进，详见config  　  |  RandomForestRegressor|                | Runtime: 1.5h |
 | 2016-03-28  | liaoyikang  | 0.45978 |  -0.01468 |  0.45946 |   -0.01625  |  rfr {2000, 12, 38}+bigram_feature，详见config  　  |  RandomForestRegressor|                | Runtime: 10min |
-
-
+| 2016-03-29  | liaoyikang  | 0.45960 |  -0.01487 |  0.45937 |   -0.01634  |  rfr {2000, 12, 38}+stem改进+bigram，详见config  　  |  RandomForestRegressor|                | Runtime: 10min |
+| 2016-03-29  | zhuyu  | 0.4595 |  -0.01492 |  0.45917 |   -0.01654  |  rfr {2000, 12, 38}+num_size+bigram，详见config  　  |  RandomForestRegressor|                | Runtime: 10min |
