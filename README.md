@@ -80,7 +80,7 @@ liaoyikang
 beidouwang
 
 * 测试SVM和SVR，以及各种不同的kernel函数的使用[doing,beidouwang]
-* sampling解决skew问题(训练数据中高分数据偏多)，可参考Oversampling（重复sample negative feedback直到和数量和postive相等），undersampling（sample和negative feedback一样多的postive feedback），另外专门有论文讲cost sensitive sampling [ doing, zhuyu ]
+* sampling解决skew问题(训练数据中高分数据偏多)，可参考Oversampling（重复sample negative feedback直到和数量和postive相等），undersampling（sample和negative feedback一样多的postive feedback），另外专门有论文讲cost sensitive sampling [ done, zhuyu ]
 * 使用scikit-learn的feature selection模块减少无用feature [ not planned yet ]
 
 
