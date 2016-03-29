@@ -9,7 +9,7 @@ def load_data(num_sample=-1):
     df_test = pd.read_csv('./input/test.csv', encoding="ISO-8859-1")
     if num_sample > 0:
         df_train = df_train[:num_sample]
-        df_test = df_test[:num_sample]
+        df_test = df_test[-num_sample:]
     df_pro_desc = pd.read_csv('./input/product_descriptions.csv')
     df_attr = pd.read_csv('./input/attributes.csv')
     df_brand = df_attr[df_attr.name == "MFG Brand Name"][["product_uid", "value"]].rename(columns={"value": "brand"})

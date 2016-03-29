@@ -19,6 +19,13 @@ stopwords = set(stopwords.words('english')) | stop_w
 bigram_vectorizer = CountVectorizer(ngram_range=(2, 2),token_pattern=r'\b\w+\b')
 bigram_analyzer = bigram_vectorizer.build_analyzer()
 
+#size = ['cm.','in.','ft.','watt.','qt.','gal.','oz.','sq.ft.','cu.ft.','mm.','lb.','volt.','amp.']
+#reObj can match three types of strings, such as 2.3in. |  2.5x3sq.ft.  |   23x23
+numsize_reObj = re.compile('(([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
+                    ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
+                    ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+))')
+
+
 def lemmatize(token, tag):
     try:
         morphy_tag = {'NN':wordnet.NOUN,'JJ':wordnet.ADJ,'VB':wordnet.VERB,'RB':wordnet.ADV}[tag[:2]]
@@ -351,49 +358,33 @@ def num_whole_word(word, str):
     return cnt
 
 
-def num_size_word(word, str):
+def num_numsize_word(numsize_list, str):
     """
-    number of times that words of number and size appears in str
+    number of times that numsize in numsize_list appears in str
     :param word:
     :param str:
     :return: cnt
     """
-    #size = ['cm.','in.','ft.','watt.','qt.','gal.','oz.','sq.ft.','cu.ft.','mm.','lb.','volt.','amp.']
-    #reObj can match three types of strings, such as 2.3in. |  2.5x3sq.ft.  |   23x23
-    reObj = re.compile('(([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
-                        ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
-                        ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+))')
-
-    num_size_list = reObj.findall(word)  
-
     cnt = 0
-    for num_size in num_size_list:
+    for numsize in numsize_list:
         i = 0
-        #print num_size[0]
+        #print numsize[0]
         while i < len(str):
-            i = str.find(num_size[0],i)
+            i = str.find(numsize[0], i)
             if i == -1:
                 break
             else:
                 cnt += 1
-                i += len(num_size[0])
+                i += len(numsize[0])
     return cnt
 
-def words_of_numsize_str(str):
+def numsize_of_str(str):
     """
     number of times that number and size appears in str
     :param str:
     :return: number
     """
-    #size = ['cm.','in.','ft.','watt.','qt.','gal.','oz.','sq.ft.','cu.ft.','mm.','lb.','volt.','amp.']
-    #reObj can match three types of strings, such as 2.3in. |  2.5x3sq.ft.  |   23x23
-    reObj = re.compile('(([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
-                        ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
-                        ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+))')
-
-    num_size_list = reObj.findall(str)  
-
-    return len(num_size_list)
+    return numsize_reObj.findall(str)
 
 def count_er_word_in_(x):
     """
@@ -433,5 +424,5 @@ if __name__=='__main__':
 #    doctest.testmod()
     word = 'asdasdzxc 0.2in.  asdzxcz21x32qt. asdasdasd 3/4ft.asdasdaszxc 23watt.'
     str = 'asdasdzczxczxc 0.2in.  asdzxccxcz21x32qt. adasd 3/4ft.asd3/4ft.aasczxc3/4ft.'
-    cnt = num_size_word(word, str)
+    cnt = num_numsize_word(word, str)
     #print cnt

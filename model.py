@@ -6,7 +6,7 @@ from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifi
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import mean_squared_error, make_scorer
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 from sklearn import pipeline, grid_search
 from sklearn.pipeline import FeatureUnion
 from sklearn import cross_validation
@@ -27,6 +27,32 @@ class CustTxtCol(BaseEstimator, TransformerMixin):
         return self
     def transform(self, data_dict):
         return data_dict[self.key].apply(str)
+
+
+class Discretizer(BaseEstimator, ClassifierMixin):
+    def __init__(self, threshold):
+        self.threshold = threshold
+        self.discreate_points = [1.0, 1.33, 1.67, 2.0, 2.33, 2.67, 3.0]
+        self.max_threshold = 0.165
+        if threshold>=0.165:
+            print("threshold should not >= 0.165")
+            sys.exit()
+        # self.discretize_func = np.vectorize(lambda x: self._discretize(x, threshold))
+
+    def _discretize(self, x):
+        for point in self.discreate_points:
+            if x<point-self.threshold:
+                break
+            if x>=point-self.threshold and x<=point+self.threshold:
+                return point
+        return x
+
+    def fit(self, x, y=None):
+        return self
+
+    def predict(self, values):
+        return np.array([self._discretize(v) for v in values])
+
 
 class Model(object):
 
@@ -64,13 +90,7 @@ class Model(object):
         print(model.best_params_)
         print("Best CV score:")
         print(model.best_score_)
-        print()
-        if self.config['save_badcase']:
-            cvmodel = clf
-            for k, v in model.best_params_.items():
-                cvmodel = cvmodel.set_params(**{k: v})
-            self.print_badcase_(x_train, y_train, cvmodel, 2000)
-            print("Badcase printing done.\n")
+
         return model
 
     def make_pipeline_(self, model_name, model):
@@ -104,9 +124,26 @@ class RandomForestRegression(Model):
     def predict(self, x_train, y_train, x_test):
         rfr = RandomForestRegressor(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfr', rfr)
-        param_grid = {'rfr__n_estimators': [2000], 'rfr__max_features': [12], 'rfr__max_depth': [38]}
+        param_grid = {'rfr__n_estimators': [2400], 'rfr__max_features': [12], 'rfr__max_depth': [38]}
         model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
-        return model.predict(x_test)
+        #print bad case
+        if self.config['save_badcase']:
+            cvmodel = clf
+            for k, v in model.best_params_.items():
+                cvmodel = cvmodel.set_params(**{k: v})
+            self.print_badcase_(x_train, y_train, cvmodel, 2000)
+            print("Badcase printing done.\n")
+
+        y_pred = model.predict(x_test)
+
+        if 'try_discretize' in self.config and self.config['try_discretize']:
+            print("\ntry discretize ...\n")
+            x_train_predict = model.predict(x_train)
+            discretizer = Discretizer(threshold=0.05)
+            param_grid = {'threshold': [0.0, 0.02, 0.05, 0.08, 0.1, 0.13, 0.16]}
+            discretize_model = self.grid_search_fit_(discretizer, param_grid, x_train_predict, y_train)
+            return discretize_model.predict(y_pred)
+        return y_pred
 
 class RandomForestClassification(Model):
 
