@@ -356,6 +356,22 @@ def num_size_word(word, str):
                 i += len(num_size[0])
     return cnt
 
+def words_of_numsize_str(str):
+    """
+    number of times that number and size appears in str
+    :param str:
+    :return: number
+    """
+    #size = ['cm.','in.','ft.','watt.','qt.','gal.','oz.','sq.ft.','cu.ft.','mm.','lb.','volt.','amp.']
+    #reObj can match three types of strings, such as 2.3in. |  2.5x3sq.ft.  |   23x23
+    reObj = re.compile('(([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
+                        ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
+                        ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+))')
+
+    num_size_list = reObj.findall(str)  
+
+    return len(num_size_list)
+
 def count_er_word_in_(x):
     """
     function to count word which end with er x
