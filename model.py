@@ -78,10 +78,14 @@ class Model(object):
         #output.drop('product_title', axis=1, inplace=True)
 
         output.insert(3, 'pred', pd.Series(train_pred, index=x_train.index))
-        output.insert(3, 'diff', pd.Series(abs(train_pred-y_train), index=x_train.index))
+        output.insert(3, 'diff', pd.Series(train_pred-y_train, index=x_train.index))
         output = output.sort_values(by=['diff', 'id'], ascending=False)
-        len_output = len(output)
-        output[:min(default_output_line, len_output)].to_csv(os.path.join(os.path.abspath(sys.argv[1]),'badcase.csv'), encoding="utf-8")
+        output_len = min(default_output_line, len(output))
+
+        output[:output_len].to_csv(os.path.join(os.path.abspath(sys.argv[1]),'pos_badcase.csv'), encoding="utf-8")
+        output = output[-output_len:]
+        output = output.iloc[::-1] #reverse order
+        output[:output_len].to_csv(os.path.join(os.path.abspath(sys.argv[1]),'neg_badcase.csv'), encoding="utf-8")
 
     def grid_search_fit_(self, clf, param_grid, x_train, y_train):
         model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=self.RMSE)
@@ -122,7 +126,7 @@ class Model(object):
 class RandomForestRegression(Model):
 
     def predict(self, x_train, y_train, x_test):
-        rfr = RandomForestRegressor(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
+        rfr = RandomForestRegressor(n_estimators = 2000, n_jobs = -1, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfr', rfr)
         param_grid = {'rfr__n_estimators': [2400], 'rfr__max_features': [12], 'rfr__max_depth': [38]}
         model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
