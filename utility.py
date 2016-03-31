@@ -211,8 +211,18 @@ def noun_of_str(tags):
     return cnt
 
 def seg_words(str1, str2):
+    """
+    :param str1:
+    :param str2:
+    :return:
+
+    >>> seg_words("basketball", "basket ball")
+    basket ball
+    """
+
+
     str2 = str2.lower()
-    str2 = re.sub("[^a-z0-9./]"," ", str2)
+    str2 = re.sub("[^a-z0-9./]", " ", str2)
     str2 = [z for z in set(str2.split()) if len(z)>2]
     words = str1.lower().split(" ")
     s = []
@@ -339,8 +349,12 @@ def num_common_noun_ordered(s, tags):
     :param str1:
     :param tags:
     :return: cnt
+
+    >>> num_common_noun_ordered("hello world", pos_tag("world hello world".split()))
+    2
+
     """
-    words, cnt, idx = s.split(), .0, 0
+    words, cnt, idx = s.split(), 0, 0
     for word in words:
         for i in range(idx, len(tags)):
             if tags[i][1]=='NN' and word==tags[i][0]:
@@ -434,4 +448,7 @@ if __name__=='__main__':
     word = 'asdasdzxc 0.2in.  asdzxcz21x32qt. asdasdasd 3/4ft.asdasdaszxc 23watt.'
     s = 'asdasdzczxczxc 0.2in.  asdzxccxcz21x32qt. adasd 3/4ft.asd3/4ft.aasczxc3/4ft.'
     cnt = num_numsize_word(word, s)
+    import doctest
+    doctest.testmod()
+
     #print cnt
