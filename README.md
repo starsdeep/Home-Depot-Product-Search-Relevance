@@ -102,13 +102,14 @@ beidouwang
 
 
 ## need to check
-* utility.num_common_word
 * utility.num_common_word_ordered
 * utility.num_size_word
-
+* utility.numsize_of_str
 
 
 ## feature 含义
+
+### from FirstFeatureFuncDict
 
 * origin_search_term, 最原始的search_term
 * ori_stem_search_term, 对原始的search_term,通过utility.str_stem(s, by_lemmatizer=False)处理过的结果
@@ -148,55 +149,102 @@ beidouwang
 * bigram_in_brand,???对search_term切分的时候，所有相邻的两个单词组成一个bigram word，返回list of  bigram word， 这些bigram word有多少个出现在brand中
 
 
-* search_term_fuzzy_match, 
+* search_term_fuzzy_match, search_term, title????
 
 
 * word_with_er_count_in_query, search_term中，er结尾的单词的数目
 * word_with_er_count_in_title,  title中，er结尾的单词的数目
 * first_er_in_query_occur_position_in_title, search_term中第一个er结尾的单词出现在title中的位置
 
-* len_of_query,
-* len_of_main_title 
-* len_of_title 
-* len_of_description 
-* len_of_brand 
-* len_of_numsize_query 
+* len_of_query,search_term(非原始search_term)中单词的个数
+* len_of_main_title,main_title中单词的个数
+* len_of_title,title中单词的个数
+* len_of_description,description中单词的个数
+* len_of_brand,brand中单词的个数
+
+
+* chars_of_query, search_term(非原始search_term)的字符个数，包含空格字符
+
+
+* ratio_main_title, word_in_main_title / ( len_of_query + 1 )
+* ratio_title, word_in_title / ( len_of_query + 1 )
+* ratio_main_title_ordered, word_in_main_title_ordered / (len_of_query + 1)
+* ratio_title_ordered, word_in_title_ordered / (len_of_query + 1)
+* ratio_description, word_in_description / ( len_of_query + 1)
+* ratio_brand, word_in_brand / (len_of_query + 1)
+
+
+* len_of_numsize_query,
 * len_of_numsize_main_title 
 * len_of_numsize_title 
 * len_of_numsize_description 
 
+* ratio_bigram_title, bigram_in_title / (len_of_query + 1)
+* ratio_bigram_main_title, bigram_in_main_title / (len_of_query + 1)
+* ratio_bigram_description, bigram_in_description / (len_of_query + 1)
+* ratio_bigram_brand, bigram_in_brand / (len_of_query + 1)
 
-* ratio_main_title 
-* ratio_title 
-* ratio_main_title_ordered 
-* ratio_title_ordered 
-* ratio_description 
-* ratio_brand 
-* ratio_numsize_main_title 
-* ratio_numsize_title 
-* ratio_numsize_description 
+* len_of_search_term_fuzzy_match, search_term_fuzzy_match中的单词数量
 
+* title_query_BM25， title和search_term之间的BM25相似度，离线计算???
+* description_query_BM25，description 和search_term之间的BM25相似度，离线计算？？
 
 
-* len_of_search_term_fuzzy_match 
-* chars_of_query 
-* noun_of_query 
-* noun_of_title 
-* noun_of_main_title 
-* noun_of_description 
-* noun_match_main_title 
-* noun_match_title 
-* noun_match_main_title_ordered 
-* noun_match_title_ordered 
-* noun_match_description 
-* match_last_noun_main 
-* match_last_2_noun_main 
-* match_last_3_noun_main 
-* match_last_5_noun_main 
-* ratio_noun_match_main_title 
-* ratio_noun_match_title 
-* ratio_noun_match_description
- 
+### from PostagFeatureFuncDict，之后的search_term都是指原始search_term经过utility.str_stem之后的内容
+
+* noun_of_query, search_term中名词的个数
+* noun_of_title, title 中名词的个数
+* noun_of_main_title, main_title中名词的个数
+* noun_of_description, description中名词的个数
+* noun_match_main_title, search_term中的词语在main_title中，并且是名词（在main_title中是名词）的个数，有模糊匹配的词算0.5个
+* noun_match_title, search_term中的词语在title中，并且是名词（在title中是名词）的个数，有模糊匹配的词算0.5个
+* noun_match_main_title_ordered, 对search_term进行split,从第一个词开始顺序匹配main_title中的名词，看能匹配多少个词，【这里可以改进，因此如果第一个词出现在main_title最后面的话，返回值就是1，这会忽略search_term其它词的作用】
+* noun_match_title_ordered, 含义同上，不过把main_title替换成了title
+* noun_match_description, 含义同noun_match_main_title_ordered，不过main_title替换成description
+* match_last_noun_main, 对于main_title当中的最后一个名词，是否在search_term中可以找到
+* match_last_2_noun_main,对于main_title当中的最后两个名词，有多少个可以在search_term中找到
+* match_last_3_noun_main,对于main_title当中的最后三个名词，有多少个可以在search_term中找到
+* match_last_5_noun_main,对于main_title当中的最后五个名词，有多少个可以在search_term中找到 
+
+
+
+### from NumsizeFuncDict
+* numsize_word_in_main_title, ？？？？ search_term中的度量单位词，包含数字和单位,在main_title中，可以找到多少个匹配的词
+* numsize_word_in_title， 同numsize_word_in_main_title，不过要将main_title替换成title
+* numsize_word_in_description, 同numsize_word_in_main_title，不过要将main_title替换成description
+* numsize_of_query, ？？？？search_term中有多少度量单位词
+* len_of_numsize_main_title, ??? main_title中有多少度量单位词
+* len_of_numsize_title， ？？？title中有多少度量单位词
+* len_of_numsize_description， ？？ description有多少度量单位词
+
+* numsize_title_case1,  len(numsize_of_query) == 0 and len(numsize_of_title)==0,
+* numsize_title_case2, len(numsize_of_query)==0 and len(numsize_of_title)>0),
+* numsize_title_case3,len(numsize_of_query)>0 and len(numsize_of_title)==0),
+* numsize_title_case4,len(numsize_of_query)>0 and len(numsize_of_title)>0 and len(set(numsize_of_query) & set(numsize_of_title))==0),
+* numsize_title_case5, len(numsize_of_query)>0 and len(numsize_of_title)>0 and len(set(numsize_of_query) & set(numsize_of_title))>0),
+* 以上几个case都是，numsize_of_query和numsize_of_title的一些组合
+
+* numsize_description_case1, len(numsize_of_query)==0 and len(numsize_of_description)==0),
+* numsize_description_case2,len(numsize_of_query)==0 and len(numsize_of_description)>0),
+* numsize_description_case3,len(numsize_of_query)>0 and len(numsize_of_description)==0),
+* numsize_description_case4,len(numsize_of_query)>0 and len(numsize_of_description)>0 and len(set(numsize_of_query) & set(numsize_of_description))==0),
+* numsize_description_case5, len(numsize_of_query)>0 and len(numsize_of_description)>0 and len(set(numsize_of_query) & set(numsize_of_description))>0),
+* 以上几个case都是，numsize_of_query和numsize_of_description的一些组合
+
+### from LastFeatureFuncDict
+
+* ratio_noun_match_title, noun_match_title / ( noun_of_query + 1 )
+* ratio_noun_match_main_title, noun_match_main_title / ( noun_of_query + 1 )
+* ratio_noun_match_description, noun_match_title / ( noun_of_query + 1 )
+* ratio_noun_match_title_ordered, noun_match_title_ordered / ( noun_of_query + 1 )
+* ratio_noun_match_main_title_ordered,  noun_match_main_title_ordered / ( noun_of_query + 1 )
+* ratio_noun_match_description, noun_match_description / ( noun_of_query + 1 ) 
+
+
+* ratio_numsize_main_title,  numsize_word_in_main_title / ( len_of_numsize_query + 1 )
+* ratio_numsize_title, numsize_word_in_title / ( len_of_numsize_query + 1 )
+* ratio_numsize_description, numsize_word_in_description / ( len_of_numsize_query + 1 ) 
+
 
 
 ## 实验结果记录
