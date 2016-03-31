@@ -87,7 +87,6 @@ def str_remove_stopwords(s):
     word_list = s.split()
     return ' '.join([word for word in word_list if word not in stop_w])
 
-
 def str_is_meaningful(s):
     for t in s.split():
         is_number = re.match(r'^[0-9]+$', t)
@@ -118,6 +117,24 @@ def str_stem(s, by_lemmatizer=False):
 
     s = s.lower()
     s = s.replace("  "," ")
+
+    # fix typos
+    s = s.replace("&amp;", "&") # most '&' in title are turned to "&amp;"
+    s = s.replace("&#39;", "'") # escaped in title
+    s = s.replace("氓隆"," degrees") # escaped in title
+    s = s.replace("聣脹聬", "-") # escaped in title
+    s = s.replace("聣脹陋", "'") # escaped in title
+    s = s.replace("toliet","toilet")
+    s = s.replace("airconditioner","air condition")
+    s = s.replace("vinal","vinyl")
+    s = s.replace("vynal","vinyl")
+    s = s.replace("skill","skil")
+    s = s.replace("snowbl","snow bl")
+    s = s.replace("plexigla","plexi gla")
+    s = s.replace("rustoleum","rust oleum")
+    s = s.replace("whirpool","whirlpool")
+    s = s.replace("whirlpoolga", "whirlpool ga")
+    s = s.replace("whirlpoolstainless","whirlpool stainless")
 
     # remove punctuations
     s = re.sub(r"([0-9]),([0-9])", r"\1\2", s)
@@ -175,21 +192,6 @@ def str_stem(s, by_lemmatizer=False):
     s = s.replace("  "," ") # consequent space may be added by above rules
     #s = (" ").join([z for z in s.split(" ") if z not in stop_w])
 
-    # fix typos
-    s = s.replace("&amp;", "&") # most '&' in title are turned to "&amp;"
-    s = s.replace("&#39;", "'") # escaped in title
-    s = s.replace("toliet","toilet")
-    s = s.replace("airconditioner","air condition")
-    s = s.replace("vinal","vinyl")
-    s = s.replace("vynal","vinyl")
-    s = s.replace("skill","skil")
-    s = s.replace("snowbl","snow bl")
-    s = s.replace("plexigla","plexi gla")
-    s = s.replace("rustoleum","rust oleum")
-    s = s.replace("whirpool","whirlpool")
-    s = s.replace("whirlpoolga", "whirlpool ga")
-    s = s.replace("whirlpoolstainless","whirlpool stainless")
-
     # use lemmatizer or stemmer to stem words
     if by_lemmatizer:
         tagged_corpus = pos_tag(s.split())
@@ -198,8 +200,8 @@ def str_stem(s, by_lemmatizer=False):
         words = [stemmer.stem(z) for z in s.split()]
     return " ".join(words)
 
-def words_of_str(str):
-    return len(str.split())
+def words_of_str(s):
+    return len(s.split())
 
 def noun_of_str(tags):
     cnt = 0
@@ -253,7 +255,7 @@ def segmentit(s, txt_arr, t):
     return r
 
 
-def num_common_word(str1, str2, ngram=1):
+def num_common_word(str1, str2, ngram=1, exact_matching=True):
     """
     number of words in str1 that also in str2
     :param str1:
@@ -269,18 +271,21 @@ def num_common_word(str1, str2, ngram=1):
         print(str(ngram) + " not supported yet")
 
     cnt = 0
+    targets = str2.split()
     for word in words:
-        if str2.find(word)>=0:
-            cnt += 1
+        if exact_matching and word in targets:
+            cnt+=1
+        elif not exact_matching and str2.find(word)>=0:
+            cnt+=1
+        # count 0.5 for words unfound but edit distance<2
         elif len(word)>3:
-            # count 0.5 for words unfound but edit distance<2
             s1 = [z for z in list(set(str2.split(" "))) if abs(len(z)-len(word))<2]
             t1 = sum([1 for z in s1 if edit_distance(z, word)<2])
             if t1 > 1:
                 cnt+=0.5
     return cnt
 
-def num_common_word_ordered(str1, str2):
+def num_common_word_ordered(str1, str2, exact_matching=True):
     """
     number of words in str1 that also in str2, occuring in same order
     :param str1:
@@ -288,13 +293,17 @@ def num_common_word_ordered(str1, str2):
     :return: cnt
     """
     words, cnt = str1.split(), 0
+    targets = str2.split()
     for word in words:
-        if str2.find(word)>=0:
+        if exact_matching and word in targets:
+            cnt+=1
+            targets = targets[targets.index(word)+1:]
+        elif not exact_matching and str2.find(word)>=0:
             cnt+=1
             str2 = str2[str2.find(word)+len(word):]
     return cnt
 
-def match_last_k_noun(s, tags, k):
+def match_last_k_noun(s, tags, k, exact_matching=True):
     """
     total number of noun(s) which is both in s and last k noun(s) of str2(tags is pos_tag of str2)
     :param str1:
@@ -307,8 +316,11 @@ def match_last_k_noun(s, tags, k):
             nouns.append(key)
             if len(nouns)>=k:
                 break
+    targets = s.split()
     for noun in nouns:
-        if s.find(noun)>=0:
+        if exact_matching and noun in targets:
+            cnt += 1
+        elif not exact_matching and s.find(noun)>=0:
             cnt += 1
     return cnt
 
@@ -351,9 +363,9 @@ def num_common_noun_ordered(s, tags):
                 break
     return cnt
 
-def num_whole_word(word, str):
+def num_whole_word(word, s):
     """
-    number of times that word(sentence) appears in str
+    number of times that whole word(sentence) appears in str, as prefix or word
     :param word:
     :param str:
     :return: cnt
@@ -362,8 +374,8 @@ def num_whole_word(word, str):
     i = 0
     if len(word.split())==0:
         return 0
-    while i < len(str):
-        i = str.find(word, i)
+    while i < len(s):
+        i = s.find(word, i) # may match "butterfly" with "butter"
         if i == -1:
             return cnt
         else:
@@ -371,8 +383,7 @@ def num_whole_word(word, str):
             i += len(word)
     return cnt
 
-
-def num_numsize_word(numsize_list, str):
+def num_numsize_word(numsize_list, s):
     """
     number of times that numsize in numsize_list appears in str
     :param word:
@@ -383,8 +394,8 @@ def num_numsize_word(numsize_list, str):
     for numsize in numsize_list:
         i = 0
         #print numsize[0]
-        while i < len(str):
-            i = str.find(numsize[0], i)
+        while i < len(s):
+            i = s.find(numsize[0], i) # may match "123in." with "3in."
             if i == -1:
                 break
             else:
@@ -435,8 +446,8 @@ def find_er_position(query, title):
 
 if __name__=='__main__':
     word = 'asdasdzxc 0.2in.  asdzxcz21x32qt. asdasdasd 3/4ft.asdasdaszxc 23watt.'
-    str = 'asdasdzczxczxc 0.2in.  asdzxccxcz21x32qt. adasd 3/4ft.asd3/4ft.aasczxc3/4ft.'
-    cnt = num_numsize_word(word, str)
+    s = 'asdasdzczxczxc 0.2in.  asdzxccxcz21x32qt. adasd 3/4ft.asd3/4ft.aasczxc3/4ft.'
+    cnt = num_numsize_word(word, s)
     import doctest
     doctest.testmod()
     #print cnt
