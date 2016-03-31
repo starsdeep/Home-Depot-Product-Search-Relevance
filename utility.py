@@ -261,9 +261,9 @@ def num_common_word(str1, str2, ngram=1):
     cnt = 0
     for word in words:
         if str2.find(word)>=0:
-            cnt+=1
-        # count 0.5 for words unfound but edit distance<2
-        if cnt==0 and len(word)>3:
+            cnt += 1
+        elif len(word)>3:
+            # count 0.5 for words unfound but edit distance<2
             s1 = [z for z in list(set(str2.split(" "))) if abs(len(z)-len(word))<2]
             t1 = sum([1 for z in s1 if edit_distance(z, word)<2])
             if t1 > 1:
@@ -420,8 +420,6 @@ def find_er_position(query, title):
     return position
 
 if __name__=='__main__':
-#    import doctest
-#    doctest.testmod()
     word = 'asdasdzxc 0.2in.  asdzxcz21x32qt. asdasdasd 3/4ft.asdasdaszxc 23watt.'
     str = 'asdasdzczxczxc 0.2in.  asdzxccxcz21x32qt. adasd 3/4ft.asd3/4ft.aasczxc3/4ft.'
     cnt = num_numsize_word(word, str)
