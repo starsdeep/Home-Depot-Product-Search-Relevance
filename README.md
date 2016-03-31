@@ -101,6 +101,104 @@ beidouwang
 |4|hot dog|HealthSmart Digger Dog Reusable Hot and Cold Pack||2-gram||
 
 
+## need to check
+* utility.num_common_word
+* utility.num_common_word_ordered
+* utility.num_size_word
+
+
+
+## feature 含义
+
+* origin_search_term, 最原始的search_term
+* ori_stem_search_term, 对原始的search_term,通过utility.str_stem(s, by_lemmatizer=False)处理过的结果
+* search_term,对原始的search_term，通过feature.search_term_clean，处理过的结果，主要是纠错和删除stopword，同时还会调用utility.str_stem
+* main_title，对原始的product_title，进行utility.main_title_extract，处理之后，再进行utility.str_stem处理
+* title,对原始的product_title，进行utility.str_stem处理的结果
+* description,对原始的product_description进行utility.str_stem处理的结果
+* brand,原始brand，来自于attributes.csv的MFG Brand Name字段的值，对原始brand进行utility.str_stem处理之后的结果
+
+
+* ori_query_in_title, ori_stem_search_term整体在title中出现的次数
+* query_in_main_title, search_term(非原始search_term)整体在main_title中出现的次数
+* query_in_title, search_term(非原始search_term)整体在title中出现的次数
+* query_in_description, search_term(非原始search_term)整体在description中出现的次数 
+* query_last_word_in_main_title, search_term(非原始search_term)的最后一个单词在是否在main_title中，【模糊匹配算0.5】
+* query_last_word_in_title,search_term(非原始search_term)的最后一个单词在是否在title中，【模糊匹配算0.5】
+* query_last_word_in_description,search_term(非原始search_term)的最后一个单词在是否在description中，【模糊匹配算0.5】
+* word_in_main_title,search_term(非原始search_term)中所有词，有多少个在main_title中出现了，【模糊匹配算0.5】 
+* word_in_main_title_ordered, 对search_term(非原始search_term)进行split,从第一个词开始顺序匹配main_title，看能匹配多少个词，【这里可以改进，因此如果第一个词出现在main_title最后面的话，返回值就是1，这会忽略search_term其它词的作用】
+* word_in_title,search_term(非原始search_term)中所有词，有多少个在title中出现了，【模糊匹配算0.5】
+
+
+* numsize_word_in_main_title,search_term(非原始search_term)中描述单位的词，在main_title中出现的次数
+* numsize_word_in_title,search_term(非原始search_term)中描述单位的词，在title中出现的次数 
+* numsize_word_in_description,search_term(非原始search_term)中描述单位的词，在description中出现的次数
+
+
+* ori_word_in_title_ordered, 对ori_stem_search_term进行split,从第一个词开始顺序匹配，看能匹配多少个词，【这里可以改进，因此如果第一个词出现在main_title最后面的话，返回值就是1，这会忽略search_term其它词的作用】
+* word_in_title_ordered, 对search_term(非原始search_term)进行split,从第一个词开始顺序匹配title，看能匹配多少个词，【这里可以改进，因此如果第一个词出现在main_title最后面的话，返回值就是1，这会忽略search_term其它词的作用】
+* word_in_description,search_term(非原始search_term)的各个词语，有多少个出现description中
+* word_in_brand,search_term(非原始search_term)的各个词语，有多少个出现brand中
+
+
+* bigram_in_title,???对search_term切分的时候，所有相邻的两个单词组成一个bigram word，返回list of  bigram word， 这些bigram word有多少个出现在title中
+* bigram_in_main_title,???对search_term切分的时候，所有相邻的两个单词组成一个bigram word，返回list of  bigram word， 这些bigram word有多少个出现在main_title中
+* bigram_in_description,???对search_term切分的时候，所有相邻的两个单词组成一个bigram word，返回list of  bigram word， 这些bigram word有多少个出现在description中
+* bigram_in_brand,???对search_term切分的时候，所有相邻的两个单词组成一个bigram word，返回list of  bigram word， 这些bigram word有多少个出现在brand中
+
+
+* search_term_fuzzy_match, 
+
+
+* word_with_er_count_in_query, search_term中，er结尾的单词的数目
+* word_with_er_count_in_title,  title中，er结尾的单词的数目
+* first_er_in_query_occur_position_in_title, search_term中第一个er结尾的单词出现在title中的位置
+
+* len_of_query,
+* len_of_main_title 
+* len_of_title 
+* len_of_description 
+* len_of_brand 
+* len_of_numsize_query 
+* len_of_numsize_main_title 
+* len_of_numsize_title 
+* len_of_numsize_description 
+
+
+* ratio_main_title 
+* ratio_title 
+* ratio_main_title_ordered 
+* ratio_title_ordered 
+* ratio_description 
+* ratio_brand 
+* ratio_numsize_main_title 
+* ratio_numsize_title 
+* ratio_numsize_description 
+
+
+
+* len_of_search_term_fuzzy_match 
+* chars_of_query 
+* noun_of_query 
+* noun_of_title 
+* noun_of_main_title 
+* noun_of_description 
+* noun_match_main_title 
+* noun_match_title 
+* noun_match_main_title_ordered 
+* noun_match_title_ordered 
+* noun_match_description 
+* match_last_noun_main 
+* match_last_2_noun_main 
+* match_last_3_noun_main 
+* match_last_5_noun_main 
+* ratio_noun_match_main_title 
+* ratio_noun_match_title 
+* ratio_noun_match_description
+ 
+
+
 ## 实验结果记录
 
 | submit date | name | offline |          | online  |   compare  |feature                  | model                   | other trick                                   | comments |
