@@ -25,11 +25,8 @@ if __name__ == '__main__':
     with open(os.path.join(sys.argv[1], 'config.json')) as infile:
         config = json.load(infile)
 
-    if 'load_feature_from' in config and config["load_feature_from"] and os.path.isfile(config["load_feature_from"]):
-        df_train, df_test = load_feature(config)
-    else:
-        # feature extraction
-        df_train, df_test = get_feature(config)
+    # feature extraction
+    df_train, df_test = get_feature(config)
 
     id_test = df_test['id']
     y_train = df_train['relevance'].values
@@ -40,5 +37,5 @@ if __name__ == '__main__':
     start_time = time.time()
     mf = ModelFactory()
     y_pred = mf.create_model(config).predict(X_train, y_train, X_test)
-    print("--- Fit Model: %s minutes ---" % round(((time.time() - start_time)/60),2))
+    print("--- Fit Model: %s minutes ---" % round(((time.time() - start_time)/60), 2))
     pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv(os.path.join(sys.argv[1],'submission.csv'),index=False)
