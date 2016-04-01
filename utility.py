@@ -14,17 +14,10 @@ lemmatizer = WordNetLemmatizer()
 
 stop_w = {'for', 'xbi', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'} #'electr','paint','pipe','light','kitchen','wood','outdoor','door','bathroom'
 strNum = {'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9}
-stopwords = set(stopwords.words('english')) | stop_w
+# stopwords = set(stopwords.words('english')) | stop_w # too much stopwords makes performance worse
 
 bigram_vectorizer = CountVectorizer(ngram_range=(2, 2),token_pattern=r'\b\w+\b')
 bigram_analyzer = bigram_vectorizer.build_analyzer()
-
-#size = ['cm.','in.','ft.','watt.','qt.','gal.','oz.','sq.ft.','cu.ft.','mm.','lb.','volt.','amp.']
-#reObj can match three types of strings, such as 2.3in. |  2.5x3sq.ft.  |   23x23
-numsize_reObj = re.compile('(([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
-                    ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+)(cm\.|ft\.|in\.|watt.|qt.|gal.|oz.|sq.ft.|cu.ft.|mm.|lb.|volt.|amp.)|\
-                    ([0-9]+(\.|\/)?[0-9]+)x([0-9]+(\.|\/)?[0-9]+))')
-
 
 def lemmatize(token, tag):
     try:
@@ -79,7 +72,7 @@ def main_title_extract(title):
     title = re.sub(r'\s+$', '', title) # remove endings spaces
     return title
 
-def model_number_extract(title):
+def typeid_extract(title):
     regex = "(?<=\s)#*[A-Z]+\d*-?\d+-*[A-Z]?(?=\s|$)"
     return " ".join(re.findall(regex, title))
 
@@ -255,7 +248,7 @@ def segmentit(s, txt_arr, t):
     return r
 
 
-def num_common_word(str1, str2, ngram=1, exact_matching=True):
+def num_common_word(str1, str2, ngram=1, exact_matching=False):
     """
     number of words in str1 that also in str2
     :param str1:
@@ -393,23 +386,28 @@ def num_numsize_word(numsize_list, s):
     cnt = 0
     for numsize in numsize_list:
         i = 0
-        #print numsize[0]
         while i < len(s):
-            i = s.find(numsize[0], i) # may match "123in." with "3in."
+            i = s.find(numsize, i) # may match "123in." with "3in."
             if i == -1:
                 break
             else:
                 cnt += 1
-                i += len(numsize[0])
+                i += len(numsize)
     return cnt
 
-def numsize_of_str(str):
+numsize_num = "\s\d+(?:\s\d+\/\d+|(?:(?:\.|\/)\d+)?)"
+numsize_msr = "(?:in\.|ft\.|lb\.|sq\.ft\.|cu\.ft\.|gal\.|oz\.|fl\.oz\.|cm\.|mm\.|deg\.|volt\.|watt\.|yd\.|amp\.|hour\.|year\.|gauge\.|gpm\.|psi\.|hp\.|kw\.|qt\.|cfm\.|cc\.|vdc\.|btu\.|gpf\.|grit\.|ton\.|seer\.|tpi\.|tvl\.|awg\.|swe\.|mph\.|cri\.|lumens\.)"
+numsize_mid = "(?:\s(?:long|wide|length|height|deep|thick|l|h|w|d))"
+numsize_elem = numsize_num + numsize_msr + '?' + numsize_mid + '?'
+numsize_regex = re.compile('#?(?:' + numsize_elem + '\sxbi)*' + numsize_elem)
+
+def numsize_of_str(s):
     """
     number of times that number and size appears in str
     :param str:
     :return: number
     """
-    return numsize_reObj.findall(str)
+    return numsize_regex.findall(s)
 
 def count_er_word_in_(x):
     """
