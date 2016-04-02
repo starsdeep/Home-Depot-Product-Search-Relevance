@@ -248,7 +248,7 @@ def segmentit(s, txt_arr, t):
     return r
 
 
-def num_common_word(str1, str2, ngram=1, exact_matching=False):
+def num_common_word(str1, str2, ngram=1, exact_matching=False, use_editdis=True):
     """
     number of words in str1 that also in str2
     :param str1:
@@ -270,15 +270,18 @@ def num_common_word(str1, str2, ngram=1, exact_matching=False):
             cnt+=1
         elif not exact_matching and str2.find(word)>=0:
             cnt+=1
-        # count 0.5 for words unfound but edit distance<2
-        elif len(word)>3:
-            s1 = [z for z in list(set(str2.split(" "))) if abs(len(z)-len(word))<2]
-            t1 = sum([1 for z in s1 if edit_distance(z, word)<2])
-            if t1 > 1:
-                cnt+=0.5
+    # count 0.5 if words unfound but some word edit distance<2
+    if use_editdis and cnt==0:
+        for word in words:
+            if len(word)>3:
+                s1 = [z for z in list(set(str2.split(" "))) if abs(len(z)-len(word))<2]
+                t1 = sum([1 for z in s1 if edit_distance(z, word)<2])
+                if t1 > 1:
+                    cnt += 0.5
+                    break
     return cnt
 
-def num_common_word_ordered(str1, str2, exact_matching=True):
+def num_common_word_ordered(str1, str2, exact_matching=False):
     """
     number of words in str1 that also in str2, occuring in same order
     :param str1:
@@ -296,7 +299,7 @@ def num_common_word_ordered(str1, str2, exact_matching=True):
             str2 = str2[str2.find(word)+len(word):]
     return cnt
 
-def match_last_k_noun(s, tags, k, exact_matching=True):
+def match_last_k_noun(s, tags, k, exact_matching=False):
     """
     total number of noun(s) which is both in s and last k noun(s) of str2(tags is pos_tag of str2)
     :param str1:
@@ -317,7 +320,7 @@ def match_last_k_noun(s, tags, k, exact_matching=True):
             cnt += 1
     return cnt
 
-def num_common_noun(s, tags):
+def num_common_noun(s, tags, use_editdis=True):
     """
     number of nouns in s that also in str2(tags is pos_tag of str2)
     :param str1:
@@ -327,13 +330,14 @@ def num_common_noun(s, tags):
     words, cnt = s.split(), .0
     for word in words:
         for key, tag in tags:
-            if tag=='NN':
-                if word==key:
-                    cnt += 1
-                    break
-                if edit_distance(word, key)<2:
-                    cnt += 0.5
-                    break
+            if tag=='NN' and word==key:
+                cnt += 1
+                break
+    if use_editdis and cnt==0:
+        for word in words:
+            for key, tag in tags:
+                if tag=='NN' and edit_distance(word, key)<2:
+                    return 0.5
     return cnt
 
 def num_common_noun_ordered(s, tags):
