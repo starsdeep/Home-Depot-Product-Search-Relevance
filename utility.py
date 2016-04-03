@@ -87,6 +87,16 @@ def str_is_meaningful(s):
             return True
     return False
 
+def typeid_stem(s):
+    s = s.lower()
+    s = re.sub(r"([0-9])([a-z])", r"\1 \2", s)
+    s = re.sub(r"([a-z])([0-9])", r"\1 \2", s)
+    s = re.sub(r"([a-z])( *)\.( *)([a-z])", r"\1 \4", s)
+    s = re.sub(r"([a-z])( *)/( *)([a-z])", r"\1 \4", s)
+    s = re.sub(r"(#)(\S)", r"\1 \2", s)
+    s = s.replace("-"," ") 
+    return s
+
 def str_stem(s, by_lemmatizer=False):
     """
     :param s:
@@ -407,11 +417,19 @@ numsize_regex = re.compile('#?(?:' + numsize_elem + '\sxbi)*' + numsize_elem)
 
 def numsize_of_str(s):
     """
-    number of times that number and size appears in str
+    number of times that number + size combinations appears in a complete str
     :param str:
     :return: number
     """
     return numsize_regex.findall(s)
+
+def numsize_of_query(s):
+    """
+    number of times that number and size appears in a short query
+    :param str:
+    :return: number
+    """
+    return re.compile('\d+\S*').findall(s)
 
 def count_er_word_in_(x):
     """

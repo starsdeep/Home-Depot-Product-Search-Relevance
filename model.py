@@ -13,7 +13,7 @@ from sklearn import cross_validation
 import xgboost as xgb
 
 class CustRegressionVals(BaseEstimator, TransformerMixin):
-    d_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid']
+    d_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid','numsize_of_query','numsize_of_title','numsize_of_main_title','numsize_of_description']
     def fit(self, x, y=None):
         return self
     def transform(self, hd_searches):

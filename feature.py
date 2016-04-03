@@ -120,14 +120,27 @@ def get_feature(config):
 #
 #     return df[:num_train], df[num_train:]
 
+def str_exclude(s, row, name):
+    if name in row:
+        return s.replace(row[name], "")
+    else:
+        return s
+
 def build_feature(df, features):
     # iterate features in order, use apply() to update in time
     if not features:
         return df
-    for feature in list(FirstFeatureFuncDict.keys()):
+
+    for feature in list(TextFeatureFuncDict.keys()):
         if feature in features:
             print('calculating feature: '+feature+' ...')
-            feature_func = FirstFeatureFuncDict[feature]
+            feature_func = TextFeatureFuncDict[feature]
+            df[feature] = df.apply(feature_func, axis=1)
+
+    for feature in list(MatchFeatureFuncDict.keys()):
+        if feature in features:
+            print('calculating feature: '+feature+' ...')
+            feature_func = MatchFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
 
     # iterate features in order (iterrows cannot update in time)
@@ -148,21 +161,11 @@ def build_feature(df, features):
                 print(str(index)+' rows calculated...')
 
     # compute CategoricalNumsizeFuncDict
-    if set(features) & set(NumsizeFuncDict.keys()):
-        print('calculating cateforical numsize features...')
-        for index, row in df.iterrows():
-            help_dict = {
-                'numsize_of_query': numsize_of_str(row['search_term']),
-                'numsize_of_title': numsize_of_str(row['title']),
-                'numsize_of_main_title': numsize_of_str(row['main_title']),
-                'numsize_of_description': numsize_of_str(row['description']),
-            }
-            for feature in list(NumsizeFuncDict.keys()):
-                if feature in features:
-                    feature_func = NumsizeFuncDict[feature]
-                    df.loc[index, feature] = feature_func(row, help_dict)
-            if index%500==0:
-                print(str(index)+' rows calculated...')
+    for feature in list(NumsizeFuncDict.keys()):
+        if feature in features:
+            print('calculating feature: '+feature+' ...')
+            feature_func = NumsizeFuncDict[feature]
+            df[feature] = df.apply(feature_func, axis=1)
 
     # iterate features in order, use apply() to update in time
     for feature in list(LastFeatureFuncDict.keys()):
@@ -191,17 +194,27 @@ def last_word_in_title(s, t):
 
 # Following features in dicts will be calculated from top to bottom
 
-# Features can be calculated by raw input in order
-FirstFeatureFuncDict = OrderedDict([
-    ('origin_search_term', lambda row: row['search_term']),
+# Features of pure texts
+TextFeatureFuncDict = OrderedDict([
     ('ori_stem_search_term', lambda row: str_stem(row['search_term'])),
-    ('search_term', lambda row: search_term_clean(row['search_term'])),
-    ('typeid', lambda row: str_stem(typeid_extract(row['product_title']))),
+    ('origin_search_term', lambda row: row['search_term']),
+    ('typeid', lambda row: typeid_stem(typeid_extract(row['product_title']))),
+    ('title', lambda row: str_stem(str_exclude(row['product_title'],row,'typeid'))),
     ('main_title', lambda row: str_stem(main_title_extract(row['product_title']))),
-    ('title', lambda row: str_stem(row['product_title'])),
+    ('search_term', lambda row: search_term_clean(row['search_term'])),
     ('description', lambda row: str_stem(row['product_description'])),
     ('brand', lambda row: str_stem(row['brand'])),
+    ('numsize_of_query', lambda row: " ".join(numsize_of_str(row['search_term']))),
+    ('numsize_of_title', lambda row: " ".join(numsize_of_str(row['title']))),
+    ('numsize_of_main_title', lambda row: " ".join(numsize_of_str(row['main_title']))),
+    ('numsize_of_description', lambda row: " ".join(numsize_of_str(row['description'])))
+])
 
+# Features for matching words
+MatchFeatureFuncDict = OrderedDict([
+    ('title', lambda row: str_exclude(row['title'], row, 'numsize_of_title')),
+    ('main_title', lambda row: str_exclude(row['title'], row, 'numsize_of_main_title')),
+    ('description', lambda row: str_exclude(row['title'], row, 'numsize_of_description')),
     ('ori_query_in_title', lambda row: num_whole_word(row['ori_stem_search_term'], row['title'])),
     ('query_in_main_title', lambda row: num_whole_word(row['search_term'], row['main_title'])),
     ('query_in_title', lambda row: num_whole_word(row['search_term'], row['title'])),
@@ -240,9 +253,7 @@ FirstFeatureFuncDict = OrderedDict([
     ('len_of_title', lambda row: words_of_str(row['title'])),
     ('len_of_description', lambda row: words_of_str(row['description'])),
     ('len_of_brand', lambda row: words_of_str(row['brand'])),
-
-    ('len_of_typeid', lambda row: words_of_str(row['typeid'])),
-
+    ('chars_of_typeid', lambda row: len(row['typeid'])),
     ('chars_of_query', lambda row: len(row['search_term'])),
 
     ('ratio_main_title', lambda row :row['word_in_main_title'] / (row['len_of_query']+1.0)),
@@ -285,28 +296,29 @@ PostagFeatureFuncDict = OrderedDict([
 
 # categorical feature for numsize, 用来表征query和title,description的匹配情况的feature,是binary feature
 NumsizeFuncDict = OrderedDict([
-    ('numsize_word_in_main_title', lambda row, help_dict: num_numsize_word(help_dict['numsize_of_query'], row['main_title'])),
-    ('numsize_word_in_title', lambda row, help_dict: num_numsize_word(help_dict['numsize_of_query'], row['title'])),
-    ('numsize_word_in_description', lambda row, help_dict: num_numsize_word(help_dict['numsize_of_query'], row['description'])),
-    ('numsize_match_title', lambda row, help_dict: num_common_word(row['search_term'], " ".join(help_dict['numsize_of_title']), exact_matching=False)),
-    ('numsize_match_description', lambda row, help_dict: num_common_word(row['search_term'], " ".join(help_dict['numsize_of_description']), exact_matching=False)),
-    ('numsize_match_title_exact', lambda row, help_dict: num_common_word(row['search_term'], " ".join(help_dict['numsize_of_title']), exact_matching=True)),
-    ('numsize_match_description_exact', lambda row, help_dict: num_common_word(row['search_term'], " ".join(help_dict['numsize_of_description']), exact_matching=True)),
-    ('len_of_numsize_query', lambda row, help_dict: len(help_dict['numsize_of_query'])),
-    ('len_of_numsize_main_title', lambda row, help_dict: len(help_dict['numsize_of_main_title'])),
-    ('len_of_numsize_title', lambda row, help_dict: len(help_dict['numsize_of_title'])),
-    ('len_of_numsize_description', lambda row, help_dict: len(help_dict['numsize_of_description'])),
+    ('numsize_word_in_main_title', lambda row: num_numsize_word(row['numsize_of_query'], row['main_title'])),
+    ('numsize_word_in_title', lambda row: num_numsize_word(row['numsize_of_query'], row['title'])),
+    ('numsize_word_in_description', lambda row: num_numsize_word(row['numsize_of_query'], row['description'])),
+    ('numsize_match_title', lambda row: num_common_word(row['search_term'], row['numsize_of_title'], exact_matching=False)),
+    ('numsize_match_description', lambda row: num_common_word(row['search_term'], row['numsize_of_description'], exact_matching=False)),
+    ('numsize_match_title_exact', lambda row: num_common_word(row['search_term'], row['numsize_of_title'], exact_matching=True)),
+    ('numsize_match_description_exact', lambda row: num_common_word(row['search_term'], row['numsize_of_description'], exact_matching=True)),
+    ('chars_of_numsize_query', lambda row: len(row['numsize_of_query'])),
+    ('len_of_numsize_query', lambda row: words_of_str(row['numsize_of_query'])),
+    ('len_of_numsize_main_title', lambda row: words_of_str(row['numsize_of_main_title'])),
+    ('len_of_numsize_title', lambda row: words_of_str(row['numsize_of_title'])),
+    ('len_of_numsize_description', lambda row: words_of_str(row['numsize_of_description'])),
 
-    ('numsize_title_case1', lambda row, help_dict: len(help_dict['numsize_of_query'])==0 and len(help_dict['numsize_of_title'])==0),
-    ('numsize_title_case2', lambda row, help_dict: len(help_dict['numsize_of_query'])==0 and len(help_dict['numsize_of_title'])>0),
-    ('numsize_title_case3', lambda row, help_dict: len(help_dict['numsize_of_query'])>0 and len(help_dict['numsize_of_title'])==0),
-    ('numsize_title_case4', lambda row, help_dict: len(help_dict['numsize_of_query'])>0 and len(help_dict['numsize_of_title'])>0 and len(set(help_dict['numsize_of_query']) & set(help_dict['numsize_of_title']))==0),
-    ('numsize_title_case5', lambda row, help_dict: len(help_dict['numsize_of_query'])>0 and len(help_dict['numsize_of_title'])>0 and len(set(help_dict['numsize_of_query']) & set(help_dict['numsize_of_title']))>0),
-    ('numsize_description_case1', lambda row, help_dict: len(help_dict['numsize_of_query'])==0 and len(help_dict['numsize_of_description'])==0),
-    ('numsize_description_case2', lambda row, help_dict: len(help_dict['numsize_of_query'])==0 and len(help_dict['numsize_of_description'])>0),
-    ('numsize_description_case3', lambda row, help_dict: len(help_dict['numsize_of_query'])>0 and len(help_dict['numsize_of_description'])==0),
-    ('numsize_description_case4', lambda row, help_dict: len(help_dict['numsize_of_query'])>0 and len(help_dict['numsize_of_description'])>0 and len(set(help_dict['numsize_of_query']) & set(help_dict['numsize_of_description']))==0),
-    ('numsize_description_case5', lambda row, help_dict: len(help_dict['numsize_of_query'])>0 and len(help_dict['numsize_of_description'])>0 and len(set(help_dict['numsize_of_query']) & set(help_dict['numsize_of_description']))>0),
+    ('numsize_title_case1', lambda row: len(row['numsize_of_query'])==0 and len(row['numsize_of_title'])==0),
+    ('numsize_title_case2', lambda row: len(row['numsize_of_query'])==0 and len(row['numsize_of_title'])>0),
+    ('numsize_title_case3', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_title'])==0),
+    ('numsize_title_case4', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_title'])>0 and len(set(row['numsize_of_query']) & set(row['numsize_of_title']))==0),
+    ('numsize_title_case5', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_title'])>0 and len(set(row['numsize_of_query']) & set(row['numsize_of_title']))>0),
+    ('numsize_description_case1', lambda row: len(row['numsize_of_query'])==0 and len(row['numsize_of_description'])==0),
+    ('numsize_description_case2', lambda row: len(row['numsize_of_query'])==0 and len(row['numsize_of_description'])>0),
+    ('numsize_description_case3', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_description'])==0),
+    ('numsize_description_case4', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_description'])>0 and len(set(row['numsize_of_query']) & set(row['numsize_of_description']))==0),
+    ('numsize_description_case5', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_description'])>0 and len(set(row['numsize_of_query']) & set(row['numsize_of_description']))>0),
 ])
 
 # Statistical Features
