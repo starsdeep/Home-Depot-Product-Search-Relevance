@@ -133,9 +133,6 @@ beidouwang
 * word_in_title,search_term(非原始search_term)中所有词，有多少个在title中出现了，【模糊匹配算0.5】
 
 
-* numsize_word_in_main_title,search_term(非原始search_term)中描述单位的词，在main_title中出现的次数
-* numsize_word_in_title,search_term(非原始search_term)中描述单位的词，在title中出现的次数 
-* numsize_word_in_description,search_term(非原始search_term)中描述单位的词，在description中出现的次数
 
 
 * ori_word_in_title_ordered, 对ori_stem_search_term进行split,从第一个词开始顺序匹配，看能匹配多少个词，【这里可以改进，因此如果第一个词出现在main_title最后面的话，返回值就是1，这会忽略search_term其它词的作用】
@@ -151,6 +148,7 @@ beidouwang
 
 
 * search_term_fuzzy_match, search_term, title????
+* len_of_search_term_fuzzy_match, search_term_fuzzy_match中的单词数量
 
 
 * word_with_er_count_in_query, search_term中，er结尾的单词的数目
@@ -175,17 +173,12 @@ beidouwang
 * ratio_brand, word_in_brand / (len_of_query + 1)
 
 
-* len_of_numsize_query,
-* len_of_numsize_main_title 
-* len_of_numsize_title 
-* len_of_numsize_description 
 
 * ratio_bigram_title, bigram_in_title / (len_of_query + 1)
 * ratio_bigram_main_title, bigram_in_main_title / (len_of_query + 1)
 * ratio_bigram_description, bigram_in_description / (len_of_query + 1)
 * ratio_bigram_brand, bigram_in_brand / (len_of_query + 1)
 
-* len_of_search_term_fuzzy_match, search_term_fuzzy_match中的单词数量
 
 * title_query_BM25， title和search_term之间的BM25相似度，离线计算???
 * description_query_BM25，description 和search_term之间的BM25相似度，离线计算？？
@@ -210,10 +203,12 @@ beidouwang
 
 
 ### from NumsizeFuncDict
+
 * numsize_word_in_main_title, ？？？？ search_term中的度量单位词，包含数字和单位,在main_title中，可以找到多少个匹配的词
 * numsize_word_in_title， 同numsize_word_in_main_title，不过要将main_title替换成title
 * numsize_word_in_description, 同numsize_word_in_main_title，不过要将main_title替换成description
-* numsize_of_query, ？？？？search_term中有多少度量单位词
+
+* len_of_numsize_query, ？？？？search_term中有多少度量单位词
 * len_of_numsize_main_title, ??? main_title中有多少度量单位词
 * len_of_numsize_title， ？？？title中有多少度量单位词
 * len_of_numsize_description， ？？ description有多少度量单位词
@@ -274,3 +269,4 @@ beidouwang
 | 2016-03-29  | zhuyu  | 0.4595 |  -0.01492 |  0.45917 |   -0.01654  |  rfr {2000, 12, 38}+num_size+bigram，详见config  　  |  RandomForestRegressor|                | Runtime: 10min |
 | 2016-03-29  | liaoyikang| 0.45957 |  |  0.45941 |   |  rfr {2000, 12, 38} + all numsize feature，详见rfr_liaoyikang/config  　  |  RandomForestRegressor|                | |
 | 2016-03-29  | liaoyikang| 0.45958 |  |  0.45921 |   |  rfr {2000, 12, 38} + categorical numsize feature，详见rfr_liaoyikang/config  　  |  RandomForestRegressor|                | |
+| 2016-03-29  | chenqiang| 0.46306 |  |  0.46802 |   |  {'rfr__max_depth': 38, 'rfr__max_features': 12, 'rfr__n_estimators': 2400} all features， rfr_chenqiang/2016-04-02.config.json  　  |  RandomForestRegressor|                | |

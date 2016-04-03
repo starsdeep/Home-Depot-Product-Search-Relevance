@@ -12,7 +12,7 @@ pyenchant 提供了基本的拼写检查，但是做拼写检查的时候，没�
 SpellCheckGoogleOnline, SpellCheckGoogleOffline 来自于 https://www.kaggle.com/steubk/home-depot-product-search-relevance/fixing-typos/notebook
 
 """
-
+import config.project as project
 
 class SpellCheckEnchant():
 
@@ -29,7 +29,7 @@ class SpellCheckEnchant():
 
 class SpellCheckGoogleOffline():
     def __init__(self):
-        with open('./input/google_spell_check_dict.json') as infile:
+        with open('%s/input/google_spell_check_dict.json' % project.project_path) as infile:
             self.spell_correct_dict = json.load(infile)
         print("load google spell check dict done. number of item: %d." % len(self.spell_correct_dict))
 

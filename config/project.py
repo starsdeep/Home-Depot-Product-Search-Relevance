@@ -16,5 +16,5 @@ train_file_split_part_prefer_high_score = "%s/input/train_prefer_high.csv" % pro
 
 submission_merged_result = "%s/output/rfc_chenqiang_merge_three_part_2/submission.csv" % project_path
 
-add_bm25_train_path = "%s/input_added_features/add_bm25_train.csv" % project_path
-add_bm25_test_path = "%s/input_added_features/add_bm25_test.csv" % project_path
+add_bm25_train_path = "%s/generate_offline_features/add_bm25_train.csv" % project_path
+add_bm25_test_path = "%s/generate_offline_features/add_bm25_test.csv" % project_path

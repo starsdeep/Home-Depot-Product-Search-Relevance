@@ -9,6 +9,7 @@ import config.project as project
 import pandas as pd
 import utility
 import math
+import feature
 
 
 def cal_idf(N, count):
@@ -84,7 +85,7 @@ for index, item in df_test.iterrows():
 for key in product_title.keys():
     title = product_title[key]
     word_frequency_in_title[key] = {}
-    stem_title = utility.str_stem(title, by_pos_tag=False)
+    stem_title = utility.str_stem(title)
     title_length[key] = len(stem_title)
     for word in stem_title.split():
         if word in word_frequency_in_title[key]:
@@ -98,7 +99,7 @@ for key in product_title.keys():
 
 for index, item in df_train_descriptions.iterrows():
     key = item["product_uid"]
-    stem_description = utility.str_stem(item["product_description"], by_pos_tag=False)
+    stem_description = utility.str_stem(item["product_description"])
     word_frequency_in_description[key] = {}
     description_length[key] = len(stem_description)
     for word in stem_description.split():
@@ -133,7 +134,7 @@ def cal_bm25_query_with_title_and_description(df):
     BM25_description = []
     for index, item in df.iterrows():
         pid = item["product_uid"]
-        term = utility.str_stem(item["search_term"], by_pos_tag=False)
+        term = utility.str_stem(item["search_term"])
         title_score = 0
         description_score = 0
         for word in term.split():
@@ -148,15 +149,11 @@ def cal_bm25_query_with_title_and_description(df):
         BM25_description.append(description_score)
     return BM25_title, BM25_description
 
-BM25_title_train, BM25_description_train = cal_bm25_query_with_title_and_description(df_train)
-BM25_title_test, BM25_description_test = cal_bm25_query_with_title_and_description(df_test)
+df_all = pd.concat((df_train, df_test), axis=0, ignore_index=True)
 
+BM25_title, BM25_description = cal_bm25_query_with_title_and_description(df_all)
+BM25_title = pd.DataFrame(BM25_title)
+BM25_description = pd.DataFrame(BM25_description)
 
-df_train["title_query_BM25"] = BM25_title_train
-df_train["description_query_BM25"] = BM25_description_train
-
-df_test["title_query_BM25"] = BM25_title_test
-df_test["description_query_BM25"] = BM25_description_test
-
-df_train.to_csv(project.add_bm25_train_path)
-df_test.to_csv(project.add_bm25_test_path)
+BM25_title.to_csv("%s/%s/title_query_BM25.csv" % (project.project_path, feature.feature_path))
+BM25_description.to_csv("%s/%s/description_query_BM25.csv" % (project.project_path, feature.feature_path))

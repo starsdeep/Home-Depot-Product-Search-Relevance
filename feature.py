@@ -213,7 +213,9 @@ FirstFeatureFuncDict = OrderedDict([
     ('word_in_main_title_exact', lambda row: num_common_word(row['search_term'], row['main_title'], exact_matching=True)),
     ('word_in_main_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['main_title'])),
     ('word_in_title', lambda row: num_common_word(row['search_term'], row['title'])),
+
     ('word_in_title_exact', lambda row: num_common_word(row['search_term'], row['title'], exact_matching=True)),
+
     ('ori_word_in_title_ordered', lambda row: num_common_word_ordered(row['ori_stem_search_term'], row['title'])),
     ('word_in_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['title'])),
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
@@ -227,6 +229,8 @@ FirstFeatureFuncDict = OrderedDict([
     ('bigram_in_brand', lambda row: num_common_word(row['search_term'], row['brand'], ngram=2)),
 
     ('search_term_fuzzy_match', lambda row: seg_words(row['search_term'], row['title'])),
+    ('len_of_search_term_fuzzy_match', lambda row: words_of_str(row['search_term_fuzzy_match'])),
+
     ('word_with_er_count_in_query', lambda row: count_er_word_in_(row['search_term'])),
     ('word_with_er_count_in_title', lambda row: count_er_word_in_(row['title'])),
     ('first_er_in_query_occur_position_in_title', lambda row: find_er_position(row['search_term'], row['title'])),
@@ -236,7 +240,9 @@ FirstFeatureFuncDict = OrderedDict([
     ('len_of_title', lambda row: words_of_str(row['title'])),
     ('len_of_description', lambda row: words_of_str(row['description'])),
     ('len_of_brand', lambda row: words_of_str(row['brand'])),
+
     ('len_of_typeid', lambda row: words_of_str(row['typeid'])),
+
     ('chars_of_query', lambda row: len(row['search_term'])),
 
     ('ratio_main_title', lambda row :row['word_in_main_title'] / (row['len_of_query']+1.0)),
@@ -253,7 +259,7 @@ FirstFeatureFuncDict = OrderedDict([
     ('ratio_bigram_main_title', lambda row: row['bigram_in_main_title'] / (row['len_of_query']+1.0)),
     ('ratio_bigram_description', lambda row: row['bigram_in_description'] / (row['len_of_query']+1.0)),
     ('ratio_bigram_brand', lambda row: row['bigram_in_brand'] / (row['len_of_query']+1.0)),
-    ('len_of_search_term_fuzzy_match', lambda row: words_of_str(row['search_term_fuzzy_match'])),
+
 
     ('title_query_BM25', lambda row: row['title_query_BM25']),
     ('description_query_BM25', lambda row: row['description_query_BM25'])
