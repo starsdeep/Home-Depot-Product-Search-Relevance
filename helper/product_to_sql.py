@@ -66,7 +66,7 @@ def process_search_case(limit=-1):
             continue
 
         try:
-            relevance = int(item["relevance"])
+            relevance = float(item["relevance"])
         except:
             relevance = 0
 
