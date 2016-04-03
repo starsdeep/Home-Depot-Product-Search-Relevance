@@ -1,6 +1,9 @@
 __author__ = 'fucus'
 
-project_path = "/Users/fucus/Documents/buaa/projects/kaggle_home_spot_search/Home_Depot_Product_Search_Relevance_code/"
+import os
+import re
+
+project_path = re.search(r'.*Home_Depot_Product_Search_Relevance[^\/]*',os.getcwd()).group()
 original_train_file = "%s/input/train.csv" % project_path
 original_test_file = "%s/input/test.csv" % project_path
 original_product_descriptions = "%s/input/product_descriptions.csv" % project_path
