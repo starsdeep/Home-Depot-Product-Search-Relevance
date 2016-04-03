@@ -33,7 +33,7 @@ df_all = pd.concat((df_train, df_test), axis=0, ignore_index=True)
 
 
 general_query_count = 0
-for index, item in df_train.iterrows():
+for index, item in df_all.iterrows():
     search_term = utility.str_stem(item["search_term"])
     if search_term in query_is_general.keys():
         query_is_general_feature.append(query_is_general[search_term])
