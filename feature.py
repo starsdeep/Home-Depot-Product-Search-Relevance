@@ -120,12 +120,6 @@ def get_feature(config):
 #
 #     return df[:num_train], df[num_train:]
 
-def str_exclude(s, row, name):
-    if name in row:
-        return s.replace(row[name], "")
-    else:
-        return s
-
 def build_feature(df, features):
     # iterate features in order, use apply() to update in time
     if not features:
@@ -199,12 +193,12 @@ TextFeatureFuncDict = OrderedDict([
     ('ori_stem_search_term', lambda row: str_stem(row['search_term'])),
     ('origin_search_term', lambda row: row['search_term']),
     ('typeid', lambda row: typeid_stem(typeid_extract(row['product_title']))),
-    ('title', lambda row: str_stem(str_exclude(row['product_title'],row,'typeid'))),
+    ('title', lambda row: str_stem(row['product_title'])),
     ('main_title', lambda row: str_stem(main_title_extract(row['product_title']))),
     ('search_term', lambda row: search_term_clean(row['search_term'])),
     ('description', lambda row: str_stem(row['product_description'])),
     ('brand', lambda row: str_stem(row['brand'])),
-    ('numsize_of_query', lambda row: " ".join(numsize_of_str(row['search_term']))),
+    ('numsize_of_query', lambda row: " ".join(numsize_of_query(row['search_term']))),
     ('numsize_of_title', lambda row: " ".join(numsize_of_str(row['title']))),
     ('numsize_of_main_title', lambda row: " ".join(numsize_of_str(row['main_title']))),
     ('numsize_of_description', lambda row: " ".join(numsize_of_str(row['description'])))
@@ -212,9 +206,6 @@ TextFeatureFuncDict = OrderedDict([
 
 # Features for matching words
 MatchFeatureFuncDict = OrderedDict([
-    ('title', lambda row: str_exclude(row['title'], row, 'numsize_of_title')),
-    ('main_title', lambda row: str_exclude(row['title'], row, 'numsize_of_main_title')),
-    ('description', lambda row: str_exclude(row['title'], row, 'numsize_of_description')),
     ('ori_query_in_title', lambda row: num_whole_word(row['ori_stem_search_term'], row['title'])),
     ('query_in_main_title', lambda row: num_whole_word(row['search_term'], row['main_title'])),
     ('query_in_title', lambda row: num_whole_word(row['search_term'], row['title'])),

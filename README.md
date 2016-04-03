@@ -269,4 +269,7 @@ beidouwang
 | 2016-03-29  | zhuyu  | 0.4595 |  -0.01492 |  0.45917 |   -0.01654  |  rfr {2000, 12, 38}+num_size+bigram，详见config  　  |  RandomForestRegressor|                | Runtime: 10min |
 | 2016-03-29  | liaoyikang| 0.45957 |  |  0.45941 |   |  rfr {2000, 12, 38} + all numsize feature，详见rfr_liaoyikang/config  　  |  RandomForestRegressor|                | |
 | 2016-03-29  | liaoyikang| 0.45958 |  |  0.45921 |   |  rfr {2000, 12, 38} + categorical numsize feature，详见rfr_liaoyikang/config  　  |  RandomForestRegressor|                | |
-| 2016-03-29  | chenqiang| 0.46306 |  |  0.46802 |   |  {'rfr__max_depth': 38, 'rfr__max_features': 12, 'rfr__n_estimators': 2400} all features， rfr_chenqiang/2016-04-02.config.json  　  |  RandomForestRegressor|                | |
+| 2016-04-02  | chenqiang| 0.46306 |  |  0.46802 |   |  {'rfr__max_depth': 38, 'rfr__max_features': 12, 'rfr__n_estimators': 2400} all features， rfr_chenqiang/2016-04-02.config.json  　  |  RandomForestRegressor|                | |
+| unsubmitted | fenixlin  | 0.46013 |          |          |            | 在num_common_word中默认使用精确匹配而不是str.find这种前缀匹配  | RandomForest Regressor      |                                               |          |
+| unsubmitted | fenixlin  | 0.46934 |          |          |            | 在title/description/main title中去掉numsize, typeid  | RandomForest Regressor      |                                               |          |
+| 2016-04-03 | fenixlin  | 0.45871 |          | 0.45882 |            | rfr{2000,38,12} + 更精确的typeid特征。顺便测试这一段时间内对原有功能改动的影响。详见config | RandomForest Regressor      |                                               |          |
