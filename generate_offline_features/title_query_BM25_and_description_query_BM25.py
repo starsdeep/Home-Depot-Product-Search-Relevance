@@ -152,8 +152,8 @@ def cal_bm25_query_with_title_and_description(df):
 df_all = pd.concat((df_train, df_test), axis=0, ignore_index=True)
 
 BM25_title, BM25_description = cal_bm25_query_with_title_and_description(df_all)
-BM25_title = pd.DataFrame(BM25_title)
-BM25_description = pd.DataFrame(BM25_description)
+BM25_title = pd.DataFrame(BM25_title, columns=['title_query_BM25', ])
+BM25_description = pd.DataFrame(BM25_description, columns=['description_query_BM25', ])
 
 BM25_title.to_csv("%s/%s/title_query_BM25.csv" % (project.project_path, feature.feature_path))
 BM25_description.to_csv("%s/%s/description_query_BM25.csv" % (project.project_path, feature.feature_path))
