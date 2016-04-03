@@ -273,3 +273,4 @@ beidouwang
 | unsubmitted | fenixlin  | 0.46013 |          |          |            | 在num_common_word中默认使用精确匹配而不是str.find这种前缀匹配  | RandomForest Regressor      |                                               |          |
 | unsubmitted | fenixlin  | 0.46934 |          |          |            | 在title/description/main title中去掉numsize, typeid  | RandomForest Regressor      |                                               |          |
 | 2016-04-03 | fenixlin  | 0.45871 |          | 0.45882 |            | rfr{2000,38,12} + 更精确的typeid特征。顺便测试这一段时间内对原有功能改动的影响。详见config | RandomForest Regressor      |                                               |          |
+| 2016-04-03 | fenixlin  | 0.43887 |          | 0.46408 |            | rfr{2000,38,12} + 同一product/search term的历史平均relevance(预处理得到，训练中已去掉自身relevance)详见config | RandomForest Regressor      |                                               | 历史数据可能不靠谱 |
