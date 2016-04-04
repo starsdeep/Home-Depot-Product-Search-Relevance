@@ -86,8 +86,7 @@
 		"numsize_of_description",
 		"chars_of_numsize_query",
 
-        "word_in_concatenated_type",
-        "query_is_general"
+        "word_in_concatenated_type"
     ],
 		 "recompute_features": [ ],
 		
