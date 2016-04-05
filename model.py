@@ -263,7 +263,7 @@ class MultiClassifier(Model):
     #     return y_each
 
     def fit(self, x_trian, y_train):
-
+        pass
 
     def predict( self, x_train, y_train, x_test):
         #base _ is a number : 2 classifier base on this number
