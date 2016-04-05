@@ -15,7 +15,7 @@ total_train = 74067
 total_test = 166693
 
 feature_path = './output/features/'
-
+statistics_path = './output/statistics/'
 
 # def load_feature(config):
 #     df = pd.read_csv(config["load_feature_from"], encoding="ISO-8859-1", index_col=0)
@@ -161,6 +161,36 @@ def build_feature(df, features):
             feature_func = NumsizeFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
 
+    # compute idf features
+    tmp_feature_set = set(features) & set(IdfFeatureFuncDict.keys())
+    if tmp_feature_set:
+        print("calculating idf features...")
+
+        # prepare idf_dicts, idf_dicts contains idf value for a given word
+        if not os.path.exists(statistics_path):
+            os.makedirs(statistics_path)
+        if os.path.exists(os.path.join(statistics_path, 'idf_dicts.json')):
+            print("idf dicts exists, loading existed file")
+            with open(os.path.join(statistics_path, 'idf_dicts.json')) as infile:
+                idf_dicts = json.load(infile)
+        else:
+            print("idf dicts do not exists, calculating...")
+            idf_dicts = dict()
+            idf_dicts['title'] = compute_idf_dict(df['title']) # idf value from title
+            idf_dicts['description'] = compute_idf_dict(df['description']) # idf value from description
+            idf_dicts['brand'] = compute_idf_dict(df['brand']) # idf value from brand
+            idf_dicts['composite'] = compute_idf_dict(df['search_term'] + " " + df['description'] + " " + df['brand']) # idf value from the those 3 fields
+            print("calculating idf dicts done. dump to " + os.path.join(statistics_path, 'idf_dicts.json'))
+            with open(os.path.join(statistics_path, 'idf_dicts.json'), 'w') as outfile:
+                json.dump(idf_dicts, outfile)
+
+        for index, row in df.iterrows():
+            for feature in tmp_feature_set:
+                feature_func = IdfFeatureFuncDict[feature]
+                df.loc[index, feature] = feature_func(row, idf_dicts)
+            if index%1000==0:
+                print(str(index) + ' rows calculated ...')
+
     # iterate features in order, use apply() to update in time
     for feature in list(LastFeatureFuncDict.keys()):
         if feature in features:
@@ -179,7 +209,7 @@ def search_term_clean(query):
 
 def last_word_in_title(s, t):
     """
-        How many times last word of s occurs in t 
+        How many times last word of s occurs in t
     """
     words = s.split()
     if len(words)==0:
@@ -190,9 +220,9 @@ def last_word_in_title(s, t):
 
 # Features of pure texts
 TextFeatureFuncDict = OrderedDict([
-    ('ori_stem_search_term', lambda row: str_stem(row['search_term'])),
-    ('origin_search_term', lambda row: row['search_term']),
-    ('typeid', lambda row: typeid_stem(typeid_extract(row['product_title']))),
+('ori_stem_search_term', lambda row: str_stem(row['search_term'])),
+('origin_search_term', lambda row: row['search_term']),
+('typeid', lambda row: typeid_stem(typeid_extract(row['product_title']))),
     ('title', lambda row: str_stem(row['product_title'])),
     ('main_title', lambda row: str_stem(main_title_extract(row['product_title']))),
     ('search_term', lambda row: search_term_clean(row['search_term'])),
@@ -201,7 +231,7 @@ TextFeatureFuncDict = OrderedDict([
     ('numsize_of_query', lambda row: " ".join(numsize_of_query(row['search_term']))),
     ('numsize_of_title', lambda row: " ".join(numsize_of_str(row['title']))),
     ('numsize_of_main_title', lambda row: " ".join(numsize_of_str(row['main_title']))),
-    ('numsize_of_description', lambda row: " ".join(numsize_of_str(row['description'])))
+    ('numsize_of_description', lambda row: " ".join(numsize_of_str(row['description']))),
 ])
 
 # Features for matching words
@@ -218,7 +248,9 @@ MatchFeatureFuncDict = OrderedDict([
     ('word_in_main_title_exact', lambda row: num_common_word(row['search_term'], row['main_title'], exact_matching=True)),
     ('word_in_main_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['main_title'])),
     ('word_in_title', lambda row: num_common_word(row['search_term'], row['title'])),
+    
     ('word_in_title_weighted', lambda row: num_common_word(row['search_term'], row['title'], weighted=True)),
+    
     ('word_in_title_exact', lambda row: num_common_word(row['search_term'], row['title'], exact_matching=True)),
     ('ori_word_in_title_ordered', lambda row: num_common_word_ordered(row['ori_stem_search_term'], row['title'])),
     ('word_in_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['title'])),
@@ -314,6 +346,17 @@ NumsizeFuncDict = OrderedDict([
     ('numsize_description_case3', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_description'])==0),
     ('numsize_description_case4', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_description'])>0 and len(set(row['numsize_of_query']) & set(row['numsize_of_description']))==0),
     ('numsize_description_case5', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_description'])>0 and len(set(row['numsize_of_query']) & set(row['numsize_of_description']))>0),
+])
+
+
+# idf feature
+IdfFeatureFuncDict = OrderedDict([
+    ('idf_of_title', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['title'])),
+    ('idf_of_description', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['description'], idf_dicts['description'])),
+    ('idf_of_brand', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['brand'], idf_dicts['brand'])),
+    ('composite_idf_of_title', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['composite'])),
+    ('composite_idf_of_description', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['description'], idf_dicts['composite'])),
+    ('composite_idf_of_brand', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['brand'], idf_dicts['composite'])),
 ])
 
 # Statistical Features

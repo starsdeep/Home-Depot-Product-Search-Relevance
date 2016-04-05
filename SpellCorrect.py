@@ -28,6 +28,10 @@ class SpellCheckEnchant():
         return err.get_text()
 
 class SpellCheckGoogleOffline():
+    """
+    先从https://www.kaggle.com/steubk/home-depot-product-search-relevance/fixing-typos/notebook  构造一个dict, 放到./input下，
+    并命名为 google_spell_check_dict.json
+    """
     def __init__(self):
         with open('%s/input/google_spell_check_dict.json' % project.project_path) as infile:
             self.spell_correct_dict = json.load(infile)

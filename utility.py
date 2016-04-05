@@ -7,7 +7,7 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import pos_tag
 from nltk import word_tokenize
 from nltk.corpus.reader import wordnet
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
@@ -318,6 +318,31 @@ def num_common_word_ordered(str1, str2, exact_matching=False):
             str2 = str2[str2.find(word)+len(word):]
     return cnt
 
+
+def idf_common_word(str1, str2, idf_dict, normalize=True):
+    """
+    idf sum of common words of str1 and str2
+    :param str1:
+    :param str2:
+    :param idf_dict:
+    :return:
+    """
+    words = str1.split()
+    targets = str2.split()
+    idf_sum = 0
+    for word in words:
+        if word in targets:
+            if word in idf_dict:
+                idf_sum += idf_dict[word]
+            else:
+                print("word: " + word)
+                print("str: " + str2)
+                print("-------------")
+    if normalize:
+        idf_sum /= (len(words) + 1.0)
+    return idf_sum
+
+
 def match_last_k_noun(s, tags, k, exact_matching=False):
     """
     total number of noun(s) which is both in s and last k noun(s) of str2(tags is pos_tag of str2)
@@ -472,6 +497,14 @@ def find_er_position(query, title):
             position = index
             break
     return position
+
+
+
+def compute_idf_dict(corpus):
+    vectorizer = TfidfVectorizer(min_df=1, tokenizer=str.split)
+    vectorizer.fit_transform(corpus)
+    return {word : vectorizer.idf_[idx] for word, idx in vectorizer.vocabulary_.items()}
+
 
 if __name__=='__main__':
     word = 'asdasdzxc 0.2in.  asdzxcz21x32qt. asdasdasd 3/4ft.asdasdaszxc 23watt.'
