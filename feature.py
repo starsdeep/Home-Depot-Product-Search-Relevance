@@ -220,9 +220,9 @@ def last_word_in_title(s, t):
 
 # Features of pure texts
 TextFeatureFuncDict = OrderedDict([
-('ori_stem_search_term', lambda row: str_stem(row['search_term'])),
-('origin_search_term', lambda row: row['search_term']),
-('typeid', lambda row: typeid_stem(typeid_extract(row['product_title']))),
+    ('ori_stem_search_term', lambda row: str_stem(row['search_term'])),
+    ('origin_search_term', lambda row: row['search_term']),
+    ('typeid', lambda row: typeid_stem(typeid_extract(row['product_title']))),
     ('title', lambda row: str_stem(row['product_title'])),
     ('main_title', lambda row: str_stem(main_title_extract(row['product_title']))),
     ('search_term', lambda row: search_term_clean(row['search_term'])),
