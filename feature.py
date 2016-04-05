@@ -214,12 +214,12 @@ MatchFeatureFuncDict = OrderedDict([
     ('query_last_word_in_title', lambda row: last_word_in_title(row['search_term'], row['title'])),
     ('query_last_word_in_description', lambda row: last_word_in_title(row['search_term'], row['description'])),
     ('word_in_main_title', lambda row: num_common_word(row['search_term'], row['main_title'])),
+    ('word_in_main_title_weighted', lambda row: num_common_word(row['search_term'], row['main_title'], weighted=True)),
     ('word_in_main_title_exact', lambda row: num_common_word(row['search_term'], row['main_title'], exact_matching=True)),
     ('word_in_main_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['main_title'])),
     ('word_in_title', lambda row: num_common_word(row['search_term'], row['title'])),
-
+    ('word_in_title_weighted', lambda row: num_common_word(row['search_term'], row['title'], weighted=True)),
     ('word_in_title_exact', lambda row: num_common_word(row['search_term'], row['title'], exact_matching=True)),
-
     ('ori_word_in_title_ordered', lambda row: num_common_word_ordered(row['ori_stem_search_term'], row['title'])),
     ('word_in_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['title'])),
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),

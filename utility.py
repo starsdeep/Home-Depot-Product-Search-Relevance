@@ -53,7 +53,7 @@ def main_title_extract(title):
             else:
                 m = m[:-1]
 
-    kick_words = ['L', 'W', 'O\.D\.', 'OD', 'O\.C\.', 'OC', 'in\.', 'lb\.', 'lbs\.', 'x', '\d+[/\d]*', 'ft\.\.', 'ft\.', 'Lumens', 'CRI', 'Thick', '\+', 'AWG', 'oz.', 'Gauge', 'and', '\S+-\S+']
+    kick_words = ['L', 'W', 'O\.D\.', 'OD', 'O\.C\.', 'OC', 'in\.', 'lb\.', 'lbs\.', 'x', '\d+[/\d]*', 'ft\.\.', 'ft\.', 'Lumens', 'CRI', 'Thick', '\+', 'AWG', 'oz.', '\d+\s+Gauge', 'and', '\S+-\S+']
     for i in range(len(kick_words)):
         kick_words[i] = '^'+kick_words[i]+'$' # require full match
     title = title.split()
@@ -258,7 +258,7 @@ def segmentit(s, txt_arr, t):
     return r
 
 
-def num_common_word(str1, str2, ngram=1, exact_matching=False, use_editdis=True):
+def num_common_word(str1, str2, ngram=1, exact_matching=False, use_editdis=True, weighted=False):
     """
     number of words in str1 that also in str2
     :param str1:
@@ -272,14 +272,23 @@ def num_common_word(str1, str2, ngram=1, exact_matching=False, use_editdis=True)
         words = bigram_analyzer(str1)
     else:
         print(str(ngram) + " not supported yet")
+    if len(words)==0:
+        return 0
 
     cnt = 0
+    wstep = 1000000**(1/len(words))
+    if weighted:
+        weight = wstep
+    else:
+        weight = 1
     targets = str2.split()
     for word in words:
         if exact_matching and word in targets:
-            cnt+=1
+            cnt+=weight
         elif not exact_matching and str2.find(word)>=0:
-            cnt+=1
+            cnt+=weight
+        if weighted:
+            weight = weight*wstep
     # count 0.5 if words unfound but some word edit distance<2
     if use_editdis and cnt==0:
         for word in words:

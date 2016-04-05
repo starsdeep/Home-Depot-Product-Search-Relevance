@@ -1,28 +1,33 @@
 import pandas as pd
+from math import sqrt
 
 def get_average(dic):
     rsum, num = 0, 0
     for key, value in dic.items():
         rsum += value[0]
         num += value[1]
+    print(max([v[1] for k,v in dic.items()]))
     return rsum / num
 
 def apply_hist_rel(df, count_dict, name):
     new_feature_name = name + '_hist_rel'
+    new_feature_name2 = name + '_hist_count'
+    new_feature_name3 = name + '_hist_cmb'
+    threshold = 3
     avg = get_average(count_dict)    
     for index, row in df.iterrows():
         key = row[name]
+        df.loc[index, new_feature_name] = avg
+        df.loc[index, new_feature_name2] = 0
         if key in count_dict:
             relsum, count = count_dict[key]
-        else:
-            df.loc[index, new_feature_name] = avg
-            continue
-        if 'relevance' not in row:
-            df.loc[index, new_feature_name] = relsum/count
-        elif count==1:
-            df.loc[index, new_feature_name] = avg
-        else:
-            df.loc[index, new_feature_name] = (relsum-row['relevance'])/(count-1)
+            if 'relevance' not in row and count >= threshold:
+                df.loc[index, new_feature_name] = relsum/count
+                df.loc[index, new_feature_name2] = count
+            elif 'relevance' in row and count-1 >= threshold:
+                df.loc[index, new_feature_name] = (relsum-row['relevance'])/(count-1)
+                df.loc[index, new_feature_name2] = count-1
+        df.loc[index, new_feature_name3] = sqrt(df.loc[index, new_feature_name2]+1) * df.loc[index, new_feature_name]
 
 def add_hist_rel(df_train, df_test, name):
     count_dict = dict()
