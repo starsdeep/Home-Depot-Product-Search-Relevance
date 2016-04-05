@@ -246,7 +246,7 @@ class LessThan(Model):
             recover y
         '''
         res = [None]*len(self.labels)
-        for(i = 0;i<)
+        
         return res
 
 
