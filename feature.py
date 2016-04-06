@@ -16,19 +16,6 @@ total_test = 166693
 
 feature_path = './output/features/'
 
-# def load_feature(config):
-#     df = pd.read_csv(config["load_feature_from"], encoding="ISO-8859-1", index_col=0)
-#     num_train = total_train if config['num_train'] < 0 else config['num_train']
-#     return df[:num_train], df[total_test * -1:]
-#
-#
-#
-#     names = [os.path.splitext(filename)[0] for filename in filenames]
-#
-#     return names, paths
-
-
-
 def load_feature(features):
     """
     read features from existing files, and then concat those features into a big frame using pd.concat,
@@ -46,14 +33,11 @@ def load_feature(features):
     df.fillna('', inplace=True)
     return df
 
-
-
 def write_feature(df, features):
     for feature in features:
         tmp_df = df[[feature]]
         tmp_df.to_csv(os.path.join(feature_path, feature + '.csv'), encoding="utf8")
     return
-
 
 def get_feature(config):
     all_exist_features = set([os.path.splitext(f)[0] for f in os.listdir(feature_path) if os.path.isfile(os.path.join(feature_path,f)) and f.endswith('.csv')])
@@ -83,41 +67,7 @@ def get_feature(config):
     print("start computing feature: " + ' '.join(to_compute_features))
     df = build_feature(df, to_compute_features)
     write_feature(df, to_compute_features)
-
-
     return df[:num_train], df[num_train:]
-
-
-# def get_feature(config):
-#     feature = ' '.join(sorted(config['features']))
-#     feature_hash = hashlib.sha1(feature.encode('utf-8')).hexdigest()
-#     num_train = total_train if config['num_train'] < 0 else config['num_train']
-#     feature_filename = feature_hash + '_' + str(num_train)
-#     feature_path = './feature_cache/'
-#     if not os.path.exists(feature_path):
-#         os.makedirs(feature_path)
-#
-#     file_dict = dict()
-#     for f in os.listdir(feature_path):
-#         if os.path.isfile(os.path.join(feature_path, f)):
-#             hash_value = f.split('_')[0]
-#             num_value = int(f.split('_')[1])
-#             if hash_value not in file_dict or num_value>file_dict[hash_value]:
-#                 file_dict[hash_value] = num_value
-#
-#     if feature_hash in file_dict and num_train <= file_dict[feature_hash]:
-#         df = pd.read_csv(os.path.join(feature_path, feature_filename), encoding="ISO-8859-1", index_col=0)
-#         print("feature: " + feature + " already computed")
-#         print("load from " + feature_path + "/" + feature_filename)
-#     else:
-#         df, num_train, num_test = load_data(config['num_train'])
-#         print("feature not computed yet, start computing")
-#         start_time = time.time()
-#         df = build_feature(df, config['features'])
-#         print("--- Build Features: %s minutes ---" % round(((time.time() - start_time)/60),2))
-#         df.to_csv(os.path.join(feature_path, feature_filename), encoding="utf8")
-#
-#     return df[:num_train], df[num_train:]
 
 def build_feature(df, features):
     # iterate features in order, use apply() to update in time
@@ -307,7 +257,6 @@ PostagFeatureFuncDict = OrderedDict([
     ('match_last_5_noun_main', lambda row, tags: match_last_k_noun(row['search_term'], tags['main_title'], 5)) # average nouns in main of all data: 5.3338
 ])
 
-
 # categorical feature for numsize, 用来表征query和title,description的匹配情况的feature,是binary feature
 NumsizeFuncDict = OrderedDict([
     ('numsize_count_in_main_title', lambda row: num_numsize_word(row['numsize_of_query'], row['main_title'])), #deprecated
@@ -334,7 +283,6 @@ NumsizeFuncDict = OrderedDict([
     ('numsize_description_case4', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_description'])>0 and len(set(row['numsize_of_query']) & set(row['numsize_of_description']))==0),
     ('numsize_description_case5', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_description'])>0 and len(set(row['numsize_of_query']) & set(row['numsize_of_description']))>0),
 ])
-
 
 # idf feature
 IdfFeatureFuncDict = OrderedDict([
@@ -371,8 +319,6 @@ LastFeatureFuncDict = OrderedDict([
     ('ratio_numsize_match_title_exact', lambda row :row['numsize_match_title_exact'] / (row['len_of_numsize_query']+1)),
     ('ratio_numsize_match_description_exact', lambda row :row['numsize_match_description_exact'] / (row['len_of_numsize_query']+1)),
 ])
-
-
 
 if __name__=='__main__':
     import doctest

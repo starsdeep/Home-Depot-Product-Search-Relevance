@@ -2,6 +2,8 @@
 import re
 from nltk.corpus import stopwords
 from nltk.stem.porter import *
+#from nltk.stem.snowball import SnowballStemmer #0.003 improvement but takes twice as long as PorterStemmer
+#stemmer = SnowballStemmer('english')
 from nltk.metrics import edit_distance
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import pos_tag
@@ -500,9 +502,5 @@ def compute_idf_dict(corpus):
     return dict(zip(vectorizer.get_feature_names(), vectorizer.idf_))
 
 if __name__=='__main__':
-    word = 'asdasdzxc 0.2in.  asdzxcz21x32qt. asdasdasd 3/4ft.asdasdaszxc 23watt.'
-    s = 'asdasdzczxczxc 0.2in.  asdzxccxcz21x32qt. adasd 3/4ft.asd3/4ft.aasczxc3/4ft.'
-    cnt = num_numsize_word(word, s)
     import doctest
     doctest.testmod()
-    #print cnt

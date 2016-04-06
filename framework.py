@@ -1,9 +1,3 @@
-#from sklearn import pipeline, model_selection
-#from sklearn.feature_extraction import DictVectorizer
-#from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-#from nltk.stem.snowball import SnowballStemmer #0.003 improvement but takes twice as long as PorterStemmer
-#stemmer = SnowballStemmer('english')
-#import enchant
 import hashlib
 import pandas as pd
 import random

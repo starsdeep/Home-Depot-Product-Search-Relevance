@@ -28,7 +28,6 @@ class CustTxtCol(BaseEstimator, TransformerMixin):
     def transform(self, data_dict):
         return data_dict[self.key].apply(str)
 
-
 class Discretizer(BaseEstimator, ClassifierMixin):
     def __init__(self, threshold):
         self.threshold = threshold
