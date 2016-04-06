@@ -8,7 +8,8 @@ class ModelFactory(object):
             'rfc': model.RandomForestClassification(),
             'xgbr': model.XgboostRegression(),
             'gbdtr': model.GbdtRegression(),
-            'multi': model.MultiClassifier()
+            'multi': model.MultiClassifier(),
+            'three': model.ThreePartRandomForestClassification(),
         }
 
     def create_model(self, config):

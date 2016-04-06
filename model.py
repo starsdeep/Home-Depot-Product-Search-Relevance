@@ -11,6 +11,9 @@ from sklearn import pipeline, grid_search
 from sklearn.pipeline import FeatureUnion
 from sklearn import cross_validation
 import xgboost as xgb
+import pickle
+import config.project
+
 
 class CustRegressionVals(BaseEstimator, TransformerMixin):
     d_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid','numsize_of_query','numsize_of_title','numsize_of_main_title','numsize_of_description']
@@ -27,6 +30,7 @@ class CustTxtCol(BaseEstimator, TransformerMixin):
         return self
     def transform(self, data_dict):
         return data_dict[self.key].apply(str)
+
 
 class Discretizer(BaseEstimator, ClassifierMixin):
     def __init__(self, threshold):
@@ -105,7 +109,8 @@ class Model(object):
         print(model.best_params_)
         print("Best CV score:")
         print(model.best_score_)
-
+        # f = "%s/%s/model.dump.pickle" % (config.project.project_path, sys.argv[1])
+        # pickle.dump(model, f)
         return model
 
     def make_pipeline_(self, model_name, model):
@@ -116,8 +121,8 @@ class Model(object):
                             transformer_list = [
                                 ('cst',  CustRegressionVals()),
                                 ('txt1', pipeline.Pipeline([('s1', CustTxtCol(key='search_term_fuzzy_match')), ('tfidf1', tfidf), ('tsvd1', tsvd)])),
-                                #('txt2', pipeline.Pipeline([('s2', CustTxtCol(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
-                                #('txt3', pipeline.Pipeline([('s3', CustTxtCol(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
+                                ('txt2', pipeline.Pipeline([('s2', CustTxtCol(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
+                                ('txt3', pipeline.Pipeline([('s3', CustTxtCol(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
                                 ('txt4', pipeline.Pipeline([('s4', CustTxtCol(key='brand')), ('tfidf4', tfidf), ('tsvd4', tsvd)])),
                                 ('txt5', pipeline.Pipeline([('s5', CustTxtCol(key='main_title')), ('tfidf5', tfidf), ('tsvd5', tsvd)]))
                                 ],
@@ -139,6 +144,8 @@ class RandomForestRegression(Model):
         clf = self.make_pipeline_('rfr', rfr)
         param_grid = {'rfr__n_estimators': [2000], 'rfr__max_features': [12], 'rfr__max_depth': [42]}
         model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
+
+
         #print bad case
         if self.config['save_badcase']:
             cvmodel = clf
@@ -158,6 +165,53 @@ class RandomForestRegression(Model):
             discretize_model = self.grid_search_fit_(discretizer, param_grid, x_train_predict, y_train)
             return discretize_model.predict(y_pred)
         return y_pred
+
+
+def get_low_score(x):
+    return int(x / 3)
+
+def get_mid_score(x):
+    low = get_low_score(x)
+    if int(x) % 3 >= 2:
+        return low + 1
+    else:
+        return low
+
+def get_high_score(x):
+    low = get_low_score(x)
+    if x % 3 >= 1:
+        return low + 1
+    else:
+        return low
+
+class ThreePartRandomForestClassification(Model):
+
+    def predict(self, x_train, y_train, x_test, need_transform_label=False):
+        y_train = list(y_train)
+        y_train = [int(3*x + 0.5) for x in y_train]
+
+        y_prefer_low = [get_low_score(x) for x in y_train]
+        y_prefer_mid = [get_mid_score(x) for x in y_train]
+        y_prefer_high = [get_high_score(x) for x in y_train]
+
+
+        rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
+        clf = self.make_pipeline_('rfc', rfc)
+        param_grid = {'rfc__max_features': [1, 2, 5], 'rfc__max_depth': [2, 5, 10]}
+
+        model_low = self.grid_search_fit_(clf, param_grid, x_train, y_prefer_low)
+        result_low = model_low.predict(x_test)
+
+        model_mid = self.grid_search_fit_(clf, param_grid, x_train, y_prefer_mid)
+        result_mid = model_mid.predict(x_test)
+
+        model_high = self.grid_search_fit_(clf, param_grid, x_train, y_prefer_high)
+        result_high = model_high.predict(x_test)
+
+        result = result_low
+        for i in range(len(result)):
+            result[i] = (result_low[i] + result_mid[i] + result_high[i]) / 3.0
+        return result
 
 class RandomForestClassification(Model):
 
