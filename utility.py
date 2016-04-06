@@ -501,6 +501,13 @@ def compute_idf_dict(corpus):
     vectorizer.fit_transform(corpus)
     return dict(zip(vectorizer.get_feature_names(), vectorizer.idf_))
 
+def synonym(word):
+    synonyms = set([])
+    allword = wn.synsets(word)
+    for i in allword:
+        synonyms = synonyms.union(i.lemma_names())
+    return synonyms
+
 if __name__=='__main__':
     import doctest
     doctest.testmod()
