@@ -1,5 +1,5 @@
 {   
-	"model": "rfr",
+	"model": "three",
 	"save_badcase": true,
 	"num_train": -1,
 	"features": [
@@ -87,7 +87,8 @@
 		"chars_of_numsize_query",
 
         "word_in_concatenated_type",
-        "query_is_general"
+        "query_is_general",
+        "query_is_none_sense"
     ],
 		 "recompute_features": [ ],
 		
