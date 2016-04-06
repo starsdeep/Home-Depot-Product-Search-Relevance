@@ -319,7 +319,7 @@ def num_common_word_ordered(str1, str2, exact_matching=False):
     return cnt
 
 
-def idf_common_word(str1, str2, idf_dict, normalize=True):
+def idf_common_word(str1, str2, idf_dict, normalize=True, exact_matching=False):
     """
     idf sum of common words of str1 and str2
     :param str1:
@@ -331,17 +331,13 @@ def idf_common_word(str1, str2, idf_dict, normalize=True):
     targets = str2.split()
     idf_sum = 0
     for word in words:
-        if word in targets:
-            if word in idf_dict:
+        if word in idf_dict:
+            if (exact_matching and word in targets) or (not exact_matching and str2.find(word)>=0):
                 idf_sum += idf_dict[word]
-            else:
-                print("word: " + word)
-                print("str: " + str2)
-                print("-------------")
+
     if normalize:
         idf_sum /= (len(words) + 1.0)
     return idf_sum
-
 
 def match_last_k_noun(s, tags, k, exact_matching=False):
     """
@@ -424,7 +420,7 @@ def num_whole_word(word, s):
             i += len(word)
     return cnt
 
-def num_numsize_word(numsize_list, s):
+def num_numsize_word(numsize_s, s):
     """
     number of times that numsize in numsize_list appears in str
     :param word:
@@ -432,7 +428,7 @@ def num_numsize_word(numsize_list, s):
     :return: cnt
     """
     cnt = 0
-    for numsize in numsize_list:
+    for numsize in numsize_s.split():
         i = 0
         while i < len(s):
             i = s.find(numsize, i) # may match "123in." with "3in."
@@ -498,13 +494,10 @@ def find_er_position(query, title):
             break
     return position
 
-
-
 def compute_idf_dict(corpus):
     vectorizer = TfidfVectorizer(min_df=1, tokenizer=str.split)
     vectorizer.fit_transform(corpus)
-    return {word : vectorizer.idf_[idx] for word, idx in vectorizer.vocabulary_.items()}
-
+    return dict(zip(vectorizer.get_feature_names(), vectorizer.idf_))
 
 if __name__=='__main__':
     word = 'asdasdzxc 0.2in.  asdzxcz21x32qt. asdasdasd 3/4ft.asdasdaszxc 23watt.'

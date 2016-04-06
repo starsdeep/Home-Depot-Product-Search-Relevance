@@ -138,7 +138,7 @@ class RandomForestRegression(Model):
     def predict(self, x_train, y_train, x_test):
         rfr = RandomForestRegressor(n_estimators = 2000, n_jobs = -1, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfr', rfr)
-        param_grid = {'rfr__n_estimators': [2000], 'rfr__max_features': [12], 'rfr__max_depth': [38]}
+        param_grid = {'rfr__n_estimators': [2000], 'rfr__max_features': [12], 'rfr__max_depth': [42]}
         model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
         #print bad case
         if self.config['save_badcase']:

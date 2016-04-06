@@ -15,7 +15,6 @@ total_train = 74067
 total_test = 166693
 
 feature_path = './output/features/'
-statistics_path = './output/statistics/'
 
 # def load_feature(config):
 #     df = pd.read_csv(config["load_feature_from"], encoding="ISO-8859-1", index_col=0)
@@ -162,34 +161,22 @@ def build_feature(df, features):
             df[feature] = df.apply(feature_func, axis=1)
 
     # compute idf features
-    tmp_feature_set = set(features) & set(IdfFeatureFuncDict.keys())
-    if tmp_feature_set:
-        print("calculating idf features...")
-
+    if set(features) & set(IdfFeatureFuncDict.keys()):
         # prepare idf_dicts, idf_dicts contains idf value for a given word
-        if not os.path.exists(statistics_path):
-            os.makedirs(statistics_path)
-        if os.path.exists(os.path.join(statistics_path, 'idf_dicts.json')):
-            print("idf dicts exists, loading existed file")
-            with open(os.path.join(statistics_path, 'idf_dicts.json')) as infile:
-                idf_dicts = json.load(infile)
-        else:
-            print("idf dicts do not exists, calculating...")
-            idf_dicts = dict()
-            idf_dicts['title'] = compute_idf_dict(df['title']) # idf value from title
-            idf_dicts['description'] = compute_idf_dict(df['description']) # idf value from description
-            idf_dicts['brand'] = compute_idf_dict(df['brand']) # idf value from brand
-            idf_dicts['composite'] = compute_idf_dict(df['search_term'] + " " + df['description'] + " " + df['brand']) # idf value from the those 3 fields
-            print("calculating idf dicts done. dump to " + os.path.join(statistics_path, 'idf_dicts.json'))
-            with open(os.path.join(statistics_path, 'idf_dicts.json'), 'w') as outfile:
-                json.dump(idf_dicts, outfile)
+        search_terms = df['search_term'].unique()
+        unique_prd = df.drop_duplicates(subset='product_uid')
+        idf_dicts = dict()
+        idf_dicts['search_term'] = compute_idf_dict(search_terms) # idf value from search_terms
+        idf_dicts['title'] = compute_idf_dict(unique_prd['title']) # idf value from title
+        idf_dicts['description'] = compute_idf_dict(unique_prd['description']) # idf value from description
+        idf_dicts['brand'] = compute_idf_dict(unique_prd['brand']) # idf value from brand
+        idf_dicts['composite'] = compute_idf_dict(unique_prd['description'] + ' ' + unique_prd['title'] + ' ' + unique_prd['brand']) # idf value from the those 4 fields
 
-        for index, row in df.iterrows():
-            for feature in tmp_feature_set:
+        for feature in list(IdfFeatureFuncDict.keys()):
+            if feature in features:
+                print('calculating feature: '+feature+' ...')
                 feature_func = IdfFeatureFuncDict[feature]
-                df.loc[index, feature] = feature_func(row, idf_dicts)
-            if index%1000==0:
-                print(str(index) + ' rows calculated ...')
+                df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
 
     # iterate features in order, use apply() to update in time
     for feature in list(LastFeatureFuncDict.keys()):
@@ -323,9 +310,9 @@ PostagFeatureFuncDict = OrderedDict([
 
 # categorical feature for numsize, 用来表征query和title,description的匹配情况的feature,是binary feature
 NumsizeFuncDict = OrderedDict([
-    ('numsize_word_in_main_title', lambda row: num_numsize_word(row['numsize_of_query'], row['main_title'])),
-    ('numsize_word_in_title', lambda row: num_numsize_word(row['numsize_of_query'], row['title'])),
-    ('numsize_word_in_description', lambda row: num_numsize_word(row['numsize_of_query'], row['description'])),
+    ('numsize_count_in_main_title', lambda row: num_numsize_word(row['numsize_of_query'], row['main_title'])), #deprecated
+    ('numsize_count_in_title', lambda row: num_numsize_word(row['numsize_of_query'], row['title'])), #deprecated
+    ('numsize_count_in_description', lambda row: num_numsize_word(row['numsize_of_query'], row['description'])), #deprecated
     ('numsize_match_title', lambda row: num_common_word(row['search_term'], row['numsize_of_title'], exact_matching=False)),
     ('numsize_match_description', lambda row: num_common_word(row['search_term'], row['numsize_of_description'], exact_matching=False)),
     ('numsize_match_title_exact', lambda row: num_common_word(row['search_term'], row['numsize_of_title'], exact_matching=True)),
@@ -351,12 +338,20 @@ NumsizeFuncDict = OrderedDict([
 
 # idf feature
 IdfFeatureFuncDict = OrderedDict([
-    ('idf_of_title', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['title'])),
-    ('idf_of_description', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['description'], idf_dicts['description'])),
-    ('idf_of_brand', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['brand'], idf_dicts['brand'])),
-    ('composite_idf_of_title', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['composite'])),
-    ('composite_idf_of_description', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['description'], idf_dicts['composite'])),
-    ('composite_idf_of_brand', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['brand'], idf_dicts['composite'])),
+    ('local_idf_of_title', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['search_term'])),
+    ('local_idf_of_title_exact', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['search_term'], exact_matching=True)),
+    ('local_idf_of_description', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['description'], idf_dicts['search_term'])),
+    ('local_idf_of_brand', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['brand'], idf_dicts['search_term'])),
+    ('idf_of_title', lambda row, idf_dicts: idf_common_word(row['search_term'], row['title'], idf_dicts['title'])),
+    ('ori_idf_of_title', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['title'])),
+    ('idf_of_title_exact', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['title'], exact_matching=True)),
+    ('idf_of_description', lambda row, idf_dicts: idf_common_word(row['search_term'], row['description'], idf_dicts['description'])),
+    ('idf_of_brand', lambda row, idf_dicts: idf_common_word(row['search_term'], row['brand'], idf_dicts['brand'])),
+    ('composite_idf_of_title', lambda row, idf_dicts: idf_common_word(row['search_term'], row['title'], idf_dicts['composite'])),
+    ('ori_composite_idf_of_title', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['composite'])),
+    ('composite_idf_of_title_exact', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['composite'], exact_matching=True)),
+    ('composite_idf_of_description', lambda row, idf_dicts: idf_common_word(row['search_term'], row['description'], idf_dicts['composite'])),
+    ('composite_idf_of_brand', lambda row, idf_dicts: idf_common_word(row['search_term'], row['brand'], idf_dicts['composite'])),
 ])
 
 # Statistical Features
