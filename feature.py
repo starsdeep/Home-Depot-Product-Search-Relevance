@@ -165,10 +165,10 @@ TextFeatureFuncDict = OrderedDict([
     ('search_term', lambda row: search_term_clean(row['search_term'])),
     ('description', lambda row: str_stem(row['product_description'])),
     ('brand', lambda row: str_stem(row['brand'])),
-    ('numsize_of_query', lambda row: " ".join(numsize_of_query(row['search_term']))),
-    ('numsize_of_title', lambda row: " ".join(numsize_of_str(row['title']))),
-    ('numsize_of_main_title', lambda row: " ".join(numsize_of_str(row['main_title']))),
-    ('numsize_of_description', lambda row: " ".join(numsize_of_str(row['description']))),
+    ('numsize_of_query', lambda row: " ".join(numsize_of_query(row['search_term'])).replace('  ',' ')),
+    ('numsize_of_title', lambda row: " ".join(numsize_of_str(row['title'])).replace('  ',' ')),
+    ('numsize_of_main_title', lambda row: " ".join(numsize_of_str(row['main_title'])).replace('  ',' ')),
+    ('numsize_of_description', lambda row: " ".join(numsize_of_str(row['description'])).replace('  ',' ')),
 ])
 
 # Features for matching words
@@ -194,7 +194,7 @@ MatchFeatureFuncDict = OrderedDict([
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
     ('word_in_description_exact', lambda row: num_common_word(row['search_term'], row['description'], exact_matching=True)),
     ('word_in_brand', lambda row: num_common_word(row['search_term'], row['brand'])),
-    ('word_in_typeid', lambda row: num_common_word(row['search_term'], row['typeid'], exact_matching=False)),
+    ('word_in_typeid', lambda row: num_common_word(row['ori_stem_search_term'], row['typeid'], exact_matching=False)),
 
     ('bigram_in_title', lambda row: num_common_word(row['search_term'], row['title'], ngram=2)),
     ('bigram_in_main_title', lambda row: num_common_word(row['search_term'], row['main_title'], ngram=2)),
