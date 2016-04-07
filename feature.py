@@ -86,6 +86,24 @@ def build_feature(df, features):
             feature_func = MatchFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
 
+    # compute idf features
+    idf_dicts = dict()
+    if set(features) & set(IdfFeatureFuncDict.keys()):
+        # prepare idf_dicts, idf_dicts contains idf value for a given word
+        search_terms = df['search_term'].unique()
+        unique_prd = df.drop_duplicates(subset='product_uid')
+        idf_dicts['search_term'] = compute_idf_dict(search_terms) # idf value from search_terms
+        idf_dicts['title'] = compute_idf_dict(unique_prd['title']) # idf value from title
+        idf_dicts['description'] = compute_idf_dict(unique_prd['description']) # idf value from description
+        idf_dicts['brand'] = compute_idf_dict(unique_prd['brand']) # idf value from brand
+        idf_dicts['composite'] = compute_idf_dict(unique_prd['description'] + ' ' + unique_prd['title'] + ' ' + unique_prd['brand']) # idf value from the those 4 fields
+
+        for feature in list(IdfFeatureFuncDict.keys()):
+            if feature in features:
+                print('calculating feature: '+feature+' ...')
+                feature_func = IdfFeatureFuncDict[feature]
+                df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
+
     # iterate features in order (iterrows cannot update in time)
     if set(features) & set(PostagFeatureFuncDict.keys()):
         print('calculating pos_tag features...')
@@ -100,6 +118,11 @@ def build_feature(df, features):
                 if feature in features:
                     feature_func = PostagFeatureFuncDict[feature]
                     df.loc[index, feature] = feature_func(row, tags)
+            row_new = df.ix[index]
+            for feature in list(IdfPostagFeatureFuncDict.keys()):
+                if feature in features:
+                    feature_func = IdfPostagFeatureFuncDict[feature]
+                    df.loc[index, feature] = feature_func(row_new, tags, idf_dicts)
             if index%300==0:
                 print(str(index)+' rows calculated...')
 
@@ -109,24 +132,6 @@ def build_feature(df, features):
             print('calculating feature: '+feature+' ...')
             feature_func = NumsizeFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
-
-    # compute idf features
-    if set(features) & set(IdfFeatureFuncDict.keys()):
-        # prepare idf_dicts, idf_dicts contains idf value for a given word
-        search_terms = df['search_term'].unique()
-        unique_prd = df.drop_duplicates(subset='product_uid')
-        idf_dicts = dict()
-        idf_dicts['search_term'] = compute_idf_dict(search_terms) # idf value from search_terms
-        idf_dicts['title'] = compute_idf_dict(unique_prd['title']) # idf value from title
-        idf_dicts['description'] = compute_idf_dict(unique_prd['description']) # idf value from description
-        idf_dicts['brand'] = compute_idf_dict(unique_prd['brand']) # idf value from brand
-        idf_dicts['composite'] = compute_idf_dict(unique_prd['description'] + ' ' + unique_prd['title'] + ' ' + unique_prd['brand']) # idf value from the those 4 fields
-
-        for feature in list(IdfFeatureFuncDict.keys()):
-            if feature in features:
-                print('calculating feature: '+feature+' ...')
-                feature_func = IdfFeatureFuncDict[feature]
-                df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
 
     # iterate features in order, use apply() to update in time
     for feature in list(LastFeatureFuncDict.keys()):
@@ -300,6 +305,17 @@ IdfFeatureFuncDict = OrderedDict([
     ('composite_idf_of_title_exact', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['composite'], exact_matching=True)),
     ('composite_idf_of_description', lambda row, idf_dicts: idf_common_word(row['search_term'], row['description'], idf_dicts['composite'])),
     ('composite_idf_of_brand', lambda row, idf_dicts: idf_common_word(row['search_term'], row['brand'], idf_dicts['composite'])),
+])
+
+# Idf - Pos_tag features, calculate after postag features!
+IdfPostagFeatureFuncDict = OrderedDict([
+    ('idf_of_title_noun', lambda row, tags, idf_dicts: idf_common_noun(row['search_term'], tags['title'], idf_dicts['composite'], row['noun_of_query'] + 1.0)),
+    ('idf_of_main_title_noun', lambda row, tags, idf_dicts: idf_common_noun(row['search_term'], tags['main_title'], idf_dicts['composite'], row['noun_of_query'] + 1.0)),
+    ('idf_of_description_noun', lambda row, tags, idf_dicts: idf_common_noun(row['search_term'], tags['description'], idf_dicts['composite'], row['noun_of_query'] + 1.0)),
+    ('idf_max_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 1)),
+    ('idf_max_2_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 2)),
+    ('idf_max_3_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 3)),
+    ('idf_max_5_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 5)),
 ])
 
 # Statistical Features

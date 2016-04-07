@@ -341,6 +341,27 @@ def idf_common_word(str1, str2, idf_dict, normalize=True, exact_matching=False):
         idf_sum /= (len(words) + 1.0)
     return idf_sum
 
+def idf_common_noun(s, tags, idf_dict, normalize_d=1):
+    words, nsum = s.split(), .0
+    for word in words:
+        for key, tag in tags:
+            if tag=='NN' and word==key:
+                nsum += idf_dict[word]
+                break
+    return nsum / normalize_d
+
+def idf_max_noun_match(s, tags, idf_dict, top_k=1):
+    words, cnt = s.split(), .0
+    tlist = []
+    for key, tag in tags:
+        if tag=='NN' and key in idf_dict:
+            tlist.append((key, idf_dict[key]))
+    tlist = sorted(tlist, key=lambda x:x[1], reverse=True)
+    for i in range(min(top_k, len(tlist))):
+        if tlist[i][0] in words:
+            cnt += 1
+    return cnt
+
 def match_last_k_noun(s, tags, k, exact_matching=False):
     """
     total number of noun(s) which is both in s and last k noun(s) of str2(tags is pos_tag of str2)

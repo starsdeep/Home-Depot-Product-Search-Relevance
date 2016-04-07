@@ -248,7 +248,7 @@ class XgboostRegression(Model):
         xgbr = xgb.XGBRegressor(learning_rate=0.25, silent=True, objective="reg:linear", nthread=-1, gamma=0, min_child_weight=1, max_delta_step=0,
 subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, scale_pos_weight=1, base_score=0.5, seed=0, missing=None)
         clf = self.make_pipeline_('xgbr', xgbr)
-        param_grid = {'xgbr__learning_rate': [0.03], 'xgbr__max_depth': [5], 'xgbr__n_estimators': [500], 'xgbr__min_child_weight': [3]}
+        param_grid = {'xgbr__learning_rate': [0.03], 'xgbr__max_depth': [5], 'xgbr__n_estimators': [500], 'xgbr__min_child_weight': [3], 'xgbr__subsample': [0.5, 0.75, 1], 'xgbr__colsample_bytree': [0.5, 0.75, 1]}
         model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
         y_pred = model.predict(x_test)
         for i in range(len(y_pred)):
