@@ -279,4 +279,6 @@ beidouwang
 | 2016-04-04 | chenqiang | 0.45778 |           |  0.46190   |       |  rfr{2000,38,12} + add query_is_general feature, see more from rfr_chenqiang/2014-04-04-02| RandomForest Regressor            | | |
 | 2016-04-05 | liaoyikang | 0.45746 |           |  0.45766  |       |  rfr{2000,38,12} + idf featues, rfr_liaoyikang/config.json        to    | | |
 | 2016-04-05 | fenixlin  | 0.45612 |          | 0.45744 |            | rfr{2000,42,12} + 更多idf特征(模糊匹配，search_term idf，search_term匹配)详见config | RandomForest Regressor      |                                               |  |
+| unsubmitted | fenixlin  | 0.45623 |          |  |            | rfr{2000,42,12} + idf+postag特征，详见config | RandomForest Regressor      |                                               |  |
+| 2016-04-08 | fenixlin  | 0.45455 |          | 0.45381 |            | xgbr{0.01,11,800,3,0.7,0.48} + 提交结果为0.45612的特征，详见config | Xgboost Regressor      |                                               |  |
 
