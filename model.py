@@ -93,7 +93,11 @@ class Model(object):
     def print_importance_(self, x_train, model, modelname='rfr', svdcomp=10):
         print("======== Printing feature importance ========")
         names = list(x_train.drop(CustRegressionVals.d_col_drops, axis=1, errors='ignore').columns.values)
-        imps = model.best_estimator_.named_steps[modelname].feature_importances_
+        if modelname.find('xgb')>=0:
+            imps = model.best_estimator_.named_steps[modelname]._Booster.get_fscore().items()
+            imps = [x[1] for x in list(imps)]
+        else:
+            imps = model.best_estimator_.named_steps[modelname].feature_importances_
         i = 1
         while len(names) < len(imps):
             names += ['svd'+str(i) for j in range(svdcomp)]
@@ -121,8 +125,8 @@ class Model(object):
                             transformer_list = [
                                 ('cst',  CustRegressionVals()),
                                 ('txt1', pipeline.Pipeline([('s1', CustTxtCol(key='search_term_fuzzy_match')), ('tfidf1', tfidf), ('tsvd1', tsvd)])),
-                                ('txt2', pipeline.Pipeline([('s2', CustTxtCol(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
-                                ('txt3', pipeline.Pipeline([('s3', CustTxtCol(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
+                                #('txt2', pipeline.Pipeline([('s2', CustTxtCol(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
+                                #('txt3', pipeline.Pipeline([('s3', CustTxtCol(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
                                 ('txt4', pipeline.Pipeline([('s4', CustTxtCol(key='brand')), ('tfidf4', tfidf), ('tsvd4', tsvd)])),
                                 ('txt5', pipeline.Pipeline([('s5', CustTxtCol(key='main_title')), ('tfidf5', tfidf), ('tsvd5', tsvd)]))
                                 ],
@@ -166,33 +170,32 @@ class RandomForestRegression(Model):
             return discretize_model.predict(y_pred)
         return y_pred
 
-
-def get_low_score(x):
-    return int(x / 3)
-
-def get_mid_score(x):
-    low = get_low_score(x)
-    if int(x) % 3 >= 2:
-        return low + 1
-    else:
-        return low
-
-def get_high_score(x):
-    low = get_low_score(x)
-    if x % 3 >= 1:
-        return low + 1
-    else:
-        return low
-
 class ThreePartRandomForestClassification(Model):
+
+    def get_low_score_(x):
+        return int(x / 3)
+
+    def get_mid_score_(x):
+        low = get_low_score_(x)
+        if int(x) % 3 >= 2:
+            return low + 1
+        else:
+            return low
+
+    def get_high_score_(x):
+        low = get_low_score_(x)
+        if x % 3 >= 1:
+            return low + 1
+        else:
+            return low
 
     def predict(self, x_train, y_train, x_test, need_transform_label=False):
         y_train = list(y_train)
         y_train = [int(3*x + 0.5) for x in y_train]
 
-        y_prefer_low = [get_low_score(x) for x in y_train]
-        y_prefer_mid = [get_mid_score(x) for x in y_train]
-        y_prefer_high = [get_high_score(x) for x in y_train]
+        y_prefer_low = [get_low_score_(x) for x in y_train]
+        y_prefer_mid = [get_mid_score_(x) for x in y_train]
+        y_prefer_high = [get_high_score_(x) for x in y_train]
 
 
         rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
@@ -251,6 +254,7 @@ subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1,
         param_grid = {'xgbr__learning_rate': [0.01], 'xgbr__max_depth': [11], 'xgbr__n_estimators': [800], 'xgbr__min_child_weight': [3], 'xgbr__subsample': [0.7], 'xgbr__colsample_bytree': [0.48]}
         model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
         y_pred = model.predict(x_test)
+        self.print_importance_(x_train, model, 'xgbr')
         for i in range(len(y_pred)):
             if y_pred[i]<1.0:
                 y_pred[i] = 1.0
