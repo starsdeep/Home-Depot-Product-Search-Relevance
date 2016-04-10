@@ -282,3 +282,5 @@ beidouwang
 | unsubmitted | fenixlin  | 0.45623 |          |  |            | rfr{2000,42,12} + idf+postag特征，详见config | RandomForest Regressor      |                                               |  |
 | 2016-04-08 | fenixlin  | 0.45455 |          | 0.45381 |            | xgbr{0.01,11,800,3,0.7,0.48} + 提交结果为0.45612的特征，详见config | Xgboost Regressor      |                                               |  |
 
+|2016-04-10 | chenqiang | 0.45331  |          | 0.45400 |       | add query_is_none_sense feature, query_is_general, add correction ,edsel to edsal, guage to gauge, base on last submit xgbr{0.01,11,800,3,0.7,0.48} + all useful features, see more from xgbr_fenixlin/160408submission01.json | Xgboost Regressor      |                                               |  | 
+

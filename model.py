@@ -172,18 +172,18 @@ class RandomForestRegression(Model):
 
 class ThreePartRandomForestClassification(Model):
 
-    def get_low_score_(x):
+    def get_low_score_(self, x):
         return int(x / 3)
 
-    def get_mid_score_(x):
-        low = get_low_score_(x)
+    def get_mid_score_(self, x):
+        low = self.get_low_score_(x)
         if int(x) % 3 >= 2:
             return low + 1
         else:
             return low
 
-    def get_high_score_(x):
-        low = get_low_score_(x)
+    def get_high_score_(self, x):
+        low = self.get_low_score_(x)
         if x % 3 >= 1:
             return low + 1
         else:
@@ -193,9 +193,9 @@ class ThreePartRandomForestClassification(Model):
         y_train = list(y_train)
         y_train = [int(3*x + 0.5) for x in y_train]
 
-        y_prefer_low = [get_low_score_(x) for x in y_train]
-        y_prefer_mid = [get_mid_score_(x) for x in y_train]
-        y_prefer_high = [get_high_score_(x) for x in y_train]
+        y_prefer_low = [self.get_low_score_(x) for x in y_train]
+        y_prefer_mid = [self.get_mid_score_(x) for x in y_train]
+        y_prefer_high = [self.get_high_score_(x) for x in y_train]
 
 
         rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)

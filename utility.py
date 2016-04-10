@@ -141,6 +141,10 @@ def str_stem(s, by_lemmatizer=False):
     s = s.replace("whirlpoolga", "whirlpool ga")
     s = s.replace("whirlpoolstainless","whirlpool stainless")
 
+    # add correction
+    s = s.replace("edsel", "edsal")
+    s = s.replace("guage", "gauge")
+
     # remove punctuations
     s = re.sub(r"([0-9]),([0-9])", r"\1\2", s)
     s = s.replace(","," ") #could be number / segment later
