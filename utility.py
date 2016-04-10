@@ -325,7 +325,7 @@ def num_common_word_ordered(str1, str2, exact_matching=False):
     return cnt
 
 
-def idf_common_word(str1, str2, idf_dict, normalize=True, exact_matching=False):
+def idf_common_word(str1, str2, idf_dict, normalize='len', exact_matching=False):
     """
     idf sum of common words of str1 and str2
     :param str1:
@@ -341,8 +341,15 @@ def idf_common_word(str1, str2, idf_dict, normalize=True, exact_matching=False):
             if (exact_matching and word in targets) or (not exact_matching and str2.find(word)>=0):
                 idf_sum += idf_dict[word]
 
-    if normalize:
+    if normalize == 'len':
         idf_sum /= (len(words) + 1.0)
+    elif normalize == 'idftotal':
+        total = 0
+        for word in words:
+            if word in idf_dict:
+                total += idf_dict[word]
+        if total > 0:
+            idf_sum /= total
     return idf_sum
 
 def idf_common_noun(s, tags, idf_dict, normalize_d=1):
@@ -470,7 +477,7 @@ numsize_num = "\s\d+(?:\s\d+\/\d+|(?:(?:\.|\/)\d+)?)"
 numsize_msr = "(?:in\.|ft\.|lb\.|sq\.ft\.|cu\.ft\.|gal\.|oz\.|fl\.oz\.|cm\.|mm\.|deg\.|volt\.|watt\.|yd\.|amp\.|hour\.|year\.|gauge\.|gpm\.|psi\.|hp\.|kw\.|qt\.|cfm\.|cc\.|vdc\.|btu\.|gpf\.|grit\.|ton\.|seer\.|tpi\.|tvl\.|awg\.|swe\.|mph\.|cri\.|lumens\.)"
 numsize_mid = "(?:\s(?:long|wide|length|height|deep|thick|l|h|w|d))"
 numsize_elem = numsize_num + numsize_msr + '?' + numsize_mid + '?'
-numsize_regex = re.compile('#?(?:' + numsize_elem + '\sxbi)*' + numsize_elem)
+numsize_regex = re.compile('#?(?:' + numsize_elem + '\sxbi)*' + numsize_elem + '(?=\s|$)')
 
 def numsize_of_str(s):
     """
