@@ -35,4 +35,3 @@ if __name__ == '__main__':
     y_pred_all = model.predict(df_all)
     y_pred = model.predict(X_test)
     pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv(os.path.join(sys.argv[1],'submission.csv'),index=False)
-    pd.DataFrame({"id": df_all['id'], "relevance": y_pred_all}).to_csv(os.path.join(sys.argv[1],'predict_relevance.csv'),index=False)
