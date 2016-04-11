@@ -1,6 +1,7 @@
 import os, sys
 import pandas as pd
 import numpy as np
+from sklearn import linear_model
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.decomposition import TruncatedSVD
@@ -15,11 +16,12 @@ import pickle
 import config.project
 
 
+
 class CustRegressionVals(BaseEstimator, TransformerMixin):
-    d_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid','numsize_of_query','numsize_of_title','numsize_of_main_title','numsize_of_description']
     def fit(self, x, y=None):
         return self
     def transform(self, hd_searches):
+        self.d_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid','numsize_of_query','numsize_of_title','numsize_of_main_title','numsize_of_description']
         hd_searches = hd_searches.drop(self.d_col_drops, axis=1, errors='ignore').values
         return hd_searches
 
@@ -62,6 +64,11 @@ class Model(object):
     def __init__(self):
         self.RMSE = make_scorer(self.fmean_squared_error_, greater_is_better=False)
         self.config = dict()
+        self.model = None
+
+
+    def make_in_range(y_pred, min_value, max_value):
+        return [x if 1.0<=x<=3.0 else 1.0 if x<1.0 else 3.0 for x in y_pred]
 
     def set_config(self, config):
         self.config = config
@@ -73,8 +80,13 @@ class Model(object):
         fmean_squared_error_ = mean_squared_error(ground_truth, predictions)**0.5
         return fmean_squared_error_
 
-    def print_badcase_(self, x_train, y_train, model, default_output_line=1000):
-        train_pred = cross_validation.cross_val_predict(model, x_train, y_train, cv=3)
+    def get_best_cvmodel(self, cvmodel):
+        for k, v in self.model.best_params_.items():
+            cvmodel = cvmodel.set_params(**{k: v})
+        return cvmodel
+
+    def print_badcase_(self, x_train, y_train, train_pred, default_output_line=2000):
+
         output = x_train.copy(deep=True)
         #output.drop('product_description', axis=1, inplace=True)
         #output.drop('description', axis=1, inplace=True)
@@ -89,6 +101,16 @@ class Model(object):
         output = output[-output_len:]
         output = output.iloc[::-1] #reverse order
         output[:output_len].to_csv(os.path.join(os.path.abspath(sys.argv[1]),'neg_badcase.csv'), encoding="utf-8")
+
+    def save_train_pred(self, x_train, train_pred):
+        """
+        for model ensemble
+        :param x_train:
+        :param train_pred:
+        :return:
+        """
+        df_train_pred = pd.DataFrame({'train_pred': train_pred,}, index=x_train.index)
+        df_train_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), 'train_pred.csv'), encoding="utf8")
 
     def print_importance_(self, x_train, model, modelname='rfr', svdcomp=10):
         print("======== Printing feature importance ========")
@@ -141,26 +163,32 @@ class Model(object):
                 (model_name, model)])
         return clf
 
+    def make_pipeline_low_dim_(self, model_name, model):
+        clf = pipeline.Pipeline([
+            ('cst', CustRegressionVals()),
+            (model_name, model)
+        ])
+        return clf
+
+
 class RandomForestRegression(Model):
 
-    def predict(self, x_train, y_train, x_test):
+    def fit(self, x_train, y_train):
         rfr = RandomForestRegressor(n_estimators = 2000, n_jobs = -1, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfr', rfr)
         param_grid = {'rfr__n_estimators': [2000], 'rfr__max_features': [12], 'rfr__max_depth': [42]}
-        model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
+        self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
 
-
-        #print bad case
+        best_cvmodel = self.get_best_cvmodel(clf)
+        train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
+        self.save_train_pred(x_train, train_pred)
         if self.config['save_badcase']:
-            cvmodel = clf
-            for k, v in model.best_params_.items():
-                cvmodel = cvmodel.set_params(**{k: v})
-            self.print_badcase_(x_train, y_train, cvmodel, 2000)
-            print("Badcase printing done.\n")
+            self.print_badcase_(x_train, y_train, train_pred, 2000)
 
-        y_pred = model.predict(x_test)
-        self.print_importance_(x_train, model, 'rfr')
+        self.print_importance_(x_train, self.model, 'rfr')
 
+    def predict(self, x_test):
+        y_pred = self.model.predict(x_test)
         if 'try_discretize' in self.config and self.config['try_discretize']:
             print("\ntry discretize ...\n")
             x_train_predict = model.predict(x_train)
@@ -233,43 +261,102 @@ class RandomForestClassification(Model):
             y_pred[i] = labels[int(y_pred[i])]
         return y_pred
 
-    def predict(self, x_train, y_train, x_test, need_transform_label=False):
+    def fit(self, x_train, y_train, need_transform_label=False):
         if need_transform_label:
             y_train = self.transform_labels_(y_train)
         rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfc', rfc)
         param_grid = {'rfc__max_features': [5], 'rfc__max_depth': [30]}
-        model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
-        result = model.predict(x_test)
+
+        best_cvmodel = self.get_best_cvmodel(clf)
+        train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
+        self.save_train_pred(x_train, train_pred)
+        if self.config['save_badcase']:
+            self.print_badcase_(x_train, y_train, train_pred, 2000)
+
+        self.print_importance_(x_train, self.model, 'rfc')
+
+    def predict(self, x_test, need_transform_label=False):
+        result = self.model.predict(x_test)
         if need_transform_label:
             result = self.recover_labels_(result)
         return result
 
 class XgboostRegression(Model):
 
-    def predict(self, x_train, y_train, x_test):
+    def fit(self, x_train, y_train):
         xgbr = xgb.XGBRegressor(learning_rate=0.25, silent=True, objective="reg:linear", nthread=-1, gamma=0, min_child_weight=1, max_delta_step=0,
 subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, scale_pos_weight=1, base_score=2, seed=2016, missing=None)
         clf = self.make_pipeline_('xgbr', xgbr)
         param_grid = {'xgbr__learning_rate': [0.01], 'xgbr__max_depth': [11], 'xgbr__n_estimators': [800], 'xgbr__min_child_weight': [3], 'xgbr__subsample': [0.7], 'xgbr__colsample_bytree': [0.48]}
-        model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
-        y_pred = model.predict(x_test)
-        self.print_importance_(x_train, model, 'xgbr')
-        for i in range(len(y_pred)):
-            if y_pred[i]<1.0:
-                y_pred[i] = 1.0
-            if y_pred[i]>3.0:
-                y_pred[i] = 3.0
+        self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
+        best_cvmodel = self.get_best_cvmodel(clf)
+        train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
+        train_pred = self.make_in_range(train_pred,1.0,3.0)
+        self.save_train_pred(x_train, train_pred)
+        if self.config['save_badcase']:
+            self.print_badcase_(x_train, y_train, train_pred, 2000)
+
+        self.print_importance_(x_train, self.model, 'xgbr')
+
+    def predict(self, x_test):
+        y_pred = self.model.predict(x_test)
+        y_pred = self.make_in_range(y_pred) 
         return y_pred
 
 class GbdtRegression(Model):
 
-    def predict(self, x_train, y_train, x_test):
+    def fit(self, x_train, y_train):
         gbdtr = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0, max_depth=3, random_state=2016)
         clf = self.make_pipeline_('gbdtr', gbdtr)
         param_grid = {'gbdtr__n_estimators': (100,), 'gbdtr__learning_rate': (0.1, 0.5), 'gbdtr__max_features': (3, 10, 20), 'gbdtr__max_depth': (5,15,30)}
-        model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
-        return model.predict(x_test)
+        self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
+
+        best_cvmodel = self.get_best_cvmodel(clf)
+        train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
+        self.save_train_pred(x_train, train_pred)
+        if self.config['save_badcase']:
+            self.print_badcase_(x_train, y_train, train_pred, 2000)
+        self.print_importance_(x_train, self.model, 'gbdtr')
+
+    def predict(self,  x_test):
+        return self.model.predict(x_test)
+
+
+
+class RidgeRegression(Model):
+
+    def fit(self, x_train, y_train):
+        ridger = linear_model.Ridge (alpha = .5)
+        clf = self.make_pipeline_low_dim_('ridger', ridger)
+        param_grid = {'ridger__alpha': [0.001, 0.003, 0.01, 0.03, 0.1, 0,3, 0.6, 1.0, 1.5, 3, 8, 15]}
+        self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
+
+        best_cvmodel = self.get_best_cvmodel(clf)
+        train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
+        self.save_train_pred(x_train, train_pred)
+        if self.config['save_badcase']:
+            self.print_badcase_(x_train, y_train, train_pred, 2000)
+
+    def predict(self, x_test):
+        return self.model.predict(x_test)
+
+
+class LassoRegression(Model):
+    def fit(self, x_train, y_train):
+        lassor = linear_model.Lasso (alpha = .1)
+        clf = self.make_pipeline_low_dim_('lassor', lassor)
+        param_grid = {'lassor__alpha': [0.001, 0.003, 0.01, 0.03, 0.1, 0,3, 0.6, 1.0, 1.5, 3, 8, 15]}
+        self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
+
+        best_cvmodel = self.get_best_cvmodel(clf)
+        train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
+        self.save_train_pred(x_train, train_pred)
+        if self.config['save_badcase']:
+            self.print_badcase_(x_train, y_train, train_pred, 2000)
+
+    def predict(self, x_test):
+        return self.model.predict(x_test)
 
 class LessThan(Model):
     '''

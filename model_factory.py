@@ -10,6 +10,8 @@ class ModelFactory(object):
             'gbdtr': model.GbdtRegression(),
             'multi': model.MultiClassifier(),
             'three': model.ThreePartRandomForestClassification(),
+            'ridger': model.RidgeRegression(),
+            'lassor': model.LassoRegression(),
         }
 
     def create_model(self, config):

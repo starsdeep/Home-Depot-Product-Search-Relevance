@@ -21,7 +21,6 @@ if __name__ == '__main__':
 
     # feature extraction
     df_train, df_test = get_feature(config)
-
     id_test = df_test['id']
     y_train = df_train['relevance'].values
     X_train = df_train[:]
@@ -30,6 +29,10 @@ if __name__ == '__main__':
     #model
     start_time = time.time()
     mf = ModelFactory()
-    y_pred = mf.create_model(config).predict(X_train, y_train, X_test)
-    print("--- Fit Model: %s minutes ---" % round(((time.time() - start_time)/60), 2))
+    model = mf.create_model(config)
+    model.fit(X_train, y_train)
+    df_all = pd.concat((df_train, df_test), axis=0)
+    y_pred_all = model.predict(df_all)
+    y_pred = model.predict(X_test)
     pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv(os.path.join(sys.argv[1],'submission.csv'),index=False)
+    pd.DataFrame({"id": df_all['id'], "relevance": y_pred_all}).to_csv(os.path.join(sys.argv[1],'predict_relevance.csv'),index=False)
