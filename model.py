@@ -15,14 +15,20 @@ import xgboost as xgb
 import pickle
 import config.project
 
+# high dimension columns to drops. used for tree based model
+hd_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid','numsize_of_query','numsize_of_title','numsize_of_main_title','numsize_of_description']
+
+# columns to drops for linear regression model
+linear_model_col_drops = hd_col_drops+['len_of_main_title', 'len_of_title', 'len_of_description', 'len_of_brand', "len_of_numsize_query","len_of_numsize_main_title","len_of_numsize_title","len_of_numsize_description","search_term_fuzzy_match","len_of_search_term_fuzzy_match","noun_of_query", "noun_of_title", "noun_of_main_title", "noun_of_description","len_of_numsize_query","len_of_numsize_main_title","len_of_numsize_title","len_of_numsize_description",]
 
 
 class CustRegressionVals(BaseEstimator, TransformerMixin):
+    def __init__(self, col_drops):
+        self.col_drops = col_drops
     def fit(self, x, y=None):
         return self
     def transform(self, hd_searches):
-        self.d_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid','numsize_of_query','numsize_of_title','numsize_of_main_title','numsize_of_description']
-        hd_searches = hd_searches.drop(self.d_col_drops, axis=1, errors='ignore').values
+        hd_searches = hd_searches.drop(self.col_drops, axis=1, errors='ignore').values
         return hd_searches
 
 class CustTxtCol(BaseEstimator, TransformerMixin):
@@ -146,7 +152,7 @@ class Model(object):
         clf = pipeline.Pipeline([
                 ('union', FeatureUnion(
                             transformer_list = [
-                                ('cst',  CustRegressionVals()),
+                                ('cst',  CustRegressionVals(hd_col_drops)),
                                 ('txt1', pipeline.Pipeline([('s1', CustTxtCol(key='search_term_fuzzy_match')), ('tfidf1', tfidf), ('tsvd1', tsvd)])),
                                 #('txt2', pipeline.Pipeline([('s2', CustTxtCol(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
                                 #('txt3', pipeline.Pipeline([('s3', CustTxtCol(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
@@ -166,7 +172,7 @@ class Model(object):
 
     def make_pipeline_low_dim_(self, model_name, model):
         clf = pipeline.Pipeline([
-            ('cst', CustRegressionVals()),
+            ('cst', CustRegressionVals(linear_model_col_drops)),
             (model_name, model)
         ])
         return clf
