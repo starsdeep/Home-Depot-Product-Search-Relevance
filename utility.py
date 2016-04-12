@@ -10,6 +10,7 @@ from nltk import pos_tag
 from nltk import word_tokenize
 from nltk.corpus.reader import wordnet
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+import pandas as pd
 
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
@@ -306,6 +307,27 @@ def num_common_word(str1, str2, ngram=1, exact_matching=False, use_editdis=True,
                     break
     return cnt
 
+def list_common_word(str1, str2, ngram=1, exact_matching=False):
+    words = []
+    if ngram == 1:
+        words = str1.split()
+    elif ngram == 2:
+        words = bigram_analyzer(str1)
+    else:
+        print(str(ngram) + " not supported yet")
+    if len(words)==0:
+        return []
+    result = []
+
+    targets = str2.split()
+    for i in range(len(targets)):
+        for word in words:
+            if exact_matching and word==targets[i]:
+                result.append(i+1)
+            elif not exact_matching and targets[i].find(word)>=0:
+                result.append(i+1)
+    return result
+
 def num_common_word_ordered(str1, str2, exact_matching=False):
     """
     number of words in str1 that also in str2, occuring in same order
@@ -539,6 +561,29 @@ def synonym(word):
     for i in allword:
         synonyms = synonyms.union(i.lemma_names())
     return synonyms
+
+def stat_list(li, method):
+    if len(li)==0:
+        return 0
+    elif method=='std' and len(li)==1:
+        return 0
+    else:
+        tmp = pd.Series(li)
+        func = {
+            'max': lambda x: x.max(),
+            'min': lambda x: x.min(),
+            'median': lambda x: x.median(),
+            'mean': lambda x: x.mean(),
+            'std': lambda x: x.std()
+        }
+        return func[method](tmp)
+
+def str_exclude(s, t):
+    tokens = t.split('\t')
+    for token in tokens:
+        s = s.replace(token, '')
+    s = re.sub(r' +', r' ', s)
+    return s
 
 if __name__=='__main__':
     import doctest

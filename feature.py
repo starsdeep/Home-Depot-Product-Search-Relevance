@@ -126,6 +126,22 @@ def build_feature(df, features):
             if index%300==0:
                 print(str(index)+' rows calculated...')
 
+    # iterate features in order (iterrows cannot update in time)
+    if set(features) & set(StatFeatureFuncDict.keys()):
+        print('calculating stat features...')
+        lists = {
+            'list_title': df.apply(lambda row: list_common_word(row['search_term'], row['title']), axis=1),
+            'list_description': df.apply(lambda row: list_common_word(row['search_term'], row['description']), axis=1),
+            'len_of_title': df['len_of_title'],
+            'len_of_description': df['len_of_description']
+        }
+        tmpdf = pd.DataFrame(lists)
+        for feature in list(StatFeatureFuncDict.keys()):
+            if feature in features:
+                print('calculating feature: '+feature+' ...')
+                feature_func = StatFeatureFuncDict[feature]
+                df[feature] = tmpdf.apply(feature_func, axis=1)
+
     # compute CategoricalNumsizeFuncDict
     for feature in list(NumsizeFuncDict.keys()):
         if feature in features:
@@ -243,6 +259,20 @@ MatchFeatureFuncDict = OrderedDict([
 
 
     ('query_is_general', lambda row: row['query_is_general']),
+])
+
+# Features dependending on pos_tag dict
+StatFeatureFuncDict = OrderedDict([
+    ('min_of_QinT', lambda row: stat_list(row['list_title'], 'max') / (row['len_of_title']+1.0)),
+    ('max_of_QinT', lambda row: stat_list(row['list_title'], 'min') / (row['len_of_title']+1.0)),
+    ('median_of_QinT', lambda row: stat_list(row['list_title'], 'median') / (row['len_of_title']+1.0)),
+    ('mean_of_QinT', lambda row: stat_list(row['list_title'], 'mean') / (row['len_of_title']+1.0)),
+    ('std_of_QinT', lambda row: stat_list(row['list_title'], 'std') / (row['len_of_title']+1.0)),
+    ('min_of_QinD', lambda row: stat_list(row['list_description'], 'max') / (row['len_of_description']+1.0)),
+    ('max_of_QinD', lambda row: stat_list(row['list_description'], 'min') / (row['len_of_description']+1.0)),
+    ('median_of_QinD', lambda row: stat_list(row['list_description'], 'median') / (row['len_of_description']+1.0)),
+    ('mean_of_QinD', lambda row: stat_list(row['list_description'], 'mean') / (row['len_of_description']+1.0)),
+    ('std_of_QinD', lambda row: stat_list(row['list_description'], 'std') / (row['len_of_description']+1.0)),
 ])
 
 # Features dependending on pos_tag dict

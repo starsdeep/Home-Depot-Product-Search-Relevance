@@ -117,6 +117,7 @@ class Model(object):
         names = list(x_train.drop(CustRegressionVals.d_col_drops, axis=1, errors='ignore').columns.values)
         if modelname.find('xgb')>=0:
             imps = model.best_estimator_.named_steps[modelname]._Booster.get_fscore().items()
+            imps = sorted(imps, key=lambda x: int(x[0][1:]))
             imps = [x[1] for x in list(imps)]
         else:
             imps = model.best_estimator_.named_steps[modelname].feature_importances_
