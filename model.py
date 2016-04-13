@@ -73,7 +73,7 @@ class Model(object):
         self.model = None
 
 
-    def make_in_range(y_pred, min_value, max_value):
+    def make_in_range(self, y_pred, min_value, max_value):
         return [x if 1.0<=x<=3.0 else 1.0 if x<1.0 else 3.0 for x in y_pred]
 
     def set_config(self, config):
@@ -120,7 +120,7 @@ class Model(object):
 
     def print_importance_(self, x_train, model, modelname='rfr', svdcomp=10):
         print("======== Printing feature importance ========")
-        names = list(x_train.drop(CustRegressionVals.d_col_drops, axis=1, errors='ignore').columns.values)
+        names = list(x_train.drop(hd_col_drops, axis=1, errors='ignore').columns.values)
         if modelname.find('xgb')>=0:
             imps = model.best_estimator_.named_steps[modelname]._Booster.get_fscore().items()
             imps = sorted(imps, key=lambda x: int(x[0][1:]))
