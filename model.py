@@ -73,7 +73,7 @@ class Model(object):
         self.model = None
 
 
-    def make_in_range(self, y_pred, min_value, max_value):
+    def make_in_range(self, y_pred):
         return [x if 1.0<=x<=3.0 else 1.0 if x<1.0 else 3.0 for x in y_pred]
 
     def set_config(self, config):
