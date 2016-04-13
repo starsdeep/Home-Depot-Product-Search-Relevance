@@ -76,8 +76,13 @@ def main_title_extract(title):
     return title
 
 def typeid_extract(title):
-    regex = "(?<=\s)#*[A-Z]+\d*-?\d+-*[A-Z]?(?=\s|$)"
-    return " ".join(re.findall(regex, title))
+    result = []
+    title = ' '+title
+    regex = "(?<=\s)#*[A-Z]+\d*-?\d+-*[A-Z]*(?=\s|$)"
+    result.extend(re.findall(regex, title))
+    regex2 = "(?<=\s)\d+[A-Z]+(?=\s|$)"
+    result.extend(re.findall(regex2, title))
+    return " ".join(result)
 
 def str_remove_stopwords(s):
     word_list = s.split()
@@ -126,6 +131,7 @@ def str_stem(s, by_lemmatizer=False):
 
     # fix typos
     s = s.replace("&amp;", "&") # most '&' in title are turned to "&amp;"
+    s = s.replace("&quot;", "'") # most ''' in title are turned to "&quot;"
     s = s.replace("&#39;", "'") # escaped in title
     s = s.replace("氓隆"," degrees") # escaped in title
     s = s.replace("聣脹聬", "-") # escaped in title
@@ -181,7 +187,8 @@ def str_stem(s, by_lemmatizer=False):
     s = re.sub(r"([0-9]+)( *)(foot|feet|ft|'')\.?(?=\s|$)", r"\1ft. ", s)
     s = re.sub(r"([0-9]+)( *)(pounds|pound|lbs|lb)\.?(?=\s|$)", r"\1lb. ", s)
     s = re.sub(r"([0-9]+)( *)(square|sq) ?\.?(feet|foot|ft)\.?(?=\s|$)", r"\1sq.ft. ", s)
-    s = re.sub(r"([0-9]+)( *)(cubic|cu) ?\.?(feet|foot|ft)\.?(?=\s|$)", r"\1cu.ft. ", s)
+    s = re.sub(r"([0-9]+)( *)(lin) ?\.?(feet|foot|ft)\.?(?=\s|$)", r"\1lin.ft. ", s)
+    s = re.sub(r"([0-9]+)( *)(doe)? ?(cubic|cu) ?\.?(feet|foot|ft)\.?(?=\s|$)", r"\1cu.ft. ", s)
     s = re.sub(r"([0-9]+)( *)(gallons|gallon|gal)\.?(?=\s|$)", r"\1gal. ", s)
     s = re.sub(r"([0-9]+)( *)(ounces|ounce|oz)\.?(?=\s|$)", r"\1oz. ", s)
     s = re.sub(r"([0-9]+)( *)(fl)\.? ?(oz)\.?(?=\s|$)", r"\1fl.oz. ", s)
@@ -193,7 +200,7 @@ def str_stem(s, by_lemmatizer=False):
     s = re.sub(r"([0-9]+)( *)(watts|watt|w)\.?(?=\s|$)", r"\1watt. ", s)
     s = re.sub(r"([0-9]+)( *)(yd|yds)\.?(?=\s|$)", r"\1yd. ", s)
     s = re.sub(r"([0-9]+)( *)(amperes|ampere|amps|amp)\.?(?=\s|$)", r"\1amp. ", s)
-    measures=['hour','year','gauge','gpm','psi','hp','kw','qt','cfm','cc','vdc','btu','gpf','grit','ton','seer','tpi','tvl','awg','swe','mph','cri','lumens']#pvc, od, oc
+    measures=['hour','year','gauge','gpm','psi','hp','kw','qt','cfm','cc','vdc','btu','gpf','grit','ton','seer','tpi','tvl','awg','swe','mph','cri','lumens','ah']#pvc, od, oc
     for m in measures:
         regex1 = "([0-9]+)( *)" + m + "\.?(?=\s|$)"
         regex2 = r"\1" + m + ". "
@@ -495,11 +502,13 @@ def num_numsize_word(numsize_s, s):
                 i += len(numsize)
     return cnt
 
-numsize_num = "\s\d+(?:\s\d+\/\d+|(?:(?:\.|\/)\d+)?)"
-numsize_msr = "(?:in\.|ft\.|lb\.|sq\.ft\.|cu\.ft\.|gal\.|oz\.|fl\.oz\.|cm\.|mm\.|deg\.|volt\.|watt\.|yd\.|amp\.|hour\.|year\.|gauge\.|gpm\.|psi\.|hp\.|kw\.|qt\.|cfm\.|cc\.|vdc\.|btu\.|gpf\.|grit\.|ton\.|seer\.|tpi\.|tvl\.|awg\.|swe\.|mph\.|cri\.|lumens\.)"
+numsize_num = "\s#?\d+(?:\s\d+\/\d+|(?:(?:\.|\/)\d+)?)"
+numsize_msr = "(?:in\.|ft\.|ah\.|lb\.|sq\.ft\.|cu\.ft\.|lin\.ft\.|gal\.|oz\.|fl\.oz\.|cm\.|mm\.|deg\.|volt\.|watt\.|yd\.|amp\.|hour\.|year\.|gauge\.|gpm\.|psi\.|hp\.|kw\.|qt\.|cfm\.|cc\.|vdc\.|btu\.|gpf\.|grit\.|ton\.|seer\.|tpi\.|tvl\.|awg\.|swe\.|mph\.|cri\.|lumens\.)"
 numsize_mid = "(?:\s(?:long|wide|length|height|deep|thick|l|h|w|d))"
 numsize_elem = numsize_num + numsize_msr + '?' + numsize_mid + '?'
-numsize_regex = re.compile('#?(?:' + numsize_elem + '\sxbi)*' + numsize_elem + '(?=\s|$)')
+numsize_regex = re.compile('(?:' + numsize_elem + '\s(?:xbi|and))*' + numsize_elem + '(?=\s|$)')
+numsize_regex2 = re.compile('\d+:\d+')
+numsize_regex3 = re.compile('\d+%')
 
 def numsize_of_str(s):
     """
@@ -507,7 +516,12 @@ def numsize_of_str(s):
     :param str:
     :return: number
     """
-    return numsize_regex.findall(s)
+    s = ' '+s
+    result = []
+    result.extend(numsize_regex.findall(s))
+    result.extend(numsize_regex2.findall(s))
+    result.extend(numsize_regex3.findall(s))
+    return result
 
 def numsize_of_query(s):
     """
