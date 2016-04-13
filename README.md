@@ -315,3 +315,5 @@ beidouwang
 
 |2016-04-10 | chenqiang | 0.45331  |          | 0.45400 |       | add query_is_none_sense feature, query_is_general, add correction ,edsel to edsal, guage to gauge, base on last submit xgbr{0.01,11,800,3,0.7,0.48} + all useful features, see more from xgbr_fenixlin/160408submission01.json | Xgboost Regressor      |                                               |  | 
 
+|2016-04-13 | zhuyu | 0.454722  |          | 0.45338 |       | modify testing data, extend title by query, see more from xgbr_zhuyu/160413submission01.json | Xgboost Regressor      |                                               |  | 
+
