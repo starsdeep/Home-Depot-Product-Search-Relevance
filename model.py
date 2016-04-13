@@ -299,7 +299,7 @@ subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1,
         self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
         best_cvmodel = self.get_best_cvmodel(clf)
         train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
-        train_pred = self.make_in_range(train_pred,1.0,3.0)
+        train_pred = self.make_in_range(train_pred)
         self.save_train_pred(x_train, train_pred)
         if self.config['save_badcase']:
             self.print_badcase_(x_train, y_train, train_pred, 2000)
