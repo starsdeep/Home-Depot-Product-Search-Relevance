@@ -6,7 +6,7 @@ def load_data(num_sample=-1):
     start_time = time.time()
 
     df_train = pd.read_csv('./input/train.csv', encoding="ISO-8859-1")
-    df_test = pd.read_csv('./input/test.csv', encoding="ISO-8859-1")
+    df_test = pd.read_csv('./input/modify_test.csv', encoding="ISO-8859-1")
     if num_sample > 0:
         df_train = df_train[:num_sample]
         df_test = df_test[-num_sample:]
