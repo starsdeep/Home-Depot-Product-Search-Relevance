@@ -393,7 +393,6 @@ class LessThan():
             print("Best CV score:")
             print(self.sub_clf[i].best_score_)
             
-            #self.sub_clf[i].fit(x_train, y_train_binary)
     
     def predict(self, x_test):
         print('predict is called')
@@ -426,7 +425,7 @@ class LessThan():
     def recover_labels_(self, y_pred, base):
         '''
             y_pred = predict_proba : 0~1 (of mark<= base)
-            return [.]*13  [ _prob /base_ | _1-prob /base ]
+            return [.]*7  [ _prob /base_ | _1-prob /base ]
 
         '''
         res = []
@@ -442,16 +441,9 @@ class MultiClassifier(Model):
         print( 'Start Multi FIT')
         base_clf = LessThan()
         clf = self.make_pipeline_('lessthan', base_clf)
-        input('wait')
         param_grid = {}
         self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
-        #self.model = clf.fit(x_train, y_train)
-        print( 'Model type:', type(self.model))
-        #best_cvmodel = self.get_best_cvmodel(clf)
-        #train_pred = cross_validation.cross_val_predict(clf, x_train, y_train, cv=3)
-        #self.save_train_pred(x_train, train_pred)
 
     def predict(self, x_test):
-        print( 'Model type:', type(self.model))
         print( 'Start Multi Predict...')
         return self.model.predict(x_test)
