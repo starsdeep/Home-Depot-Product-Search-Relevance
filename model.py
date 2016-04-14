@@ -292,7 +292,7 @@ class RandomForestClassification(Model):
 class XgboostRegression(Model):
 
     def fit(self, x_train, y_train):
-        xgbr = xgb.XGBRegressor(learning_rate=0.25, silent=True, objective="reg:linear", nthread=-1, gamma=0, min_child_weight=1, max_delta_step=0,
+        xgbr = xgb.XGBRegressor(learning_rate=0.25, silent=True, objective="reg:linear", nthread=3, gamma=0, min_child_weight=1, max_delta_step=0,
 subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, scale_pos_weight=1, base_score=2, seed=2016, missing=None)
         clf = self.make_pipeline_('xgbr', xgbr)
         param_grid = {'xgbr__learning_rate': [0.01], 'xgbr__max_depth': [11], 'xgbr__n_estimators': [800], 'xgbr__min_child_weight': [3], 'xgbr__subsample': [0.7], 'xgbr__colsample_bytree': [0.48]}

@@ -312,9 +312,6 @@ beidouwang
 | 2016-04-05 | fenixlin  | 0.45612 |          | 0.45744 |            | rfr{2000,42,12} + 更多idf特征(模糊匹配，search_term idf，search_term匹配)详见config | RandomForest Regressor      |                                               |  |
 | unsubmitted | fenixlin  | 0.45623 |          |  |            | rfr{2000,42,12} + idf+postag特征，详见config | RandomForest Regressor      |                                               |  |
 | 2016-04-08 | fenixlin  | 0.45455 |          | 0.45381 |            | xgbr{0.01,11,800,3,0.7,0.48} + 提交结果为0.45612的特征，详见config | Xgboost Regressor      |                                               |  |
-
-|2016-04-10 | chenqiang | 0.45331  |          | 0.45400 |       | add query_is_none_sense feature, query_is_general, add correction ,edsel to edsal, guage to gauge, base on last submit xgbr{0.01,11,800,3,0.7,0.48} + all useful features, see more from xgbr_fenixlin/160408submission01.json | Xgboost Regressor      |                                               |  | 
-
-|2016-04-13 | zhuyu | 0.454722  |          | 0.45338 |       | modify testing data, extend title by query, see more from xgbr_zhuyu/160413submission01.json | Xgboost Regressor      |                                               |  | 
-
+| 2016-04-10 | chenqiang | 0.45331  |          | 0.45400 |       | add query_is_none_sense feature, query_is_general, add correction ,edsel to edsal, guage to gauge, base on last submit xgbr{0.01,11,800,3,0.7,0.48} + all useful features, see more from xgbr_fenixlin/160408submission01.json | Xgboost Regressor      |                                               |  | 
+| 2016-04-13 | zhuyu | 0.454722  |          | 0.45338 |       | modify testing data, extend title by query, see more from xgbr_zhuyu/160413submission01.json | Xgboost Regressor      |                                               |  | 
 | 2016-04-14 | fenixlin  | 0.45402 |          | 0.45323 |            | xgbr{0.01,11,800,3,0.7,0.48} + 改善好的匹配统计特征(未做zhuyu学长的title拓展)，详见config | Xgboost Regressor      |                                               |  |
