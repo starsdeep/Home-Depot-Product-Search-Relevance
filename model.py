@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import mean_squared_error, make_scorer
+from sklearn.metrics import mean_squared_error, make_scorer, accuracy_score
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 from sklearn import pipeline, grid_search
 from sklearn.pipeline import FeatureUnion
@@ -274,7 +274,7 @@ class RandomForestClassification(Model):
         rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfc', rfc)
         param_grid = {'rfc__max_features': [5], 'rfc__max_depth': [30]}
-
+        self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
         best_cvmodel = self.get_best_cvmodel(clf)
         train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
         self.save_train_pred(x_train, train_pred)
@@ -365,73 +365,93 @@ class LassoRegression(Model):
     def predict(self, x_test):
         return self.model.predict(x_test)
 
-class LessThan(Model):
-    '''
-        <= labels[label_index] 
-        True: 1
-        False: 0
-    ''' 
-    def __init__(self, label_index):
-        super(LessThan, self).__init__()
-        self.label_index = label_index
-        self.labels=np.asarray([1., 1.25, 1.33, 1.5, 1.67, 1.75, 2., 2.25, 2.33, 2.5, 2.67, 2.75, 3.])
-        self.total = len(self.labels)
+class LessThan():
+    ''' 7 clf  for 1~3 '''
+    def __init__(self):
+        self.labels=np.asarray([1., 1.33 , 1.67, 2., 2.33, 2.67, 3.])
+        self.label_num = len(self.labels)
+        self.sub_clf = [None]*self.label_num
+        self.ACCURACY = make_scorer(self.precision_, greater_is_better=False)
+ 
+    def precision_(self, ground_truth, predictions):
+        return accuracy_score(ground_truth, predictions)
 
-    def predict(self, x_train, y_train, x_test):
-        ''' return  [0 or 1]*13 '''
-        rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
-        clf = self.make_pipeline_('rfc', rfc)
-        y_lessthan = self.transform_labels_(y_train)
-        param_grid = {'rfc__max_features': [5], 'rfc__max_depth': [30]}
-        model = self.grid_search_fit_(clf, param_grid, x_train, y_lessthan)
-        classes_order = model.best_estimator_.named_steps['rfc'].classes_
-        binary_judge = model.predict_proba(x_test)[:,classes_order[1]]
-        print('binary_judge')
-        print(binary_judge)
-        y_pred = self.recover_labels_(binary_judge)
-        print(y_pred)
+
+    def fit( self, x_train, y_train):
+        print(' LessThan __Fit__ was called ')
+
+        for i in range(self.label_num):
+            print('fit ',i,'th clf')
+            clf = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
+            y_train_binary = self.transform_labels_(y_train, i)
+            param_grid = {'max_features': [5], 'max_depth': [30]}
+            self.sub_clf[i] = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=self.ACCURACY)
+
+            self.sub_clf[i].fit(x_train, y_train_binary)
+            print("Best parameters found by grid search:")
+            print(self.sub_clf[i].best_params_)
+            print("Best CV score:")
+            print(self.sub_clf[i].best_score_)
+            
+            #self.sub_clf[i].fit(x_train, y_train_binary)
+    
+    def predict(self, x_test):
+        print('predict is called')
+        result = []
+        for i in range(self.label_num):
+            tmp = self.sub_clf[i].predict(x_test) 
+            recovered_res = self.recover_labels_(tmp, i)
+            result.append( recovered_res )
+        y_pred_sum = np.sum(result, axis=0)
+        y_pred_index = np.argmax(y_pred_sum, axis=1)
+        y_pred = self.labels[y_pred_index]
         return y_pred
 
-    def transform_labels_(self, y_pred):
-        y_each = np.asarray([int(i<=self.labels[self.label_index]) for i in y_pred])
+    def transform(self):
+        print(' LessThan __tranform__was called ')
+        result = []
+        for i in range(self.label_num):
+            tmp = self.sub_clf[i].predict(x) 
+            recovered_res = self.recover_labels_(tmp, i)
+            result.append( recovered_res )
+        y_pred_sum = np.sum(result, axis=0)
+        y_pred_index = np.argmax(y_pred_sum, axis=1)
+        y_pred = self.labels[y_pred_index]
+        return y_pred
+
+    def transform_labels_(self, y_train, base):
+        y_each = np.asarray([int(i<=self.labels[base]) for i in y_train])
         return y_each
 
-    def recover_labels_(self, y_pred):
+    def recover_labels_(self, y_pred, base):
         '''
-            y_pred = predict_proba : 0~1
-            recover y
+            y_pred = predict_proba : 0~1 (of mark<= base)
+            return [.]*13  [ _prob /base_ | _1-prob /base ]
+
         '''
         res = []
         for i in y_pred:
-            lh = self.label_index+1
-            rh = self.total-self.label_index-1
+            lh = base+1
+            rh = self.label_num-base-1;
             tmp = [i/lh]*lh + [(1-i)/rh]*rh
             res.append(tmp)
         return np.asarray(res)
 
-
-
 class MultiClassifier(Model):
-    ''' 13 clf for 1~3 '''
-    def predict( self, x_train, y_train, x_test):
-        #base _ is a number : 2 classifier base on this number
-        #rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
-        #clf = self.make_pipeline_('rfc', rfc)
-        # param_grid = {'rfc__max_features': [5], 'rfc__max_depth': [30]}
-        model = [None]*13
-        #result = [None]*len(self.labels)
-        for i in range(13):
-            model[i] = LessThan(i)
-            res = model[i].predict(x_train, y_train, x_test)
-            #print(res)
-        # for i in range(len(self.labels)):
-        #     y_each = self.transform_labels_(y_train, i)
-        #     model[i] = self.grid_search_fit_(clf, param_grid, x_train, y_each)
-        #     classes_order = model[i].best_estimator_.named_steps['rfc'].classes_
-        #     result[i] = model[i].predict_proba(x_test)[:,classes_order[1]]
+    def fit(self, x_train, y_train):
+        print( 'Start Multi FIT')
+        base_clf = LessThan()
+        clf = self.make_pipeline_('lessthan', base_clf)
+        input('wait')
+        param_grid = {}
+        self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
+        #self.model = clf.fit(x_train, y_train)
+        print( 'Model type:', type(self.model))
+        #best_cvmodel = self.get_best_cvmodel(clf)
+        #train_pred = cross_validation.cross_val_predict(clf, x_train, y_train, cv=3)
+        #self.save_train_pred(x_train, train_pred)
 
-        # result = np.asarray(result).argmax(axis=0)
-        # for i in range( len(result)):
-        #     result[i] = self.labels[result[i]]
-
-        return None
+    def predict(self, x_test):
+        print( 'Model type:', type(self.model))
+        print( 'Start Multi Predict...')
+        return self.model.predict(x_test)
