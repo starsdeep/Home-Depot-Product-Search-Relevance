@@ -331,8 +331,10 @@ def list_common_word(str1, str2, ngram=1, exact_matching=False):
         for word in words:
             if exact_matching and word==targets[i]:
                 result.append(i+1)
+                break
             elif not exact_matching and targets[i].find(word)>=0:
                 result.append(i+1)
+                break
     return result
 
 def num_common_word_ordered(str1, str2, exact_matching=False):

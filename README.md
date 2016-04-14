@@ -317,3 +317,4 @@ beidouwang
 
 |2016-04-13 | zhuyu | 0.454722  |          | 0.45338 |       | modify testing data, extend title by query, see more from xgbr_zhuyu/160413submission01.json | Xgboost Regressor      |                                               |  | 
 
+| 2016-04-14 | fenixlin  | 0.45402 |          | 0.45323 |            | xgbr{0.01,11,800,3,0.7,0.48} + 改善好的匹配统计特征(未做zhuyu学长的title拓展)，详见config | Xgboost Regressor      |                                               |  |

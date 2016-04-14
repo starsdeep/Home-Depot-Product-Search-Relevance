@@ -130,8 +130,10 @@ def build_feature(df, features):
     if set(features) & set(StatFeatureFuncDict.keys()):
         print('calculating stat features...')
         lists = {
+            'list_query': df.apply(lambda row: list_common_word(row['title'], row['search_term']), axis=1),
             'list_title': df.apply(lambda row: list_common_word(row['search_term'], row['title']), axis=1),
             'list_description': df.apply(lambda row: list_common_word(row['search_term'], row['description']), axis=1),
+            'len_of_query': df['len_of_query'],
             'len_of_title': df['len_of_title'],
             'len_of_description': df['len_of_description']
         }
@@ -273,6 +275,11 @@ StatFeatureFuncDict = OrderedDict([
     ('median_of_QinD', lambda row: stat_list(row['list_description'], 'median') / (row['len_of_description']+1.0)),
     ('mean_of_QinD', lambda row: stat_list(row['list_description'], 'mean') / (row['len_of_description']+1.0)),
     ('std_of_QinD', lambda row: stat_list(row['list_description'], 'std') / (row['len_of_description']+1.0)),
+    ('min_of_QfromT', lambda row: stat_list(row['list_query'], 'min') / (row['len_of_query']+1.0)),
+    ('max_of_QfromT', lambda row: stat_list(row['list_query'], 'max') / (row['len_of_query']+1.0)),
+    ('median_of_QfromT', lambda row: stat_list(row['list_query'], 'median') / (row['len_of_query']+1.0)),
+    ('mean_of_QfromT', lambda row: stat_list(row['list_query'], 'mean') / (row['len_of_query']+1.0)),
+    ('std_of_QfromT', lambda row: stat_list(row['list_query'], 'std') / (row['len_of_query']+1.0)),
 ])
 
 # Features dependending on pos_tag dict
