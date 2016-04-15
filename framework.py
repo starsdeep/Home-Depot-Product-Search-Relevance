@@ -22,16 +22,24 @@ if __name__ == '__main__':
     # feature extraction
     df_train, df_test = get_feature(config)
     id_test = df_test['id']
+    num_train = df_train.shape[0]
+    num_test = df_test.shape[0]
+
     y_train = df_train['relevance'].values
-    X_train = df_train[:]
-    X_test = df_test[:]
 
     #model
     start_time = time.time()
     mf = ModelFactory()
     model = mf.create_model(config)
-    model.fit(X_train, y_train)
+
     df_all = pd.concat((df_train, df_test), axis=0)
-    y_pred_all = model.predict(df_all)
-    y_pred = model.predict(X_test)
+    X_all, column_names = model.feature_union(df_all)
+    X_train = X_all[:num_train]
+    X_test = X_all[-num_test:]
+
+    model.fit(X_train, y_train, df_train, column_names)
+    if config['model']=='multi':
+        y_pred = model.predict(df_test)
+    else:
+        y_pred = model.predict(X_test)
     pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv(os.path.join(sys.argv[1],'submission.csv'),index=False)

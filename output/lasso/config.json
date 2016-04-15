@@ -1,5 +1,5 @@
 {   
-    "model": "xgbr",
+    "model": "lassor",
     "save_badcase": true,
     "num_train": 100,
     "hyperopt_fit": false,
