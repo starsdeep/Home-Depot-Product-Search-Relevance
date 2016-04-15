@@ -10,6 +10,7 @@ from nltk import pos_tag
 from nltk import word_tokenize
 from nltk.corpus.reader import wordnet
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.metrics import pairwise_distances
 import pandas as pd
 from sklearn.decomposition import TruncatedSVD
 
@@ -567,9 +568,12 @@ def find_er_position(query, title):
             break
     return position
 
-def compute_idf_dict(corpus):
-    vectorizer = TfidfVectorizer(min_df=1, tokenizer=str.split)
-    vectorizer.fit_transform(corpus)
+def compute_tfidf(corpus, ngram=(1,1), mindf=1):
+    vectorizer = TfidfVectorizer(ngram_range=ngram, min_df=mindf, tokenizer=str.split)
+    vectorizer.fit(corpus)
+    return vectorizer
+
+def compute_idf_dict(vectorizer):
     return dict(zip(vectorizer.get_feature_names(), vectorizer.idf_))
 
 def tfidf_transformer(X):
@@ -580,6 +584,8 @@ def tsvd_transformer(X):
     tsvd = TruncatedSVD(n_components=10, random_state = 2016)
     return tsvd.fit_transform(X)
 
+def compute_distance(vector, s1, s2, metric='cosine'):
+    return pairwise_distances(vector.transform([s1]), vector.transform([s2]), metric=metric)[0][0]
 
 def synonym(word):
     synonyms = set([])

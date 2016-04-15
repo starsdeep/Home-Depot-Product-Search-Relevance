@@ -90,21 +90,38 @@ def build_feature(df, features):
 
     # compute idf features
     idf_dicts = dict()
-    if set(features) & set(IdfFeatureFuncDict.keys()):
+    if (set(features) & set(IdfFeatureFuncDict.keys())) or (set(features) & set(IdfSimFeatureFuncDict.keys())):
         # prepare idf_dicts, idf_dicts contains idf value for a given word
         search_terms = df['search_term'].unique()
         unique_prd = df.drop_duplicates(subset='product_uid')
-        idf_dicts['search_term'] = compute_idf_dict(search_terms) # idf value from search_terms
-        idf_dicts['title'] = compute_idf_dict(unique_prd['title']) # idf value from title
-        idf_dicts['description'] = compute_idf_dict(unique_prd['description']) # idf value from description
-        idf_dicts['brand'] = compute_idf_dict(unique_prd['brand']) # idf value from brand
-        idf_dicts['composite'] = compute_idf_dict(unique_prd['description'] + ' ' + unique_prd['title'] + ' ' + unique_prd['brand']) # idf value from the those 4 fields
+        idf_vecs = {
+            'search_term': compute_tfidf(search_terms),
+            'title': compute_tfidf(unique_prd['title']),
+            'description': compute_tfidf(unique_prd['description']),
+            'brand': compute_tfidf(unique_prd['brand']),
+            'composite': compute_tfidf(unique_prd['description'] + ' ' + unique_prd['title'] + ' ' + unique_prd['brand']), # idf value from the those 4 fields
+            'origin': compute_tfidf(df['product_description'] + ' ' + df['product_title'] + ' ' + df['origin_search_term']) # idf value from the those 4 fields
+        }
+            
+        idf_dicts = {
+            'search_term': compute_idf_dict(idf_vecs['search_term']),
+            'title': compute_idf_dict(idf_vecs['title']),
+            'description': compute_idf_dict(idf_vecs['description']),
+            'brand': compute_idf_dict(idf_vecs['brand']),
+            'composite': compute_idf_dict(idf_vecs['composite'])
+        }
 
         for feature in list(IdfFeatureFuncDict.keys()):
             if feature in features:
                 print('calculating feature: '+feature+' ...')
                 feature_func = IdfFeatureFuncDict[feature]
                 df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
+        for feature in list(IdfSimFeatureFuncDict.keys()):
+            if feature in features:
+                print('calculating feature: '+feature+', might be slow...')
+                feature_func = IdfSimFeatureFuncDict[feature]
+                df[feature] = df.apply(feature_func, axis=1, vecs=idf_vecs)
+                
 
     # iterate features in order (iterrows cannot update in time)
     if set(features) & set(PostagFeatureFuncDict.keys()):
@@ -345,6 +362,14 @@ IdfFeatureFuncDict = OrderedDict([
     ('composite_idf_of_title_exact', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['composite'], exact_matching=True)),
     ('composite_idf_of_description', lambda row, idf_dicts: idf_common_word(row['search_term'], row['description'], idf_dicts['composite'])),
     ('composite_idf_of_brand', lambda row, idf_dicts: idf_common_word(row['search_term'], row['brand'], idf_dicts['composite'])),
+])
+
+# idf feature
+IdfSimFeatureFuncDict = OrderedDict([
+    ('idf_cos_sim_QT_origin', lambda row, vecs: compute_distance(vecs['origin'], row['origin_search_term'], row['product_title'])),
+    ('idf_cos_sim_QT', lambda row, vecs: compute_distance(vecs['composite'], row['search_term'], row['title'])),
+    ('idf_cos_sim_QD', lambda row, vecs: compute_distance(vecs['composite'], row['search_term'], row['description'])),
+    ('idf_cos_sim_TD', lambda row, vecs: compute_distance(vecs['composite'], row['title'], row['description'])),
 ])
 
 # Idf - Pos_tag features, calculate after postag features!
