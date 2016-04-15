@@ -229,7 +229,7 @@ class Model(object):
                 trial_clf = trial_clf.set_params(**{k: v})
 
             #compute score, rmse
-            train_pred = cross_val_predict(trial_clf, X_train, y_train, cv=3)
+            train_pred = cross_val_predict(trial_clf, X_train, y_train, cv=2)
             rmse = fmean_squared_error_(y_train, train_pred)
             if rmse < best_rmse:
                 best_rmse = rmse
