@@ -11,6 +11,7 @@ from nltk import word_tokenize
 from nltk.corpus.reader import wordnet
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import pandas as pd
+from sklearn.decomposition import TruncatedSVD
 
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
@@ -570,6 +571,15 @@ def compute_idf_dict(corpus):
     vectorizer = TfidfVectorizer(min_df=1, tokenizer=str.split)
     vectorizer.fit_transform(corpus)
     return dict(zip(vectorizer.get_feature_names(), vectorizer.idf_))
+
+def tfidf_transformer(X):
+    tfidf = TfidfVectorizer(ngram_range=(1, 1), stop_words='english')
+    return tfidf.fit_transform(X)
+
+def tsvd_transformer(X):
+    tsvd = TruncatedSVD(n_components=10, random_state = 2016)
+    return tsvd.fit_transform(X)
+
 
 def synonym(word):
     synonyms = set([])

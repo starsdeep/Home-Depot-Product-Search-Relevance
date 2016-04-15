@@ -11,15 +11,31 @@ from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 from sklearn import pipeline, grid_search
 from sklearn.pipeline import FeatureUnion
 from sklearn import cross_validation
+from sklearn.cross_validation import cross_val_predict
 import xgboost as xgb
 import pickle
 import config.project
+from operator import itemgetter
+import json
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+from sklearn.base import clone
+from trials_helper import TrialsHelper
 
 # high dimension columns to drops. used for tree based model
 hd_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid','numsize_of_query','numsize_of_title','numsize_of_main_title','numsize_of_description']
 
 # columns to drops for linear regression model
 linear_model_col_drops = hd_col_drops+['len_of_main_title', 'len_of_title', 'len_of_description', 'len_of_brand', "len_of_numsize_query","len_of_numsize_main_title","len_of_numsize_title","len_of_numsize_description","search_term_fuzzy_match","len_of_search_term_fuzzy_match","noun_of_query", "noun_of_title", "noun_of_main_title", "noun_of_description","len_of_numsize_query","len_of_numsize_main_title","len_of_numsize_title","len_of_numsize_description",]
+
+train_pred_filename_tpl = 'train_pred_trial_%d.csv'
+trails_filename = 'hyperopt_trials.json'
+
+def fmean_squared_error_(ground_truth, predictions):
+    fmean_squared_error_ = mean_squared_error(ground_truth, predictions)**0.5
+    return fmean_squared_error_
+
+
+
 
 
 class CustRegressionVals(BaseEstimator, TransformerMixin):
@@ -38,6 +54,15 @@ class CustTxtCol(BaseEstimator, TransformerMixin):
         return self
     def transform(self, data_dict):
         return data_dict[self.key].apply(str)
+
+
+class CustArrayCol(BaseEstimator, TransformerMixin):
+    def __init__(self, key):
+        self.key = key
+    def fit(self, x, y=None):
+        return self
+    def transform(self, data_dict):
+        return data_dict[self.key]
 
 
 class Discretizer(BaseEstimator, ClassifierMixin):
@@ -68,9 +93,10 @@ class Discretizer(BaseEstimator, ClassifierMixin):
 class Model(object):
 
     def __init__(self):
-        self.RMSE = make_scorer(self.fmean_squared_error_, greater_is_better=False)
+        self.RMSE = make_scorer(fmean_squared_error_, greater_is_better=False)
         self.config = dict()
         self.model = None
+        self.hyperopt_max_evals = 3
 
 
     def make_in_range(self, y_pred):
@@ -81,10 +107,6 @@ class Model(object):
 
     def predict(self, x_train, y_train, x_test):
         print('abstract method')
-
-    def fmean_squared_error_(self, ground_truth, predictions):
-        fmean_squared_error_ = mean_squared_error(ground_truth, predictions)**0.5
-        return fmean_squared_error_
 
     def get_best_cvmodel(self, cvmodel):
         for k, v in self.model.best_params_.items():
@@ -126,7 +148,7 @@ class Model(object):
             imps = sorted(imps, key=lambda x: int(x[0][1:]))
             imps = [x[1] for x in list(imps)]
         else:
-            imps = model.best_estimator_.named_steps[modelname].feature_importances_
+            imps = model.feature_importances_
         i = 1
         while len(names) < len(imps):
             names += ['svd'+str(i) for j in range(svdcomp)]
@@ -134,6 +156,55 @@ class Model(object):
         ranked_imp = sorted(list(zip(names,imps)), key=lambda x: x[1], reverse=True)
         for k, v in ranked_imp:
             print(k,v)
+
+    def hyperopt_optimize_(self, X_train, y_train):
+        trials = Trials()
+        # variable that will be used in hyperopt_score
+        clf = self.model
+        best_rmse = 100
+        trial_counter = 0
+        best_trial_counter = 0
+
+        def hyperopt_score(params):
+            #create a new model with parameters equals to params
+            nonlocal clf
+            nonlocal best_rmse
+            nonlocal trial_counter
+            nonlocal best_trial_counter
+
+            if 0 < best_rmse:
+                pass
+            trial_clf = clone(clf)
+            for k,v in params.items():
+                trial_clf = trial_clf.set_params(**{k: v})
+
+            #compute score, rmse
+            train_pred = cross_val_predict(trial_clf, X_train, y_train, cv=3)
+            rmse = fmean_squared_error_(y_train, train_pred)
+            if rmse < best_rmse:
+                best_rmse = rmse
+                best_trial_counter = trial_counter
+                print('trial %d, new best %s, %s' % (trial_counter, str(best_rmse), str(params)))
+            if trial_counter % 10 ==0:
+                print('trial %d' % trial_counter)
+
+            #save train_pred for model selection
+            df_train_pred = pd.DataFrame({'train_pred': train_pred})
+            df_train_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), train_pred_filename_tpl % trial_counter), encoding="utf8")
+
+            trial_counter += 1
+            return {'loss': rmse, 'status': STATUS_OK, 'params': params}
+
+        best_params = fmin(hyperopt_score, self.param_space, algo=tpe.suggest, trials=trials, max_evals=self.hyperopt_max_evals)
+
+        # save tirals result
+        result_list = [{'loss': trials.results[idx]['loss'], 'status': trials.results[idx]['status'], 'params': trials.results[idx]['params']} for idx in range(len(trials.trials))]
+        #result_list = sorted(result_list, key=itemgetter('loss'), reverse=True)
+        file_path = os.path.join(os.path.abspath(sys.argv[1]), trails_filename)
+        with open(file_path, 'w') as outfile:
+            json.dump(result_list, outfile)
+        print(best_params)
+        return best_params
 
     def grid_search_fit_(self, clf, param_grid, x_train, y_train):
         model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=self.RMSE)
@@ -145,6 +216,32 @@ class Model(object):
         # f = "%s/%s/model.dump.pickle" % (config.project.project_path, sys.argv[1])
         # pickle.dump(model, f)
         return model
+
+
+    def feature_union_(self, X):
+        tfidf = TfidfVectorizer(ngram_range=(1, 1), stop_words='english')
+        tsvd = TruncatedSVD(n_components=10, random_state = 2016)
+        union_feature = FeatureUnion(
+            transformer_list=[
+                ('cst', CustRegressionVals(hd_col_drops)),
+                ('txt1', pipeline.Pipeline([('s1', CustTxtCol(key='search_term_fuzzy_match')), ('tfidf1', tfidf), ('tsvd1', tsvd)])),
+                # ('txt2', pipeline.Pipeline([('s2', CustTxtCol(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
+                #('txt3', pipeline.Pipeline([('s3', CustTxtCol(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
+                ('txt4', pipeline.Pipeline([('s4', CustTxtCol(key='brand')), ('tfidf4', tfidf), ('tsvd4', tsvd)])),
+                ('txt5', pipeline.Pipeline([('s5', CustTxtCol(key='main_title')), ('tfidf5', tfidf), ('tsvd5', tsvd)]))
+            ],
+            transformer_weights={
+                'cst': 1.0,
+                'txt1': 0.5,
+                'txt4': 0.5,
+                'txt5': 0.25  # split the 0.25 of txt2 get worse result
+            },
+            # n_jobs = -1
+        )
+        X_features = union_feature.fit(X).transform(X)
+
+        return X_features
+
 
     def make_pipeline_(self, model_name, model):
         tfidf = TfidfVectorizer(ngram_range=(1, 1), stop_words='english')
@@ -180,22 +277,59 @@ class Model(object):
 
 class RandomForestRegression(Model):
 
-    def fit(self, x_train, y_train):
-        rfr = RandomForestRegressor(n_estimators = 2000, n_jobs = -1, random_state = 2016, verbose = 1)
-        clf = self.make_pipeline_('rfr', rfr)
-        param_grid = {'rfr__n_estimators': [2000], 'rfr__max_features': [12], 'rfr__max_depth': [42]}
-        self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
+    def __init__(self):
+        Model.__init__(self)
+        self.hyperopt_max_evals = 300
+        self.param_space = {
+            'max_depth': hp.choice('max_depth', range(3,60)),
+            'max_features': hp.choice('max_features', range(2,30)),
+            'n_estimators': hp.choice('n_estimators', range(20,30)),
+            # 'criterion': hp.choice('criterion', ["gini", "entropy"]),
+        }
+        self.default_param = {
+            'max_depth': 42,
+            'max_features': 12,
+            'n_estimators': 2000,
+        }
+        self.model = RandomForestRegressor(n_estimators = 100, n_jobs = -1, random_state = 2016, verbose = 1)
 
-        best_cvmodel = self.get_best_cvmodel(clf)
-        train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
-        self.save_train_pred(x_train, train_pred)
-        if self.config['save_badcase']:
-            self.print_badcase_(x_train, y_train, train_pred, 2000)
 
-        self.print_importance_(x_train, self.model, 'rfr')
+    # def fit(self, x_train, y_train):
+    #     rfr = RandomForestRegressor(n_estimators = 2000, n_jobs = -1, random_state = 2016, verbose = 1)
+    #     clf = self.make_pipeline_('rfr', rfr)
+    #     param_grid = {'rfr__n_estimators': [2000], 'rfr__max_features': [12], 'rfr__max_depth': [42]}
+    #     self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
+    #
+    #     best_cvmodel = self.get_best_cvmodel(clf)
+    #     train_pred = cross_validation.cross_val_predict(best_cvmodel, x_train, y_train, cv=3)
+    #     self.save_train_pred(x_train, train_pred)
+    #     if self.config['save_badcase']:
+    #         self.print_badcase_(x_train, y_train, train_pred, 2000)
+    #
+    #     self.print_importance_(x_train, self.model, 'rfr')
 
-    def predict(self, x_test):
-        y_pred = self.model.predict(x_test)
+
+    def fit(self, df_train, y_train):
+        X_train = self.feature_union_(df_train)
+        best_params = self.default_param
+        tmp_model = clone(self.model)
+        if self.config['hyperopt_fit']:
+            best_params = self.hyperopt_optimize_(X_train, y_train)
+            print("hyperopt done. best param is: ")
+            print(best_params)
+        for k, v in best_params.items():
+            tmp_model = tmp_model.set_params(**{k: v})
+            self.model = self.model.set_params(**{k: v})
+
+        train_pred = cross_validation.cross_val_predict(tmp_model, X_train, y_train, cv=3)
+        self.print_badcase_(df_train, y_train, train_pred, 2000)
+
+        self.model.fit(X_train, y_train)
+        self.print_importance_(df_train, self.model, 'rfr')
+
+    def predict(self, df_test):
+        X_test = self.feature_union_(df_test)
+        y_pred = self.model.predict(X_test)
         if 'try_discretize' in self.config and self.config['try_discretize']:
             print("\ntry discretize ...\n")
             x_train_predict = model.predict(x_train)

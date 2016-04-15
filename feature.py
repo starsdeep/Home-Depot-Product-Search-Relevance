@@ -35,6 +35,7 @@ def load_feature(features):
 
 def write_feature(df, features):
     for feature in features:
+        print("save feature %s ..." % feature)
         tmp_df = df[[feature]]
         tmp_df.to_csv(os.path.join(feature_path, feature + '.csv'), encoding="utf8")
     return
@@ -66,7 +67,7 @@ def get_feature(config):
     print("loading done")
     print("start computing feature: " + ' '.join(to_compute_features))
     df = build_feature(df, to_compute_features)
-    write_feature(df, to_compute_features)
+    # write_feature(df, to_compute_features)
     return df[:num_train], df[num_train:]
 
 def build_feature(df, features):
@@ -74,11 +75,12 @@ def build_feature(df, features):
     if not features:
         return df
 
-    for feature in list(TextFeatureFuncDict.keys()):
-        if feature in features:
-            print('calculating feature: '+feature+' ...')
-            feature_func = TextFeatureFuncDict[feature]
-            df[feature] = df.apply(feature_func, axis=1)
+    # for feature in list(TextFeatureFuncDict.keys()):
+    #     if feature in features:
+    #         print('calculating feature: '+feature+' ...')
+    #         feature_func = TextFeatureFuncDict[feature]
+    #         df[feature] = feature_func(df)
+    #         print(df[feature])
 
     for feature in list(MatchFeatureFuncDict.keys()):
         if feature in features:
@@ -157,6 +159,7 @@ def build_feature(df, features):
             print('calculating feature: '+feature+' ...')
             feature_func = LastFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
+    print("build feature done.")
     return df
 
 chkr = SpellCheckGoogleOffline()
@@ -354,6 +357,25 @@ IdfPostagFeatureFuncDict = OrderedDict([
     ('idf_max_3_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 3)),
     ('idf_max_5_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 5)),
 ])
+
+# tfidf and tsvd features for text
+
+TextFeatureFuncDict = OrderedDict([
+    ('tfidf_of_ori_stem_search_term', lambda df: tfidf_transformer(df['ori_stem_search_term'])),
+    ('tfidf_of_search_term_fuzzy_match', lambda df: tfidf_transformer(df['search_term_fuzzy_match'])),
+    ('tfidf_of_title', lambda df: tfidf_transformer(df['title'])),
+    ('tfidf_of_main_title', lambda df: tfidf_transformer(df['main_title'])),
+    ('tfidf_of_brand', lambda df: tfidf_transformer(df['brand'])),
+    # ('tfidf_of_description', lambda df: tfidf_transformer(df['description'])),
+
+    ('tsvd_of_ori_stem_search_term', lambda df: tsvd_transformer(df['tfidf_of_ori_stem_search_term'])),
+    ('tsvd_of_search_term_fuzzy_match', lambda df: tsvd_transformer(df['tfidf_of_search_term_fuzzy_match'])),
+    ('tsvd_of_title', lambda df: tsvd_transformer(df['tfidf_of_title'])),
+    ('tsvd_of_main_title', lambda df: tsvd_transformer(df['tfidf_of_main_title'])),
+    ('tsvd_of_brand', lambda df: tsvd_transformer(df['tfidf_of_brandd'])),
+    # ('tsvd_of_description', lambda df: tsvd_transformer(df['tfidf_of_description'])),
+])
+
 
 # Statistical Features
 LastFeatureFuncDict = OrderedDict([
