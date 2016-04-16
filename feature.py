@@ -75,12 +75,12 @@ def build_feature(df, features):
     if not features:
         return df
 
-    # for feature in list(TextFeatureFuncDict.keys()):
-    #     if feature in features:
-    #         print('calculating feature: '+feature+' ...')
-    #         feature_func = TextFeatureFuncDict[feature]
-    #         df[feature] = feature_func(df)
-    #         print(df[feature])
+
+    for feature in list(TextFeatureFuncDict.keys()):
+        if feature in features:
+            print('calculating feature: '+feature+' ...')
+            feature_func = MatchFeatureFuncDict[feature]
+            df[feature] = df.apply(feature_func, axis=1)
 
     for feature in list(MatchFeatureFuncDict.keys()):
         if feature in features:
@@ -360,7 +360,7 @@ IdfPostagFeatureFuncDict = OrderedDict([
 
 # tfidf and tsvd features for text
 
-TextFeatureFuncDict = OrderedDict([
+TextTfidfFeatureFuncDict = OrderedDict([
     ('tfidf_of_ori_stem_search_term', lambda df: tfidf_transformer(df['ori_stem_search_term'])),
     ('tfidf_of_search_term_fuzzy_match', lambda df: tfidf_transformer(df['search_term_fuzzy_match'])),
     ('tfidf_of_title', lambda df: tfidf_transformer(df['title'])),
