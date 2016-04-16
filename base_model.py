@@ -19,7 +19,6 @@ from operator import itemgetter
 import json
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from sklearn.base import clone
-from trials_helper import TrialsHelper
 # from unique_tfidf_vectorizer import UniqueTfidfVectorizer
 
 # high dimension columns to drops. used for tree based model
@@ -214,13 +213,16 @@ class Model(object):
         best_rmse = 100
         trial_counter = 0
         best_trial_counter = 0
-
+        model_name = self.config['model']
+        model_path = os.path.abspath(sys.argv[1])
         def hyperopt_score(params):
             #create a new model with parameters equals to params
             nonlocal clf
             nonlocal best_rmse
             nonlocal trial_counter
             nonlocal best_trial_counter
+            nonlocal model_name
+            nonlocal model_path
 
             if 0 < best_rmse:
                 pass
@@ -243,12 +245,12 @@ class Model(object):
             df_train_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), train_pred_filename_tpl % trial_counter), encoding="utf8")
 
             trial_counter += 1
-            return {'loss': rmse, 'status': STATUS_OK, 'params': params}
+            return {'loss': rmse, 'status': STATUS_OK, 'model': model_name, 'params': params}
 
         best_params = fmin(hyperopt_score, self.param_space, algo=tpe.suggest, trials=trials, max_evals=self.hyperopt_max_evals)
 
         # save tirals result
-        result_list = [{'loss': trials.results[idx]['loss'], 'status': trials.results[idx]['status'], 'params': trials.results[idx]['params']} for idx in range(len(trials.trials))]
+        result_list = [{'loss': trials.results[idx]['loss'], 'status': trials.results[idx]['status'], 'model': trials.results[idx]['model'], 'params': trials.results[idx]['params']} for idx in range(len(trials.trials))]
         #result_list = sorted(result_list, key=itemgetter('loss'), reverse=True)
         file_path = os.path.join(os.path.abspath(sys.argv[1]), trails_filename)
         with open(file_path, 'w') as outfile:

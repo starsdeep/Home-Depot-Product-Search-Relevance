@@ -21,7 +21,6 @@ from operator import itemgetter
 import json
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from sklearn.base import clone
-from trials_helper import TrialsHelper
 # from unique_tfidf_vectorizer import UniqueTfidfVectorizer
 from base_model import Model, fmean_squared_error_
 class RandomForestRegression(Model):
