@@ -1,5 +1,5 @@
 {   
-	"model": "three",
+	"model": "rfr",
 	"save_badcase": true,
 	"num_train": -1,
 	"features": [
