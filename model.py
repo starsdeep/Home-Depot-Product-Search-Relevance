@@ -4,6 +4,7 @@ import os, sys
 import pandas as pd
 import numpy as np
 from sklearn import linear_model
+from sklearn import svm
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.decomposition import TruncatedSVD
@@ -232,11 +233,33 @@ class LassoRegression(Model):
     def get_column_importance_(self):
         return self.model.coef_
 
-
+class SVR(Model):
+    def __init__(self):
+        Model.__init__(self)
+        self.param_space = {
+           
+        }
+        self.model = svm.SVR()
+    
+    def get_column_importance_(self):
+        return self.model.coef_
 
 class LessThan():
     ''' 7 clf  for 1~3 '''
+    CLF_DICT = {
+        'rfc': RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1),
+        'lr':  linear_model.LogisticRegression(),
+        'svm': svm.SVC()
+    }
+    PARAM = {
+        'rfc':{'n_estimators':[50,200,500,1000], 'max_features': [5,10,20,30,40], 'max_depth': [4,8,16,32,64,128]},
+        'lr': {},
+        'svm': {}
+
+    }
+    
     def __init__(self):
+        self.clf_type = 'rfc' # classifier type: rfc, logistic regression, svm_classifier
         self.labels=np.asarray([1., 1.33 , 1.67, 2., 2.33, 2.67, 3.])
         self.label_num = len(self.labels)
         self.sub_clf = [None]*self.label_num
@@ -251,11 +274,10 @@ class LessThan():
 
         for i in range(self.label_num):
             print('fit ',i,'th clf')
-            clf = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
             y_train_binary = self.transform_labels_(y_train, i)
-            param_grid = {'max_features': [5], 'max_depth': [30]}
+            clf = CLF_DICT[self.clf_type]
+            param_grid = self.PARAM[self.clf_type]
             self.sub_clf[i] = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=self.ACCURACY)
-
             self.sub_clf[i].fit(x_train, y_train_binary)
             print("Best parameters found by grid search:")
             print(self.sub_clf[i].best_params_)
@@ -316,3 +338,6 @@ class MultiClassifier(Model):
     def predict(self, x_test):
         print( 'Start Multi Predict...')
         return self.model.predict(x_test)
+
+
+
