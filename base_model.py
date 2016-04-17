@@ -112,10 +112,6 @@ class Model(object):
     def set_config(self, config):
         self.config = config
 
-    def predict(self, x_train, y_train, x_test):
-        print('abstract method')
-
-
     # def get_column_importance_(self):
     #     print("abstract method")
 
@@ -301,7 +297,8 @@ class Model(object):
         return clf
 
     def set_hyper_params_(self, X_train, y_train):
-        if 'hyperopt_fit' in self.config and  self.config['hyperopt_fit']:
+        key = 'hyperopt_fit'
+        if key in self.config and self.config[key]:
             print("start hyperopt_fit ...")
             if 'hyperopt_max_evals' in self.config:
                 self.hyperopt_max_evals = self.config['hyperopt_max_evals']

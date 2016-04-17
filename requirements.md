@@ -31,6 +31,7 @@ setuptools==18.2
 six==1.10.0
 sklearn==0.0
 xgboost==0.4a30
+networkx==1.11
 
 # By nltk.download()
 

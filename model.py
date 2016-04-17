@@ -6,6 +6,8 @@ import numpy as np
 from sklearn import linear_model
 from sklearn import svm
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.ensemble import ExtraTreesRegressor
+
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -40,6 +42,20 @@ class RandomForestRegression(Model):
     def get_column_importance_(self):
         return self.model.feature_importances_
 
+class ExtraTreesRegression(Model):
+    def __init__(self):
+        Model.__init__(self)
+        self.hyperopt_max_evals = 300
+        self.param_space = {
+            'max_depth': hp.choice('max_depth', [None, 20, 30, 35, 40, 45, 50]),
+            'max_features': hp.choice('max_features', [20, 30, 35, 40, 45, 50]),
+            'n_estimators': hp.choice('n_estimators', [20, 30, 60, 90, 100]),
+            'min_samples_split': hp.choice('min_samples_split', [1, 2, 3]),
+        }
+        self.model = ExtraTreesRegressor(n_estimators=2000, max_depth=42, max_features=12, n_jobs=-1, random_state=2016, verbose=1)
+
+    def get_column_importance_(self):
+        return self.model.feature_importances_
 
 class ThreePartRandomForestClassification(Model):
 

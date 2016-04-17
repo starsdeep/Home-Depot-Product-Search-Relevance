@@ -4,6 +4,7 @@ class ModelFactory(object):
 
     def __init__(self):
         self.model_dict = {
+            'etr': model.ExtraTreesRegression(),
             'rfr': model.RandomForestRegression(),
             'rfc': model.RandomForestClassification(),
             'xgbr': model.XgboostRegression(),

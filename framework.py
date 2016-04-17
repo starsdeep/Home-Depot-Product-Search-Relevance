@@ -16,6 +16,9 @@ if __name__ == '__main__':
         print("<output directory>")
         sys.exit()
 
+    start_time = time.time()
+    print("---------------------start---------------------------")
+    print("start at %s" % time.strftime("%Y-%m-%d %H:%M:%S"))
     with open(os.path.join(sys.argv[1], 'config.json')) as infile:
         config = json.load(infile)
 
@@ -28,7 +31,6 @@ if __name__ == '__main__':
     y_train = df_train['relevance'].values
 
     #model
-    start_time = time.time()
     mf = ModelFactory()
     model = mf.create_model(config)
 
@@ -42,3 +44,5 @@ if __name__ == '__main__':
     else:
         y_pred = model.predict(X_test)
     pd.DataFrame({"id": id_test, "relevance": y_pred}).to_csv(os.path.join(sys.argv[1],'submission.csv'),index=False)
+    print("---------------------end---------------------------")
+    print("\n\n\n\n")
