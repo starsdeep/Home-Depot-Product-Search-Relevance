@@ -79,7 +79,7 @@ def build_feature(df, features):
     for feature in list(TextFeatureFuncDict.keys()):
         if feature in features:
             print('calculating feature: '+feature+' ...')
-            feature_func = MatchFeatureFuncDict[feature]
+            feature_func = TextFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
 
     for feature in list(MatchFeatureFuncDict.keys()):
