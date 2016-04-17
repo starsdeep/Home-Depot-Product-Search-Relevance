@@ -20,10 +20,10 @@ if __name__ == '__main__':
         config = json.load(infile)
 
     # feature extraction
-    df_train, df_test = get_feature(config)
+    df_all, num_train, num_test = get_feature(config)
+    df_train = df_all[:num_train]
+    df_test = df_all[-num_test:]
     id_test = df_test['id']
-    num_train = df_train.shape[0]
-    num_test = df_test.shape[0]
 
     y_train = df_train['relevance'].values
 
@@ -32,7 +32,6 @@ if __name__ == '__main__':
     mf = ModelFactory()
     model = mf.create_model(config)
 
-    df_all = pd.concat((df_train, df_test), axis=0)
     X_all, column_names = model.feature_union(df_all)
     X_train = X_all[:num_train]
     X_test = X_all[-num_test:]

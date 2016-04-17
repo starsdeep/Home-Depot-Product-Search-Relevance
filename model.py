@@ -135,8 +135,8 @@ class XgboostRegression(Model):
         Model.__init__(self)
         self.hyperopt_max_evals = 300
         self.param_space = {
-            'n_estimators': hp.choice('n_estimators', [800,]),
-            'learning_rate': hp.choice('learning_rate', [0.01,]),
+            'n_estimators': hp.uniform('n_estimators', 500, 1000),
+            'learning_rate': hp.choice('learning_rate', [0.001,0.003,0.01,0.03,0.1]),
             'objective': hp.choice('objective', ["reg:linear",]),
             'gamma': hp.choice('gamma', [0,]),
             'min_child_weight': hp.choice('min_child_weight', [3,]),
@@ -151,6 +151,9 @@ class XgboostRegression(Model):
         }
         self.model = xgb.XGBRegressor(learning_rate=0.01, n_estimators=800, max_depth=11, silent=True, objective="reg:linear", nthread=3, gamma=0, min_child_weight=3, max_delta_step=0,
 subsample=0.7, colsample_bytree=0.48, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, scale_pos_weight=1, base_score=2, seed=2016, missing=None)
+        #xgbr = xgb.XGBRegressor(learning_rate=0.01, max_deepth=11, n_estimators=800, ,silent=True, objective="reg:linear", nthread=3, gamma=0, min_child_weight=3, max_delta_step=0, subsample=0.7, colsample_bytree=0.48, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, scale_pos_weight=1, base_score=2, seed=2016, missing=None)
+        #self.model = self.make_pipeline_('xgbr', xgbr)
+        
 
     def fit(self, X_train, y_train, df_train, column_names):
         """
@@ -165,7 +168,7 @@ subsample=0.7, colsample_bytree=0.48, colsample_bylevel=1, reg_alpha=0, reg_lamb
         self.set_hyper_params_(X_train, y_train)
         # see offline result
         tmp_model = clone(self.model)
-        train_pred = cross_validation.cross_val_predict(tmp_model, X_train, y_train, cv=3)
+        train_pred = cross_validation.cross_val_predict(tmp_model, X_train, y_train, cv=2)
         train_pred = self.make_in_range(train_pred)
         rmse = fmean_squared_error_(y_train, train_pred)
         print("\n======= offline rmse: %f =========" % rmse)

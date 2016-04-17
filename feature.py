@@ -68,7 +68,7 @@ def get_feature(config):
     print("start computing feature: " + ' '.join(to_compute_features))
     df = build_feature(df, to_compute_features)
     # write_feature(df, to_compute_features)
-    return df[:num_train], df[num_train:]
+    return df, num_train, num_test 
 
 def build_feature(df, features):
     # iterate features in order, use apply() to update in time

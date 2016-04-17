@@ -214,7 +214,7 @@ class Model(object):
         trial_counter = 0
         best_trial_counter = 0
         model_name = self.config['model']
-        model_path = os.path.abspath(sys.argv[1])
+        model_dir = os.path.abspath(sys.argv[1])
         def hyperopt_score(params):
             #create a new model with parameters equals to params
             nonlocal clf
@@ -222,7 +222,7 @@ class Model(object):
             nonlocal trial_counter
             nonlocal best_trial_counter
             nonlocal model_name
-            nonlocal model_path
+            nonlocal model_dir
 
             if 0 < best_rmse:
                 pass
@@ -245,12 +245,12 @@ class Model(object):
             df_train_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), train_pred_filename_tpl % trial_counter), encoding="utf8")
 
             trial_counter += 1
-            return {'loss': rmse, 'status': STATUS_OK, 'model': model_name, 'params': params}
+            return {'loss': rmse, 'status': STATUS_OK, 'model': model_name, 'model_dir': model_dir, 'params': params}
 
         best_params = fmin(hyperopt_score, self.param_space, algo=tpe.suggest, trials=trials, max_evals=self.hyperopt_max_evals)
 
         # save tirals result
-        result_list = [{'loss': trials.results[idx]['loss'], 'status': trials.results[idx]['status'], 'model': trials.results[idx]['model'], 'params': trials.results[idx]['params']} for idx in range(len(trials.trials))]
+        result_list = [{'loss': trials.results[idx]['loss'], 'status': trials.results[idx]['status'], 'model': trials.results[idx]['model'], 'model_dir': trials.results[idx]['model_dir'], 'params': trials.results[idx]['params']} for idx in range(len(trials.trials))]
         #result_list = sorted(result_list, key=itemgetter('loss'), reverse=True)
         file_path = os.path.join(os.path.abspath(sys.argv[1]), trails_filename)
         with open(file_path, 'w') as outfile:
@@ -301,7 +301,7 @@ class Model(object):
         return clf
 
     def set_hyper_params_(self, X_train, y_train):
-        if self.config['hyperopt_fit']:
+        if 'hyperopt_fit' in self.config and  self.config['hyperopt_fit']:
             print("start hyperopt_fit ...")
             if 'hyperopt_max_evals' in self.config:
                 self.hyperopt_max_evals = self.config['hyperopt_max_evals']

@@ -34,8 +34,8 @@ def average_selection(y_train, Trials, max_ensemble=20):
         avg_train_pred = avg_train_pred + Trials.train_pred_list[min_index] / (i+1.0)
         avg_rmse_list.append(min_value)
         best_trials = copy.deepcopy(Trials.trial_result_list[min_index])
+        trial_result_list.append(best_trials)
         Trials.del_n_trial_(min_index)
-        trial_result_list.append(Trials.trial_result_list[min_index])
         i += 1
         print("\n======= ensemble %d, rmse %f=========\n%s\n" % (i, avg_rmse_list[i-1], trial_result_list[i-1]))
 
