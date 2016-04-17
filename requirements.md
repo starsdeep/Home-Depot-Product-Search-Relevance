@@ -36,3 +36,8 @@ xgboost==0.4a30
 
 averaged_perceptron_tagger
 stopwords
+
+## install develop version
+
+git clone https://github.com/hyperopt/hyperopt.git
+(cd hyperopt && python setup.py develop)
