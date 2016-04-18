@@ -9,6 +9,7 @@ feature_cache/
 input/
 *.csv
 *.pkl
+*.mat
 
 # ignore mac system files
 .DS_Store

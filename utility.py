@@ -10,9 +10,11 @@ from nltk import pos_tag
 from nltk import word_tokenize
 from nltk.corpus.reader import wordnet
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD
 from sklearn.metrics import pairwise_distances
 import pandas as pd
-from sklearn.decomposition import TruncatedSVD
+import numpy as np
+import os
 
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
@@ -568,10 +570,33 @@ def find_er_position(query, title):
             break
     return position
 
-def compute_tfidf(corpus, ngram=(1,1), mindf=1):
+def fit_tfidf(corpus, ngram=(1,2), mindf=2):
     vectorizer = TfidfVectorizer(ngram_range=ngram, min_df=mindf, tokenizer=str.split)
     vectorizer.fit(corpus)
     return vectorizer
+
+def compute_svd(matrix, n_components=100):
+    vectorizer = TruncatedSVD(n_components=n_components, random_state=2016)
+    return vectorizer.fit_transform(matrix)
+
+def load_tsne(name):
+    if os.path.isfile(name+'.mat'):
+        x_tsne = np.load(name+'.mat', encoding='latin1')
+        tmpdf = pd.DataFrame(x_tsne)
+        col_names = []
+        for i in range(len(tmpdf.columns)):
+            col_names.append(name+'_'+str(i))
+        tmpdf.columns = col_names
+        return tmpdf
+    else:
+        return None
+
+def compute_tsne(name, source, svd_vec):
+    print(name + ' tsne not computed, Dumpping ' + source + '.mat..')
+    svd_vec.dump(source+'.mat')
+    print('calculating tsne, make take very long...')
+    os.system('python make_tsne.py '+source)
+    return load_tsne(name)
 
 def compute_idf_dict(vectorizer):
     return dict(zip(vectorizer.get_feature_names(), vectorizer.idf_))
@@ -584,8 +609,8 @@ def tsvd_transformer(X):
     tsvd = TruncatedSVD(n_components=10, random_state = 2016)
     return tsvd.fit_transform(X)
 
-def compute_distance(vector, s1, s2, metric='cosine'):
-    return pairwise_distances(vector.transform([s1]), vector.transform([s2]), metric=metric)[0][0]
+def compute_distance(v1, v2, metric='cosine'):
+    return pairwise_distances(v1, v2, metric=metric)[0][0]
 
 def synonym(word):
     synonyms = set([])

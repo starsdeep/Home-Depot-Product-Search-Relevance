@@ -1,5 +1,4 @@
 #encoding=utf8
-import numpy as np
 import re
 import os
 import pandas as pd
@@ -88,27 +87,60 @@ def build_feature(df, features):
             feature_func = MatchFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
 
+    # load tsne features
+    if set(features) & set(tSNEFeatureSourceDict.keys()):
+        for feature in list(tSNEFeatureSourceDict.keys()):
+            if feature in features:
+                print('Trying to load feature: '+feature+' ...')
+                source = tSNEFeatureSourceDict[feature]
+                tmpdf = load_tsne(feature)
+                if tmpdf is not None:
+                    df = df.merge(tmpdf, left_index=True, right_index=True)
+                    features.remove(feature)        
+
     # compute idf features
     idf_dicts = dict()
-    if (set(features) & set(IdfFeatureFuncDict.keys())) or (set(features) & set(IdfSimFeatureFuncDict.keys())):
+    if (set(features) & set(IdfFeatureFuncDict.keys())) or (set(features) & set(IdfSimFeatureFuncDict.keys())) or (set(features) & set(SvdSimFeatureFuncDict.keys())) or (set(features) & set(tSNEFeatureSourceDict.keys())):
         # prepare idf_dicts, idf_dicts contains idf value for a given word
         search_terms = df['search_term'].unique()
         unique_prd = df.drop_duplicates(subset='product_uid')
-        idf_vecs = {
-            'search_term': compute_tfidf(search_terms),
-            'title': compute_tfidf(unique_prd['title']),
-            'description': compute_tfidf(unique_prd['description']),
-            'brand': compute_tfidf(unique_prd['brand']),
-            'composite': compute_tfidf(unique_prd['description'] + ' ' + unique_prd['title'] + ' ' + unique_prd['brand']), # idf value from the those 4 fields
-            'origin': compute_tfidf(df['product_description'] + ' ' + df['product_title'] + ' ' + df['origin_search_term']) # idf value from the those 4 fields
+        # fit idf vectorizer
+        print('fitting tfidf_vectorizer ...')
+        tfidf_vectorizer = {
+            'search_term': fit_tfidf(search_terms),
+            'title': fit_tfidf(unique_prd['title']),
+            'description': fit_tfidf(unique_prd['description']),
+            'brand': fit_tfidf(unique_prd['brand']),
+            'composite': fit_tfidf(unique_prd['description'] + ' ' + unique_prd['title'] + ' ' + unique_prd['brand']), # idf value from the those 4 fields
+            'origin': fit_tfidf(df['product_description'] + ' ' + df['product_title'] + ' ' + df['origin_search_term']) # idf value from the those 4 fields
         }
-            
+        # get idf value dictionary
         idf_dicts = {
-            'search_term': compute_idf_dict(idf_vecs['search_term']),
-            'title': compute_idf_dict(idf_vecs['title']),
-            'description': compute_idf_dict(idf_vecs['description']),
-            'brand': compute_idf_dict(idf_vecs['brand']),
-            'composite': compute_idf_dict(idf_vecs['composite'])
+            'search_term': compute_idf_dict(tfidf_vectorizer['search_term']),
+            'title': compute_idf_dict(tfidf_vectorizer['title']),
+            'description': compute_idf_dict(tfidf_vectorizer['description']),
+            'brand': compute_idf_dict(tfidf_vectorizer['brand']),
+            'composite': compute_idf_dict(tfidf_vectorizer['composite'])
+        }
+        # get transformed tfidf values
+        print('transforming tfidf vectors ...')
+        idf_func = lambda vec_name, col: tfidf_vectorizer[vec_name].transform(df[col])
+        tfidf_vecs = {
+            'compo_Q': idf_func('composite', 'search_term'),
+            'compo_T': idf_func('composite', 'title'),
+            'compo_D': idf_func('composite', 'description'),
+            'origin_Q': idf_func('origin', 'origin_search_term'),
+            'origin_T': idf_func('origin', 'product_title')
+        }
+        # get fitted & transformed svd values
+        print('transforming svd vectors ...')
+        svd_func = lambda name: compute_svd(tfidf_vecs[name])
+        svd_vecs = {
+            'compo_Q': svd_func('compo_Q'),
+            'compo_T': svd_func('compo_T'),
+            'compo_D': svd_func('compo_D'),
+            'origin_Q': svd_func('origin_Q'),
+            'origin_T': svd_func('origin_T')
         }
 
         for feature in list(IdfFeatureFuncDict.keys()):
@@ -116,12 +148,26 @@ def build_feature(df, features):
                 print('calculating feature: '+feature+' ...')
                 feature_func = IdfFeatureFuncDict[feature]
                 df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
+        mat_to_ser = lambda x: pd.Series([row for row in x])
+        tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in tfidf_vecs.items()})
         for feature in list(IdfSimFeatureFuncDict.keys()):
             if feature in features:
-                print('calculating feature: '+feature+', might be slow...')
+                print('calculating feature: '+feature+' ...')
                 feature_func = IdfSimFeatureFuncDict[feature]
-                df[feature] = df.apply(feature_func, axis=1, vecs=idf_vecs)
-                
+                df[feature] = tmpdf.apply(feature_func, axis=1)
+        tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in svd_vecs.items()})
+        for feature in list(SvdSimFeatureFuncDict.keys()):
+            if feature in features:
+                print('calculating feature: '+feature+' ...')
+                feature_func = SvdSimFeatureFuncDict[feature]
+                df[feature] = tmpdf.apply(feature_func, axis=1)
+
+        for feature in list(tSNEFeatureSourceDict.keys()):
+            if feature in features:
+                print('calculating feature: '+feature+' ...')
+                source = tSNEFeatureSourceDict[feature]
+                tmpdf = compute_tsne(feature, source, svd_vecs[source])
+                df.merge(tmpdf, left_index=True, right_index=True)
 
     # iterate features in order (iterrows cannot update in time)
     if set(features) & set(PostagFeatureFuncDict.keys()):
@@ -148,15 +194,14 @@ def build_feature(df, features):
     # iterate features in order (iterrows cannot update in time)
     if set(features) & set(StatFeatureFuncDict.keys()):
         print('calculating stat features...')
-        lists = {
+        tmpdf = pd.DataFrame({
             'list_query': df.apply(lambda row: list_common_word(row['title'], row['search_term']), axis=1),
             'list_title': df.apply(lambda row: list_common_word(row['search_term'], row['title']), axis=1),
             'list_description': df.apply(lambda row: list_common_word(row['search_term'], row['description']), axis=1),
             'len_of_query': df['len_of_query'],
             'len_of_title': df['len_of_title'],
             'len_of_description': df['len_of_description']
-        }
-        tmpdf = pd.DataFrame(lists)
+        })
         for feature in list(StatFeatureFuncDict.keys()):
             if feature in features:
                 print('calculating feature: '+feature+' ...')
@@ -346,7 +391,7 @@ NumsizeFuncDict = OrderedDict([
     ('numsize_description_case5', lambda row: len(row['numsize_of_query'])>0 and len(row['numsize_of_description'])>0 and len(set(row['numsize_of_query']) & set(row['numsize_of_description']))>0),
 ])
 
-# idf feature
+# tfidf features
 IdfFeatureFuncDict = OrderedDict([
     ('local_idf_of_title', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['search_term'])),
     ('local_idf_of_title_exact', lambda row, idf_dicts: idf_common_word(row['ori_stem_search_term'], row['title'], idf_dicts['search_term'], exact_matching=True)),
@@ -364,14 +409,27 @@ IdfFeatureFuncDict = OrderedDict([
     ('composite_idf_of_brand', lambda row, idf_dicts: idf_common_word(row['search_term'], row['brand'], idf_dicts['composite'])),
 ])
 
-# idf feature
+# tfidf similarity features
 IdfSimFeatureFuncDict = OrderedDict([
-    ('idf_cos_sim_QT_origin', lambda row, vecs: compute_distance(vecs['origin'], row['origin_search_term'], row['product_title'])),
-    ('idf_cos_sim_QT', lambda row, vecs: compute_distance(vecs['composite'], row['search_term'], row['title'])),
-    ('idf_cos_sim_QD', lambda row, vecs: compute_distance(vecs['composite'], row['search_term'], row['description'])),
-    ('idf_cos_sim_TD', lambda row, vecs: compute_distance(vecs['composite'], row['title'], row['description'])),
+    ('idf_cos_sim_QT_origin', lambda row: compute_distance(row['origin_Q'], row['origin_T'])),
+    ('idf_cos_sim_QT', lambda row: compute_distance(row['compo_Q'], row['compo_T'])),
+    ('idf_cos_sim_QD', lambda row: compute_distance(row['compo_Q'], row['compo_D'])),
+    ('idf_cos_sim_TD', lambda row: compute_distance(row['compo_T'], row['compo_D'])),
 ])
 
+# tfidf-svd similarity & sne features
+SvdSimFeatureFuncDict = OrderedDict([
+    ('svd_cos_sim_QT_origin', lambda row: compute_distance([row['origin_Q']], [row['origin_T']])),
+    ('svd_cos_sim_QT', lambda row: compute_distance([row['compo_Q']], [row['compo_T']])),
+    ('svd_cos_sim_QD', lambda row: compute_distance([row['compo_Q']], [row['compo_D']])),
+    ('svd_cos_sim_TD', lambda row: compute_distance([row['compo_T']], [row['compo_D']])),
+])
+
+tSNEFeatureSourceDict = OrderedDict([
+    ('tSNE_compo_Q', 'compo_Q'),
+    ('tSNE_compo_T', 'compo_T'),
+    ('tSNE_compo_D', 'compo_D'),
+])
 # Idf - Pos_tag features, calculate after postag features!
 IdfPostagFeatureFuncDict = OrderedDict([
     ('idf_of_title_noun', lambda row, tags, idf_dicts: idf_common_noun(row['search_term'], tags['title'], idf_dicts['composite'], row['noun_of_query'] + 1.0)),
