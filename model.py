@@ -255,8 +255,12 @@ class LassoRegression(Model):
 class SVR(Model):
     def __init__(self):
         Model.__init__(self)
+        self.hyperopt_max_evals = 5
         self.param_space = {
-           
+            'C':hp.choice('C',[0.01,0.1,0.5,1,5,10]),
+            'epsilon': hp.choice('epsilon',[0.01,0.1,0.5,1]),
+            'kernel': hp.choice('kernel',['rbf', 'sigmoid']),
+            'gamma' : hp.choice('gamma',['auto',0.1,0.01,0.001])
         }
         self.model = svm.SVR()
     
@@ -272,15 +276,16 @@ class LessThan():
     }
     PARAM = {
         'rfc':{'n_estimators':[50,200,500,1000], 'max_features': [5,10,20,30,40], 'max_depth': [4,8,16,32,64,128]},
-        'lr': {},
-        'svm': {}
+        'lr': {'C':[0.0001,0.001,0.01,0.1,0.5,1]},
+        'svm': {'C':[0.01,0.1,0.5,1,5,10],'kernel':['rbf','sigmoid'],'gamma':['auto',0.1,0.01,0.001]}
 
     }
     
     def __init__(self):
-        self.clf_type = 'rfc' # classifier type: rfc, logistic regression, svm_classifier
+        self.clf_type = 'svm' # classifier type: rfc, logistic regression, svm_classifier
         self.labels=np.asarray([1., 1.33 , 1.67, 2., 2.33, 2.67, 3.])
-        self.label_num = len(self.labels)
+        self.margin=np.asarray([1.2, 1.5 , 1.8, 2.2, 2.5, 2.8])
+        self.label_num = len(self.margin)
         self.sub_clf = [None]*self.label_num
         self.ACCURACY = make_scorer(self.precision_, greater_is_better=False)
  
@@ -294,7 +299,7 @@ class LessThan():
         for i in range(self.label_num):
             print('fit ',i,'th clf')
             y_train_binary = self.transform_labels_(y_train, i)
-            clf = CLF_DICT[self.clf_type]
+            clf = self.CLF_DICT[self.clf_type]
             param_grid = self.PARAM[self.clf_type]
             self.sub_clf[i] = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=self.ACCURACY)
             self.sub_clf[i].fit(x_train, y_train_binary)
@@ -329,7 +334,7 @@ class LessThan():
         return y_pred
 
     def transform_labels_(self, y_train, base):
-        y_each = np.asarray([int(i<=self.labels[base]) for i in y_train])
+        y_each = np.asarray([int(i<=self.margin[base]) for i in y_train])
         return y_each
 
     def recover_labels_(self, y_pred, base):
@@ -341,7 +346,7 @@ class LessThan():
         res = []
         for i in y_pred:
             lh = base+1
-            rh = self.label_num-base-1;
+            rh = self.label_num-base;
             tmp = [i/lh]*lh + [(1-i)/rh]*rh
             res.append(tmp)
         return np.asarray(res)
