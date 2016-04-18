@@ -259,7 +259,7 @@ class SVR(Model):
         self.param_space = {
             'C':hp.choice('C',[0.01,0.1,0.5,1,5,10]),
             'epsilon': hp.choice('epsilon',[0.01,0.1,0.5,1]),
-            'kernel': hp.choice('kernel',['rbf', 'sigmoid']),
+            'kernel': hp.choice('kernel',['rbf', 'sigmoid', 'linear', 'poly']),
             'gamma' : hp.choice('gamma',['auto',0.1,0.01,0.001])
         }
         self.model = svm.SVR()
