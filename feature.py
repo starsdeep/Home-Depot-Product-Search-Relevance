@@ -34,7 +34,7 @@ def load_feature(features):
 
 def write_feature(df, features):
     for feature in features:
-        print("save feature %s ..." % feature)
+        print("[step]: saving feature %s ..." % feature)
         tmp_df = df[[feature]]
         tmp_df.to_csv(os.path.join(feature_path, feature + '.csv'), encoding="utf8")
     return
@@ -50,21 +50,21 @@ def get_feature(config):
     to_compute_features = recompute_features | new_features
 
     df_basic, num_train, num_test = load_data(config['num_train'])
-    print("feature already exists, loading: \n" + ' '.join(to_load_features))
+    print("[step]: feature already exists, loading: \n" + ' '.join(to_load_features))
     if to_load_features:
         df_all = load_feature(to_load_features)
-        print("length of loaded datafame %d" % df_all.shape[0])
+        print("[info]: length of loaded datafame %d" % df_all.shape[0])
         df_train = df_all[:num_train]
         df_test = df_all[-num_test:]
         df = pd.concat((df_train, df_test), axis=0, ignore_index=True)
-        print("length of datafame after trimed with num_train %d" % df.shape[0])
+        print("[info]: length of datafame after trimed with num_train %d" % df.shape[0])
         for column in df_basic.columns.values:
             if column not in df:
                 df[column] = df_basic[column].copy()
     else:
         df = df_basic
-    print("loading done")
-    print("start computing feature: " + ' '.join(to_compute_features))
+    print("[step]: loading done")
+    print("[step]: start computing feature: " + ' '.join(to_compute_features))
     df = build_feature(df, to_compute_features)
     # write_feature(df, to_compute_features)
     return df, num_train, num_test 
@@ -77,13 +77,13 @@ def build_feature(df, features):
 
     for feature in list(TextFeatureFuncDict.keys()):
         if feature in features:
-            print('calculating feature: '+feature+' ...')
+            print('[step]: calculating feature: '+feature+' ...')
             feature_func = TextFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
 
     for feature in list(MatchFeatureFuncDict.keys()):
         if feature in features:
-            print('calculating feature: '+feature+' ...')
+            print('[step]: calculating feature: '+feature+' ...')
             feature_func = MatchFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
 
@@ -145,7 +145,7 @@ def build_feature(df, features):
 
         for feature in list(IdfFeatureFuncDict.keys()):
             if feature in features:
-                print('calculating feature: '+feature+' ...')
+                print('[step]: calculating feature: '+feature+' ...')
                 feature_func = IdfFeatureFuncDict[feature]
                 df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
         mat_to_ser = lambda x: pd.Series([row for row in x])
@@ -171,7 +171,7 @@ def build_feature(df, features):
 
     # iterate features in order (iterrows cannot update in time)
     if set(features) & set(PostagFeatureFuncDict.keys()):
-        print('calculating pos_tag features...')
+        print('[step]: calculating pos_tag features...')
         for index, row in df.iterrows():
             tags = {'search_term': pos_tag(row['search_term'].split()),
                     'main_title': pos_tag(row['main_title'].split()),
@@ -189,11 +189,11 @@ def build_feature(df, features):
                     feature_func = IdfPostagFeatureFuncDict[feature]
                     df.loc[index, feature] = feature_func(row_new, tags, idf_dicts)
             if index%300==0:
-                print(str(index)+' rows calculated...')
+                print("[step]: " + str(index)+' rows calculated...')
 
     # iterate features in order (iterrows cannot update in time)
     if set(features) & set(StatFeatureFuncDict.keys()):
-        print('calculating stat features...')
+        print('[step]: calculating stat features...')
         tmpdf = pd.DataFrame({
             'list_query': df.apply(lambda row: list_common_word(row['title'], row['search_term']), axis=1),
             'list_title': df.apply(lambda row: list_common_word(row['search_term'], row['title']), axis=1),
@@ -204,24 +204,24 @@ def build_feature(df, features):
         })
         for feature in list(StatFeatureFuncDict.keys()):
             if feature in features:
-                print('calculating feature: '+feature+' ...')
+                print('[step]: calculating feature: '+feature+' ...')
                 feature_func = StatFeatureFuncDict[feature]
                 df[feature] = tmpdf.apply(feature_func, axis=1)
 
     # compute CategoricalNumsizeFuncDict
     for feature in list(NumsizeFuncDict.keys()):
         if feature in features:
-            print('calculating feature: '+feature+' ...')
+            print('[step]: calculating feature: '+feature+' ...')
             feature_func = NumsizeFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
 
     # iterate features in order, use apply() to update in time
     for feature in list(LastFeatureFuncDict.keys()):
         if feature in features:
-            print('calculating feature: '+feature+' ...')
+            print('[step]: calculating feature: '+feature+' ...')
             feature_func = LastFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
-    print("build feature done.")
+    print("[step]: build feature done.")
     return df
 
 chkr = SpellCheckGoogleOffline()

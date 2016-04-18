@@ -1,4 +1,6 @@
+import random
 import os, sys
+import time
 import pandas as pd
 import numpy as np
 from sklearn import linear_model
@@ -211,6 +213,11 @@ class Model(object):
         best_trial_counter = 0
         model_name = self.config['model']
         model_dir = os.path.abspath(sys.argv[1])
+        feature_random_selection = False
+        if 'feature_random_selection' in self.config and self.config['feature_random_selection'] == True:
+            feature_random_selection = True
+            print("[info]: feature_random_selection: %r" % feature_random_selection)
+        column_names = self.column_names
         def hyperopt_score(params):
             #create a new model with parameters equals to params
             nonlocal clf
@@ -219,6 +226,27 @@ class Model(object):
             nonlocal best_trial_counter
             nonlocal model_name
             nonlocal model_dir
+            nonlocal X_train
+            nonlocal y_train
+            nonlocal feature_random_selection
+
+            # randomly select K features from X_train
+            new_X_train = X_train
+            features = "all"
+            feature_index = "all"
+            num_total_features = X_train.shape[1]
+            K = num_total_features
+            if feature_random_selection:
+                ratio_list = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+                ratio = random.choice(ratio_list)
+                K = int(num_total_features * ratio)
+                K_index = sorted(random.sample(range(num_total_features), K))
+                new_X_train = X_train[:,K_index]
+                if not K==num_total_features:
+                    features = " ".join(column_names[K_index]) 
+                    feature_index = " ".join(map(str, K_index))
+
+
 
             if 0 < best_rmse:
                 pass
@@ -227,32 +255,36 @@ class Model(object):
                 trial_clf = trial_clf.set_params(**{k: v})
 
             #compute score, rmse
-            train_pred = cross_val_predict(trial_clf, X_train, y_train, cv=2)
+            train_pred = cross_val_predict(trial_clf, new_X_train, y_train, cv=2)
             rmse = fmean_squared_error_(y_train, train_pred)
             if rmse < best_rmse:
                 best_rmse = rmse
                 best_trial_counter = trial_counter
                 print('trial %d, new best %s, %s' % (trial_counter, str(best_rmse), str(params)))
-            if trial_counter % 10 ==0:
-                print('trial %d' % trial_counter)
+            if trial_counter % 20 ==0:
+                print('current trial %d' % trial_counter)
 
             #save train_pred for model selection
             df_train_pred = pd.DataFrame({'train_pred': train_pred})
             df_train_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), train_pred_filename_tpl % trial_counter), encoding="utf8")
 
             trial_counter += 1
-            return {'loss': rmse, 'status': STATUS_OK, 'model': model_name, 'model_dir': model_dir, 'params': params}
-
+            return {'loss': rmse, 'status': STATUS_OK, 'model': model_name, 'model_dir': model_dir, 'params': params, 'features': features, 'feature_index': feature_index, 'num_features':K}
+        
+        #返回的并不是最优的结果，非常奇怪
         best_params = fmin(hyperopt_score, self.param_space, algo=tpe.suggest, trials=trials, max_evals=self.hyperopt_max_evals)
-
+        
         # save tirals result
-        result_list = [{'loss': trials.results[idx]['loss'], 'status': trials.results[idx]['status'], 'model': trials.results[idx]['model'], 'model_dir': trials.results[idx]['model_dir'], 'params': trials.results[idx]['params']} for idx in range(len(trials.trials))]
+        #result_list = [{'loss': trials.results[idx]['loss'], 'status': trials.results[idx]['status'], 'model': trials.results[idx]['model'], 'model_dir': trials.results[idx]['model_dir'], 'params': trials.results[idx]['params']} for idx in range(len(trials.trials))]
+        result_list = trials.results
         #result_list = sorted(result_list, key=itemgetter('loss'), reverse=True)
         file_path = os.path.join(os.path.abspath(sys.argv[1]), trails_filename)
         with open(file_path, 'w') as outfile:
             json.dump(result_list, outfile)
-        print(best_params)
-        return best_params
+        index, trial_result = min(enumerate(result_list), key=lambda k: k[1]['loss']) # shallow copy
+        print("[info]: best trial results")
+        print(trial_result)
+        return trial_result['params']
 
     def grid_search_fit_(self, clf, param_grid, x_train, y_train):
         model = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=self.RMSE)
@@ -297,27 +329,28 @@ class Model(object):
         return clf
 
     def set_hyper_params_(self, X_train, y_train):
-        key = 'hyperopt_fit'
-        if key in self.config and self.config[key]:
-            print("start hyperopt_fit ...")
+        if 'hyperopt_fit' in self.config and  self.config['hyperopt_fit']:
+            print("[step]: start hyperopt_fit ...")
             if 'hyperopt_max_evals' in self.config:
                 self.hyperopt_max_evals = self.config['hyperopt_max_evals']
+            print("[info]: hyperopt evals %d" % self.hyperopt_max_evals)
+            start_time = time.time()
             best_params = self.hyperopt_optimize_(X_train, y_train)
-            print("hyperopt done.")
-            print("best_params is: %s" % str(best_params))
+            print("[step]: hyperopt done. takes %s mins." % round(((time.time() - start_time)/60),2))
             for k, v in best_params.items():
                 self.model = self.model.set_params(**{k: v})
         else:
             pass # do nothing, using default params
 
     def fit(self, X_train, y_train, df_train, column_names):
+        self.column_names = column_names
         self.set_hyper_params_(X_train, y_train)
         # see offline result
         tmp_model = clone(self.model)
         train_pred = cross_validation.cross_val_predict(tmp_model, X_train, y_train, cv=3)
         rmse = fmean_squared_error_(y_train, train_pred)
         self.save_train_pred(df_train, train_pred)
-        print("\n======= offline rmse: %f =========" % rmse)
+        print("\n[info]: offline rmse: %f\n" % rmse)
         self.print_badcase_(df_train, y_train, train_pred, 2000)
         # fit
         self.model.fit(X_train, y_train)

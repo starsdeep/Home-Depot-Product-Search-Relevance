@@ -1,0 +1,5 @@
+{   
+    "model_library_path_list": [ "./output/rfr_hyperopt1/", "./output/xgbr_hyperopt1/", "./output/ridge_hyperopt1/", "./output/lasso_hyperfit1/" ],
+    "replace": false,
+    "max_ensemble": 100
+}

@@ -1,9 +1,9 @@
 {   
-    "model": "ridger",
+    "model": "xgbr",
     "save_badcase": true,
     "num_train": -1,
     "hyperopt_fit": true,
-    "hyperopt_max_evals": 100,
+    "hyperopt_max_evals": 300,
     "features": [
         "origin_search_term",
         "ori_stem_search_term",

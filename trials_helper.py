@@ -29,7 +29,7 @@ class TrialsList():
         self.trial_result_list += trial_result_list
         self.train_pred_list += train_pred_list
 
-    def del_n_trial_(self, n):
+    def del_n_trial(self, n):
         if n<0 or n>=len(self.trial_result_list):
             print("%d is invalid, current size is %d" % (n, ))
             sys.exit()
@@ -38,20 +38,10 @@ class TrialsList():
 
     def best_trial(self, verbose=False):
         index, trial_result = min(enumerate(self.trial_result_list), key=lambda k: k[1]['loss']) # shallow copy
-        ori = self.train_pred_list[index]
-        # test = ori * 0.5
-        # print(ori)
-        # print(test)
         if verbose:
             print("\nbest trials index is: %d" % index)
             print(trial_result)
-        return index, trial_result  # deep copy
-
-    def get_best_trial(self, verbose=False):
-        index, trial_result = self.best_trial(verbose)
-        train_pred = copy.deepcopy(self.train_pred_list[index])
-        self.del_n_trial_(index)
-        return index, trial_result, train_pred
+        return index, trial_result, self.train_pred_list[index]  # return does deep copy
 
 
 if __name__ == '__main__':

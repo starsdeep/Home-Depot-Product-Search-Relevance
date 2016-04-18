@@ -1,5 +1,5 @@
 #encoding=utf8
-
+import math
 import os, sys
 import pandas as pd
 import numpy as np
@@ -32,9 +32,9 @@ class RandomForestRegression(Model):
         Model.__init__(self)
         self.hyperopt_max_evals = 300
         self.param_space = {
-            'max_depth': hp.choice('max_depth', range(3,60)),
-            'max_features': hp.choice('max_features', range(2,30)),
-            'n_estimators': hp.choice('n_estimators', range(20,30)),
+            'max_depth': hp.choice('max_depth', range(5,60)),
+            'max_features': hp.choice('max_features', range(3,30)),
+            'n_estimators': hp.choice('n_estimators', [500,1200,2000]),
             # 'criterion': hp.choice('criterion', ["gini", "entropy"]),
         }
         self.model = RandomForestRegressor(n_estimators = 2000, max_depth=42, max_features=12, n_jobs = 3, random_state = 2016, verbose = 1)
@@ -151,19 +151,18 @@ class XgboostRegression(Model):
         Model.__init__(self)
         self.hyperopt_max_evals = 300
         self.param_space = {
-            'n_estimators': hp.uniform('n_estimators', 500, 1000),
+            'n_estimators': hp.choice('n_estimators', [500,800,1000]),
             'learning_rate': hp.choice('learning_rate', [0.001,0.003,0.01,0.03,0.1]),
-            'objective': hp.choice('objective', ["reg:linear",]),
-            'gamma': hp.choice('gamma', [0,]),
-            'min_child_weight': hp.choice('min_child_weight', [3,]),
-            'max_delta_step': hp.choice('max_delta_step', [0,]),
-            'subsample': hp.choice('subsample', [1,]),
-            'colsample_bytree': hp.choice('colsample_bytree', [1,]),
-            'colsample_bylevel': hp.choice('colsample_bylevel', [1,]),
-            'reg_alpha': hp.choice('reg_alpha', [0,]),
-            'reg_lambda': hp.choice('reg_lambda', [1,]),
-            'scale_pos_weight': hp.choice('scale_pos_weight', [1,]),
-            'base_score': hp.choice('base_score', [2,]),
+            'max_depth': hp.choice('max_depth',range(7,14)),
+            'min_child_weight': hp.uniform('min_child_weight', 1,5),
+            #'max_delta_step': hp.choice('max_delta_step', [0,]),
+            'subsample': hp.uniform('subsample', 0.5,0.8),
+            'colsample_bytree': hp.uniform('colsample_bytree', 0.3,0.7),
+            'colsample_bylevel': hp.uniform('colsample_bylevel', 0.3,0.7),
+            #'reg_alpha': hp.choice('reg_alpha', [0,]),
+            #'reg_lambda': hp.choice('reg_lambda', [1,]),
+            #'scale_pos_weight': hp.choice('scale_pos_weight', [1,]),
+            #'base_score': hp.choice('base_score', [2,]),
         }
         self.model = xgb.XGBRegressor(learning_rate=0.01, n_estimators=800, max_depth=11, silent=True, objective="reg:linear", nthread=3, gamma=0, min_child_weight=3, max_delta_step=0,
 subsample=0.7, colsample_bytree=0.48, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, scale_pos_weight=1, base_score=2, seed=2016, missing=None)
@@ -229,7 +228,7 @@ class RidgeRegression(Model):
         Model.__init__(self)
         self.hyperopt_max_evals = 5
         self.param_space = {
-            'alpha': hp.uniform('alpha', 0.0, 10),
+            'alpha': hp.loguniform('alpha', math.log(0.0001), math.log(10)),
             'normalize': hp.choice('normalize', [True, False]),
         }
         self.model = linear_model.Ridge(alpha = .5)
@@ -243,7 +242,7 @@ class LassoRegression(Model):
         Model.__init__(self)
         self.hyperopt_max_evals = 3
         self.param_space = {
-            'alpha': hp.uniform('alpha', 0.0, 10),
+            'alpha': hp.loguniform('alpha', math.log(0.00003), math.log(10)),
             'normalize': hp.choice('normalize', [True, False]),
         }
 
