@@ -37,7 +37,7 @@ class RandomForestRegression(Model):
             'n_estimators': hp.choice('n_estimators', range(20,30)),
             # 'criterion': hp.choice('criterion', ["gini", "entropy"]),
         }
-        self.model = RandomForestRegressor(n_estimators = 2000, max_depth=42, max_features=12, n_jobs = -1, random_state = 2016, verbose = 1)
+        self.model = RandomForestRegressor(n_estimators = 2000, max_depth=42, max_features=12, n_jobs = 3, random_state = 2016, verbose = 1)
 
     def get_column_importance_(self):
         return self.model.feature_importances_
@@ -52,7 +52,7 @@ class ExtraTreesRegression(Model):
             'n_estimators': hp.choice('n_estimators', [20, 30, 60, 90, 100]),
             'min_samples_split': hp.choice('min_samples_split', [1, 2, 3]),
         }
-        self.model = ExtraTreesRegressor(n_estimators=2000, max_depth=42, max_features=12, n_jobs=-1, random_state=2016, verbose=1)
+        self.model = ExtraTreesRegressor(n_estimators=2000, max_depth=42, max_features=12, n_jobs=3, random_state=2016, verbose=1)
 
     def get_column_importance_(self):
         return self.model.feature_importances_
@@ -85,7 +85,7 @@ class ThreePartRandomForestClassification(Model):
         y_prefer_high = [self.get_high_score_(x) for x in y_train]
 
 
-        rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
+        rfc = RandomForestClassifier(n_estimators = 500, n_jobs = 3, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfc', rfc)
         param_grid = {'rfc__max_features': [1, 2, 5], 'rfc__max_depth': [2, 5, 10]}
 
@@ -123,7 +123,7 @@ class RandomForestClassification(Model):
     def fit(self, x_train, y_train, need_transform_label=False):
         if need_transform_label:
             y_train = self.transform_labels_(y_train)
-        rfc = RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1)
+        rfc = RandomForestClassifier(n_estimators = 500, n_jobs = 3, random_state = 2016, verbose = 1)
         clf = self.make_pipeline_('rfc', rfc)
         param_grid = {'rfc__max_features': [5], 'rfc__max_depth': [30]}
         self.model = self.grid_search_fit_(clf, param_grid, x_train, y_train)
@@ -270,7 +270,7 @@ class SVR(Model):
 class LessThan():
     ''' 7 clf  for 1~3 '''
     CLF_DICT = {
-        'rfc': RandomForestClassifier(n_estimators = 500, n_jobs = -1, random_state = 2016, verbose = 1),
+        'rfc': RandomForestClassifier(n_estimators = 500, n_jobs = 3, random_state = 2016, verbose = 1),
         'lr':  linear_model.LogisticRegression(),
         'svm': svm.SVC()
     }
@@ -301,7 +301,7 @@ class LessThan():
             y_train_binary = self.transform_labels_(y_train, i)
             clf = self.CLF_DICT[self.clf_type]
             param_grid = self.PARAM[self.clf_type]
-            self.sub_clf[i] = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 1, cv = 2, verbose = 20, scoring=self.ACCURACY)
+            self.sub_clf[i] = grid_search.GridSearchCV(estimator = clf, param_grid = param_grid, n_jobs = 3, cv = 2, verbose = 20, scoring=self.ACCURACY)
             self.sub_clf[i].fit(x_train, y_train_binary)
             print("Best parameters found by grid search:")
             print(self.sub_clf[i].best_params_)
