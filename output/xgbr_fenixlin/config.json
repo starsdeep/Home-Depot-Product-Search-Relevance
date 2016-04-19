@@ -1,6 +1,7 @@
 {   
     "model": "xgbr",
-    "save_badcase": true,
+    "save_badcase": false,
+    "print_importance": false,
     "num_train": -1,
     "features": [
         "origin_search_term",

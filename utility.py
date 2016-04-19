@@ -576,6 +576,9 @@ def fit_tfidf(corpus, ngram=(1,2), mindf=2):
     vectorizer.fit(corpus)
     return vectorizer
 
+def compute_idf_dict(vectorizer):
+    return dict(zip(vectorizer.get_feature_names(), vectorizer.idf_))
+
 def compute_svd(matrix, n_components=100):
     vectorizer = TruncatedSVD(n_components=n_components, random_state=2016)
     return vectorizer.fit_transform(matrix)
@@ -598,17 +601,6 @@ def compute_tsne(name, source, svd_vec):
     print('calculating tsne, make take very long...')
     os.system('python make_tsne.py '+source)
     return load_tsne(name)
-
-def compute_idf_dict(vectorizer):
-    return dict(zip(vectorizer.get_feature_names(), vectorizer.idf_))
-
-def tfidf_transformer(X):
-    tfidf = TfidfVectorizer(ngram_range=(1, 1), stop_words='english')
-    return tfidf.fit_transform(X)
-
-def tsvd_transformer(X):
-    tsvd = TruncatedSVD(n_components=10, random_state = 2016)
-    return tsvd.fit_transform(X)
 
 def compute_distance(v1, v2, metric='cosine'):
     return pairwise_distances(v1, v2, metric=metric)[0][0]

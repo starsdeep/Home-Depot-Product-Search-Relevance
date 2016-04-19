@@ -512,25 +512,6 @@ IdfPostagFeatureFuncDict = OrderedDict([
     ('idf_max_5_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 5)),
 ])
 
-# tfidf and tsvd features for text
-
-TextTfidfFeatureFuncDict = OrderedDict([
-    ('tfidf_of_ori_stem_search_term', lambda df: tfidf_transformer(df['ori_stem_search_term'])),
-    ('tfidf_of_search_term_fuzzy_match', lambda df: tfidf_transformer(df['search_term_fuzzy_match'])),
-    ('tfidf_of_title', lambda df: tfidf_transformer(df['title'])),
-    ('tfidf_of_main_title', lambda df: tfidf_transformer(df['main_title'])),
-    ('tfidf_of_brand', lambda df: tfidf_transformer(df['brand'])),
-    # ('tfidf_of_description', lambda df: tfidf_transformer(df['description'])),
-
-    ('tsvd_of_ori_stem_search_term', lambda df: tsvd_transformer(df['tfidf_of_ori_stem_search_term'])),
-    ('tsvd_of_search_term_fuzzy_match', lambda df: tsvd_transformer(df['tfidf_of_search_term_fuzzy_match'])),
-    ('tsvd_of_title', lambda df: tsvd_transformer(df['tfidf_of_title'])),
-    ('tsvd_of_main_title', lambda df: tsvd_transformer(df['tfidf_of_main_title'])),
-    ('tsvd_of_brand', lambda df: tsvd_transformer(df['tfidf_of_brandd'])),
-    # ('tsvd_of_description', lambda df: tsvd_transformer(df['tfidf_of_description'])),
-])
-
-
 # Statistical Features
 LastFeatureFuncDict = OrderedDict([
     ('ratio_noun_match_title', lambda row: row['noun_match_title'] / (row['noun_of_query']+1)),
