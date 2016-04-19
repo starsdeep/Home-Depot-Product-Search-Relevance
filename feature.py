@@ -142,12 +142,23 @@ def build_feature(df, features):
             'origin_Q': svd_func('origin_Q'),
             'origin_T': svd_func('origin_T')
         }
+        # get fitted & transformed tsne values (deprecated as tsne requires O(n^2) memory space)
+        # print('transforming tsne vectors ...')
+        # tsne_func = lambda name: compute_tsne(svd_vecs[name])
+        # tsne_vecs = {
+        #     'compo_Q': tsne_func('compo_Q'),
+        #     'compo_T': tsne_func('compo_T'),
+        #     'compo_D': tsne_func('compo_D'),
+        #     'origin_Q': tsne_func('origin_Q'),
+        #     'origin_T': tsne_func('origin_T')
+        # }
 
         for feature in list(IdfFeatureFuncDict.keys()):
             if feature in features:
                 print('[step]: calculating feature: '+feature+' ...')
                 feature_func = IdfFeatureFuncDict[feature]
                 df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
+        # TODO: how to transform sparser/numpy matrix into Series?
         mat_to_ser = lambda x: pd.Series([row for row in x])
         tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in tfidf_vecs.items()})
         for feature in list(IdfSimFeatureFuncDict.keys()):
@@ -240,11 +251,37 @@ def build_feature(df, features):
     return df
 
 chkr = SpellCheckGoogleOffline()
-def search_term_clean(query):
+f_ed = open('ed_clean_comment.txt')
+f_ed.readline()
+line = f_ed.readline()
+query_title_dic = {}
+while line:
+    if not line[0] == '#':
+        terms = line.strip().split(',')
+        key = terms[2][1:-1] + ',' +','.join(terms[3:])[1:-1]
+        value = terms[0] + ',' + terms[1]
+        query_title_dic[key] = value
+    line = f_ed.readline()
+f_ed.close() 
+def search_term_clean(row):
+    query = row['search_term']
     query = chkr.spell_correct(query)
     query = str_stem(query)
     query = query if str_is_meaningful(query) else ''
     query = str_remove_stopwords(query)
+
+    ori_query = row['search_term']
+    ori_title = row['product_title']
+    key = ori_query + ',' + ori_title
+    #print(key)
+    if key in query_title_dic:
+        value = query_title_dic[key]
+        tmp_terms = value.split(',')
+        query_item = tmp_terms[0]
+        title_item = tmp_terms[1]
+        query = query.replace(query_item,title_item)
+        #print(query)
+        #print(query_item + ' ' + title_item + ' ' + key)
     return query
 
 def last_word_in_title(s, t):
@@ -265,7 +302,7 @@ TextFeatureFuncDict = OrderedDict([
     ('typeid', lambda row: typeid_stem(typeid_extract(row['product_title']))),
     ('title', lambda row: str_stem(row['product_title'])),
     ('main_title', lambda row: str_stem(main_title_extract(row['product_title']))),
-    ('search_term', lambda row: search_term_clean(row['search_term'])),
+    ('search_term', lambda row: search_term_clean(row)),
     ('description', lambda row: str_stem(row['product_description'])),
     ('brand', lambda row: str_stem(row['brand'])),
     ('numsize_of_query', lambda row: " ".join(numsize_of_query(row['search_term'])).replace('  ',' ')),
@@ -345,6 +382,20 @@ MatchFeatureFuncDict = OrderedDict([
 
     ('query_is_general', lambda row: row['query_is_general']),
 
+    # basic distance features
+    ('query_title_jaccard_1', lambda row: compute_dist(row['search_term'], row['title'], 'jaccard', 1)),
+    ('query_title_dicedist_1', lambda row: compute_dist(row['search_term'], row['title'], 'dicedist', 1)),
+    ('query_description_jaccard_1', lambda row: compute_dist(row['search_term'], row['description'], 'jaccard', 1)),
+    ('query_description_dicedist_1', lambda row: compute_dist(row['search_term'], row['description'], 'dicedist', 1)),
+    ('title_description_jaccard_1', lambda row: compute_dist(row['title'], row['description'], 'jaccard', 1)),
+    ('title_description_dicedist_1', lambda row: compute_dist(row['title'], row['description'], 'dicedist', 1)),
+
+    ('query_title_jaccard_2', lambda row: compute_dist(row['search_term'], row['title'], 'jaccard', 2)),
+    ('query_title_dicedist_2', lambda row: compute_dist(row['search_term'], row['title'], 'dicedist', 2)),
+    ('query_description_jaccard_2', lambda row: compute_dist(row['search_term'], row['description'], 'jaccard', 2)),
+    ('query_description_dicedist_2', lambda row: compute_dist(row['search_term'], row['description'], 'dicedist', 2)),
+    ('title_description_jaccard_2', lambda row: compute_dist(row['title'], row['description'], 'jaccard', 2)),
+    ('title_description_dicedist_2', lambda row: compute_dist(row['title'], row['description'], 'dicedist', 2)),
 ])
 
 # Features dependending on pos_tag dict
@@ -449,6 +500,7 @@ tSNEFeatureSourceDict = OrderedDict([
     ('tSNE_compo_T', 'compo_T'),
     ('tSNE_compo_D', 'compo_D'),
 ])
+
 # Idf - Pos_tag features, calculate after postag features!
 IdfPostagFeatureFuncDict = OrderedDict([
     ('idf_of_title_noun', lambda row, tags, idf_dicts: idf_common_noun(row['search_term'], tags['title'], idf_dicts['composite'], row['noun_of_query'] + 1.0)),
