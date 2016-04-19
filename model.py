@@ -39,7 +39,7 @@ class RandomForestRegression(Model):
             'n_estimators': hp.choice('n_estimators', [500,1200,2000]),
             # 'criterion': hp.choice('criterion', ["gini", "entropy"]),
         }
-        self.model = RandomForestRegressor(n_estimators = 2000, max_depth=42, max_features=12, n_jobs = 3, random_state = 2016, verbose = 1)
+        self.model = RandomForestRegressor(n_estimators = 2000, max_depth=42, max_features=12, n_jobs = 3, random_state = 2016, verbose = 0)
 
     def get_column_importance_(self):
         return self.model.feature_importances_
@@ -173,7 +173,7 @@ subsample=0.7, colsample_bytree=0.48, colsample_bylevel=1, reg_alpha=0, reg_lamb
         #self.model = self.make_pipeline_('xgbr', xgbr)
         
 
-    def fit(self, X_train, y_train, df_train, column_names):
+    def fit(self, X_train, y_train, df_train, column_names, X_test):
         """
         相比去其他模型，xgboost 的fit函数里面多有一个make_in_range的过程，因此重载
         :param X_train:
@@ -182,8 +182,8 @@ subsample=0.7, colsample_bytree=0.48, colsample_bylevel=1, reg_alpha=0, reg_lamb
         :param column_names:
         :return:
         """
-
-        self.set_hyper_params_(X_train, y_train)
+        self.column_names = column_names
+        self.set_hyper_params_(X_train, y_train, X_test)
         # see offline result
         tmp_model = clone(self.model)
         train_pred = cross_validation.cross_val_predict(tmp_model, X_train, y_train, cv=2)
@@ -260,15 +260,19 @@ class SVR(Model):
         Model.__init__(self)
         self.hyperopt_max_evals = 5
         self.param_space = {
-            'C':hp.choice('C',[0.01,0.1,0.5,1,5,10]),
-            'epsilon': hp.choice('epsilon',[0.01,0.1,0.5,1]),
+            'C': hp.loguniform('C', math.log(0.0001), math.log(20)),
+            'epsilon': hp.loguniform('epsilon', math.log(0.0001), math.log(20)),
             'kernel': hp.choice('kernel',['rbf', 'sigmoid', 'linear', 'poly']),
-            'gamma' : hp.choice('gamma',['auto',0.1,0.01,0.001])
+            'degree': hp.choice('degree', [1,2,3]),
+            'gamma' : hp.choice('gamma',['auto',hp.loguniform('the_gamma', math.log(0.0001), math.log(0.2))]),
+            'shrinking': hp.choice('shrinking', [True, False]),
+            'tol': hp.loguniform('tol',math.log(0.01), math.log(0.0001)),
         }
         self.model = svm.SVR()
     
     def get_column_importance_(self):
-        return self.model.coef_
+        return []
+        #return self.model.coef_  # only work for linear kernel, others will cause error
 
 class LessThan():
     ''' 7 clf  for 1~3 '''

@@ -30,6 +30,7 @@ hd_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_sear
 linear_model_col_drops = hd_col_drops+['len_of_main_title', 'len_of_title', 'len_of_description', 'len_of_brand', "len_of_numsize_query","len_of_numsize_main_title","len_of_numsize_title","len_of_numsize_description","search_term_fuzzy_match","len_of_search_term_fuzzy_match","noun_of_query", "noun_of_title", "noun_of_main_title", "noun_of_description","len_of_numsize_query","len_of_numsize_main_title","len_of_numsize_title","len_of_numsize_description",]
 
 train_pred_filename_tpl = 'train_pred_trial_%d.csv'
+test_pred_filename_tpl = 'test_pred_trial_%d.csv'
 trails_filename = 'hyperopt_trials.json'
 
 def fmean_squared_error_(ground_truth, predictions):
@@ -191,7 +192,7 @@ class Model(object):
         while len(column_names) < X_features.shape[1]:
             column_names += ['svd'+str(i) for j in range(svdcomp)]
             i += 1
-        return X_features, column_names
+        return X_features, np.array(column_names)
 
 
     def feature_union(self, X):
@@ -204,7 +205,7 @@ class Model(object):
             print("model is " + self.config['model'] + ", using feature_union_normal ...")
             return self.feature_union_normal_(X)
 
-    def hyperopt_optimize_(self, X_train, y_train):
+    def hyperopt_optimize_(self, X_train, y_train, X_test):
         trials = Trials()
         # variable that will be used in hyperopt_score
         clf = self.model
@@ -217,7 +218,7 @@ class Model(object):
         if 'feature_random_selection' in self.config and self.config['feature_random_selection'] == True:
             feature_random_selection = True
             print("[info]: feature_random_selection: %r" % feature_random_selection)
-        column_names = self.column_names
+        column_names = np.array(self.column_names)
         def hyperopt_score(params):
             #create a new model with parameters equals to params
             nonlocal clf
@@ -227,11 +228,13 @@ class Model(object):
             nonlocal model_name
             nonlocal model_dir
             nonlocal X_train
+            nonlocal X_test
             nonlocal y_train
             nonlocal feature_random_selection
-
+            nonlocal column_names
             # randomly select K features from X_train
             new_X_train = X_train
+            new_X_test = X_test
             features = "all"
             feature_index = "all"
             num_total_features = X_train.shape[1]
@@ -242,11 +245,10 @@ class Model(object):
                 K = int(num_total_features * ratio)
                 K_index = sorted(random.sample(range(num_total_features), K))
                 new_X_train = X_train[:,K_index]
+                new_X_test = X_test[:,K_index]
                 if not K==num_total_features:
                     features = " ".join(column_names[K_index]) 
                     feature_index = " ".join(map(str, K_index))
-
-
 
             if 0 < best_rmse:
                 pass
@@ -267,7 +269,11 @@ class Model(object):
             #save train_pred for model selection
             df_train_pred = pd.DataFrame({'train_pred': train_pred})
             df_train_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), train_pred_filename_tpl % trial_counter), encoding="utf8")
-
+            #fit whole data and save test_pred
+            trial_clf.fit(new_X_train, y_train)
+            test_pred = trial_clf.predict(new_X_test)
+            df_test_pred = pd.DataFrame({'test_pred': test_pred})
+            df_test_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), test_pred_filename_tpl % trial_counter), encoding="utf8")
             trial_counter += 1
             return {'loss': rmse, 'status': STATUS_OK, 'model': model_name, 'model_dir': model_dir, 'params': params, 'features': features, 'feature_index': feature_index, 'num_features':K}
         
@@ -328,23 +334,23 @@ class Model(object):
         ])
         return clf
 
-    def set_hyper_params_(self, X_train, y_train):
+    def set_hyper_params_(self, X_train, y_train, X_test):
         if 'hyperopt_fit' in self.config and  self.config['hyperopt_fit']:
             print("[step]: start hyperopt_fit ...")
             if 'hyperopt_max_evals' in self.config:
                 self.hyperopt_max_evals = self.config['hyperopt_max_evals']
             print("[info]: hyperopt evals %d" % self.hyperopt_max_evals)
             start_time = time.time()
-            best_params = self.hyperopt_optimize_(X_train, y_train)
+            best_params = self.hyperopt_optimize_(X_train, y_train, X_test)
             print("[step]: hyperopt done. takes %s mins." % round(((time.time() - start_time)/60),2))
             for k, v in best_params.items():
                 self.model = self.model.set_params(**{k: v})
         else:
             pass # do nothing, using default params
 
-    def fit(self, X_train, y_train, df_train, column_names):
+    def fit(self, X_train, y_train, df_train, column_names, X_test):
         self.column_names = column_names
-        self.set_hyper_params_(X_train, y_train)
+        self.set_hyper_params_(X_train, y_train, X_test)
         # see offline result
         tmp_model = clone(self.model)
         train_pred = cross_validation.cross_val_predict(tmp_model, X_train, y_train, cv=3)

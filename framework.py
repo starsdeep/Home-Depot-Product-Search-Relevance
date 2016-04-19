@@ -38,7 +38,7 @@ if __name__ == '__main__':
     X_train = X_all[:num_train]
     X_test = X_all[-num_test:]
 
-    model.fit(X_train, y_train, df_train, column_names)
+    model.fit(X_train, y_train, df_train, column_names, X_test)
     if config['model']=='multi':
         y_pred = model.predict(df_test)
     else:

@@ -14,6 +14,7 @@ class ModelFactory(object):
             'ridger': model.RidgeRegression(),
             'lassor': model.LassoRegression(),
             'rgf': model.RegularizedGreedyForest()
+            'svr': model.SVR(),
         }
 
     def create_model(self, config):
