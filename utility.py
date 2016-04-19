@@ -11,6 +11,7 @@ from nltk import word_tokenize
 from nltk.corpus.reader import wordnet
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
+from sklearn.manifold import TSNE
 from sklearn.metrics import pairwise_distances
 import pandas as pd
 import numpy as np
@@ -663,6 +664,45 @@ def str_exclude(s, t):
         s = s.replace(token, '')
     s = re.sub(r' +', r' ', s)
     return s
+
+def compute_dist(str1, str2, dist_type = 'jaccard', ngram=1):
+    """
+    number of words in str1 that also in str2
+    :param str1:
+    :param str2:
+    :return: cnt
+    """
+    if ngram == 1:
+        A = set(str1.split())
+        B = set(str2.split())
+    elif ngram == 2:
+        A = set(bigram_analyzer(str1))
+        B = set(bigram_analyzer(str2))
+    else:
+        print(str(ngram) + " not supported yet")
+    if len(A) == 0 or len(B) == 0:
+        return 0
+
+    if dist_type == 'jaccard':
+        intersect = len(A.intersection(B))
+        union = len(A.union(B))
+        coef = try_divide(intersect, union)
+        return coef
+    elif dist_type == 'dicedist':
+        intersect = len(A.intersection(B))
+        union = len(A) + len(B)
+        d = try_divide(2*intersect, union)
+        return d
+    else:
+        print('dist_type not support yet')
+
+def try_divide(x, y, val=0.0):
+    """
+        Try to divide two numbers
+    """
+    if y != 0.0:
+        val = float(x) / y
+    return val
 
 if __name__=='__main__':
     import doctest

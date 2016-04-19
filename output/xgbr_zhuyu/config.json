@@ -120,7 +120,21 @@
         "ratio_numsize_match_title",
         "ratio_numsize_match_title_exact",
         "ratio_numsize_match_description",
-        "ratio_numsize_match_description_exact"
+        "ratio_numsize_match_description_exact",
+
+        "query_title_jaccard_1",
+        "query_title_dicedist_1",
+        "query_description_jaccard_1",
+        "query_description_dicedist_1",
+        "title_description_jaccard_1",
+        "title_description_dicedist_1",
+        
+        "query_title_jaccard_2",
+        "query_title_dicedist_2",
+        "query_description_jaccard_2",
+        "query_description_dicedist_2",
+        "title_description_jaccard_2",
+        "title_description_dicedist_2"
     ],
     "recompute_features": [ ],
     "_feature_not_used": ["bigram_in_brand", "*_er_*", "ratio_bigram_*", "*_BM25", "numsize_word_*", "nnumsize_*_case*", "ratio_noun_*_ordered", "*_numsize_*_main_title", "ratio_numsize_(title|description)"] 
