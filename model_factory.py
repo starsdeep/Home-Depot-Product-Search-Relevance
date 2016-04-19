@@ -12,6 +12,7 @@ class ModelFactory(object):
             'multi': model.MultiClassifier(),
             'three': model.ThreePartRandomForestClassification(),
             'ridger': model.RidgeRegression(),
+            'linear': model.LinearRegression(),
             'lassor': model.LassoRegression(),
             'rgf': model.RegularizedGreedyForest()
             'svr': model.SVR(),

@@ -1,0 +1,11 @@
+{   
+    "model": "linear",
+    "param_space_name": "",
+    "hyperopt_fit": true,
+    "hyperopt_max_evals": 20,
+    "features": [],
+    "train_pred_files": [],
+    "test_pred_files": [],
+    "model_names": [],
+    "model_library_path_list": [ "./output/xgbr_hyperopt2/", "./output/ridge_hyperopt2/", "./output/lasso_hyperopt2/" ]
+}

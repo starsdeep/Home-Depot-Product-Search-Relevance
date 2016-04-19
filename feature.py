@@ -23,6 +23,8 @@ def load_feature(features):
     :param features: features to load
     :return: df contains the features
     """
+    if not features:
+        return pd.DataFrame()
     frames = []
     files = [os.path.join(feature_path, feature + '.csv') for feature in features]
     frames = [pd.read_csv(file, encoding="ISO-8859-1", index_col=0) for file in files]

@@ -205,7 +205,7 @@ class Model(object):
             print("model is " + self.config['model'] + ", using feature_union_normal ...")
             return self.feature_union_normal_(X)
 
-    def hyperopt_optimize_(self, X_train, y_train, X_test):
+    def hyperopt_optimize_(self, X_train, y_train, X_test, save_result=True):
         trials = Trials()
         # variable that will be used in hyperopt_score
         clf = self.model
@@ -232,6 +232,7 @@ class Model(object):
             nonlocal y_train
             nonlocal feature_random_selection
             nonlocal column_names
+            nonlocal save_result
             # randomly select K features from X_train
             new_X_train = X_train
             new_X_test = X_test
@@ -265,16 +266,16 @@ class Model(object):
                 print('trial %d, new best %s, %s' % (trial_counter, str(best_rmse), str(params)))
             if trial_counter % 20 ==0:
                 print('current trial %d' % trial_counter)
-
-            #save train_pred for model selection
-            df_train_pred = pd.DataFrame({'train_pred': train_pred})
-            df_train_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), train_pred_filename_tpl % trial_counter), encoding="utf8")
-            #fit whole data and save test_pred
-            trial_clf.fit(new_X_train, y_train)
-            test_pred = trial_clf.predict(new_X_test)
-            df_test_pred = pd.DataFrame({'test_pred': test_pred})
-            df_test_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), test_pred_filename_tpl % trial_counter), encoding="utf8")
-            trial_counter += 1
+            if save_result:
+                #save train_pre10d for model selection
+                df_train_pred = pd.DataFrame({'train_pred': train_pred})
+                df_train_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), train_pred_filename_tpl % trial_counter), encoding="utf8")
+                #fit whole data and save test_pred
+                trial_clf.fit(new_X_train, y_train)
+                test_pred = trial_clf.predict(new_X_test)
+                df_test_pred = pd.DataFrame({'test_pred': test_pred})
+                df_test_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), test_pred_filename_tpl % trial_counter), encoding="utf8")
+                trial_counter += 1
             return {'loss': rmse, 'status': STATUS_OK, 'model': model_name, 'model_dir': model_dir, 'params': params, 'features': features, 'feature_index': feature_index, 'num_features':K}
         
         #返回的并不是最优的结果，非常奇怪
@@ -334,7 +335,7 @@ class Model(object):
         ])
         return clf
 
-    def set_hyper_params_(self, X_train, y_train, X_test):
+    def set_hyper_params_(self, X_train, y_train, X_test, save_result=True):
         if 'hyperopt_fit' in self.config and  self.config['hyperopt_fit']:
             print("[step]: start hyperopt_fit ...")
             if 'hyperopt_max_evals' in self.config:
@@ -348,20 +349,21 @@ class Model(object):
         else:
             pass # do nothing, using default params
 
-    def fit(self, X_train, y_train, df_train, column_names, X_test):
+    def fit(self, X_train, y_train, df_train, column_names, X_test, save_result=True):
         self.column_names = column_names
         self.set_hyper_params_(X_train, y_train, X_test)
         # see offline result
         tmp_model = clone(self.model)
         train_pred = cross_validation.cross_val_predict(tmp_model, X_train, y_train, cv=3)
         rmse = fmean_squared_error_(y_train, train_pred)
-        self.save_train_pred(df_train, train_pred)
+        #self.save_train_pred(df_train, train_pred)
         print("\n[info]: offline rmse: %f\n" % rmse)
         self.print_badcase_(df_train, y_train, train_pred, 2000)
         # fit
         self.model.fit(X_train, y_train)
         imps = self.get_column_importance_()
         self.print_importance_(imps, column_names)
+
 
     def predict(self, X_test):
         y_pred = self.model.predict(X_test)

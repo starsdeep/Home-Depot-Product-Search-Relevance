@@ -190,7 +190,7 @@ subsample=0.7, colsample_bytree=0.48, colsample_bylevel=1, reg_alpha=0, reg_lamb
         train_pred = self.make_in_range(train_pred)
         rmse = fmean_squared_error_(y_train, train_pred)
         print("\n======= offline rmse: %f =========" % rmse)
-        self.save_train_pred(df_train, train_pred)
+        #self.save_train_pred(df_train, train_pred)
         self.print_badcase_(df_train, y_train, train_pred, 2000)
         # fit
         self.model.fit(X_train, y_train)
@@ -236,6 +236,20 @@ class RidgeRegression(Model):
             'normalize': hp.choice('normalize', [True, False]),
         }
         self.model = linear_model.Ridge(alpha = .5)
+
+    def get_column_importance_(self):
+        return self.model.coef_
+
+class LinearRegression(Model):
+
+    def __init__(self):
+        Model.__init__(self)
+        self.hyperopt_max_evals = 5
+        self.param_space = {
+            'fit_intercept': hp.choice('fit_intercept', [True, False]),
+            'normalize': hp.choice('normalize', [True, False]),
+        }
+        self.model = linear_model.LinearRegression()
 
     def get_column_importance_(self):
         return self.model.coef_

@@ -4,17 +4,36 @@ import json
 import operator
 import pandas as pd
 import copy
+
+
 train_pred_filename_tpl = 'train_pred_trial_%d.csv'
+test_pred_filename_tpl = 'test_pred_trial_%d.csv'
 trails_filename = 'hyperopt_trials.json'
 
 
-def load_trials(dir_path):
+
+def load_trial_result_list(dir_path):
     trial_result_list = []
     with open(os.path.join(dir_path, trails_filename)) as infile:
         trial_result_list = json.load(infile)
-    files = [os.path.join(dir_path, train_pred_filename_tpl % i) for i in range(len(trial_result_list))]
+    return trial_result_list
+
+def load_train_pred_list(dir_path, N):
+    files = [os.path.join(dir_path, train_pred_filename_tpl % i) for i in range(N)]
     train_pred_list = [pd.read_csv(file, encoding="ISO-8859-1", index_col=0)['train_pred'].values for file in files]
-    return trial_result_list, train_pred_list
+    return train_pred_list
+
+def load_test_pred_list(dir_path, N):
+    files = [os.path.join(dir_path, test_pred_filename_tpl % i) for i in range(N)]
+    test_pred_list = [pd.read_csv(file, encoding="ISO-8859-1", index_col=0)['test_pred'].values for file in files]
+    return test_pred_list 
+
+def load_trials(dir_path):
+    trial_result_list = load_trial_result_list(dir_path)
+    N = len(trial_result_list)
+    train_pred_list = load_train_pred_list(dir_path, N)
+    test_pred_list = load_test_pred_list(dir_path, N)
+    return trial_result_list, train_pred_list, test_pred_list
 
 class TrialsList():
 
@@ -50,7 +69,7 @@ if __name__ == '__main__':
     Trials = TrialsList()
     for dir_path in dir_path_list:
         print("loading dir " + dir_path)
-        trial_result_list, train_pred_list = load_trials(dir_path)
+        trial_result_list, train_pred_list, test_pred_list = load_trials(dir_path)
         Trials.append(trial_result_list, train_pred_list)
 
     print("number of trials %d" % len(Trials.trial_result_list))
