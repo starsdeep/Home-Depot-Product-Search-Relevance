@@ -11,7 +11,6 @@ from nltk import word_tokenize
 from nltk.corpus.reader import wordnet
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
-from sklearn.manifold import TSNE
 from sklearn.metrics import pairwise_distances
 import pandas as pd
 import numpy as np

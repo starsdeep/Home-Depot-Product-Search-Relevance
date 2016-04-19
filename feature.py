@@ -142,23 +142,12 @@ def build_feature(df, features):
             'origin_Q': svd_func('origin_Q'),
             'origin_T': svd_func('origin_T')
         }
-        # get fitted & transformed tsne values (deprecated as tsne requires O(n^2) memory space)
-        # print('transforming tsne vectors ...')
-        # tsne_func = lambda name: compute_tsne(svd_vecs[name])
-        # tsne_vecs = {
-        #     'compo_Q': tsne_func('compo_Q'),
-        #     'compo_T': tsne_func('compo_T'),
-        #     'compo_D': tsne_func('compo_D'),
-        #     'origin_Q': tsne_func('origin_Q'),
-        #     'origin_T': tsne_func('origin_T')
-        # }
 
         for feature in list(IdfFeatureFuncDict.keys()):
             if feature in features:
                 print('[step]: calculating feature: '+feature+' ...')
                 feature_func = IdfFeatureFuncDict[feature]
                 df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
-        # TODO: how to transform sparser/numpy matrix into Series?
         mat_to_ser = lambda x: pd.Series([row for row in x])
         tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in tfidf_vecs.items()})
         for feature in list(IdfSimFeatureFuncDict.keys()):
