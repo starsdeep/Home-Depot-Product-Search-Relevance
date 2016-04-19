@@ -24,7 +24,7 @@ from sklearn.base import clone
 # from unique_tfidf_vectorizer import UniqueTfidfVectorizer
 
 # high dimension columns to drops. used for tree based model
-hd_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid','numsize_of_query','numsize_of_title','numsize_of_main_title','numsize_of_description']
+hd_col_drops=['id','relevance','search_term','origin_search_term','ori_stem_search_term','search_term_fuzzy_match','product_title','title','main_title','product_description','description','brand','typeid','numsize_of_query','numsize_of_title','numsize_of_main_title','numsize_of_description','query_title_co_occur_11gram']
 
 # columns to drops for linear regression model
 linear_model_col_drops = hd_col_drops+['len_of_main_title', 'len_of_title', 'len_of_description', 'len_of_brand', "len_of_numsize_query","len_of_numsize_main_title","len_of_numsize_title","len_of_numsize_description","search_term_fuzzy_match","len_of_search_term_fuzzy_match","noun_of_query", "noun_of_title", "noun_of_main_title", "noun_of_description","len_of_numsize_query","len_of_numsize_main_title","len_of_numsize_title","len_of_numsize_description",]
