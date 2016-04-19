@@ -26,6 +26,8 @@ from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from sklearn.base import clone
 # from unique_tfidf_vectorizer import UniqueTfidfVectorizer
 from base_model import Model, fmean_squared_error_
+from rgf_functions import *
+
 class RandomForestRegression(Model):
 
     def __init__(self):
@@ -76,7 +78,7 @@ class ThreePartRandomForestClassification(Model):
         else:
             return low
 
-    def predict(self, x_train, y_train, x_test, need_transform_label=False):
+    def predict(self, x_train, y_train, x_test):
         y_train = list(y_train)
         y_train = [int(3*x + 0.5) for x in y_train]
 
@@ -364,5 +366,32 @@ class MultiClassifier(Model):
         print( 'Start Multi Predict...')
         return self.model.predict(x_test)
 
+class RegularizedGreedyForest(Model):
 
+    def fit(self, X_train, y_train, df_train, column_names):
+        self.param_space = {
+            'reg_L2': hp.choice('reg_L2', [0.01, 0.1, 1]), #required, default value is 1, Used to control the degree of L2 regularization
+            'max_leaf_forest': hp.choice('max_leaf_forest', [10000,20000,30000]), #defalt value is 10000
+            'reg_depth': hp.choice('reg_depth', [1, 2, 10]), # no small than 1, A larger value penalizes deeper nodes more severely. default value is 1
+            'test_interval': hp.choice('test_interval', [500, 1000, 2000]), # default value is 500, every time 500 leaf nodes are newly added to the forest,
+        }
+        param = {"reg_L2": 1}
+        startTraining(X_train, y_train, param)
 
+    def predict(self, X_test):
+        makePredictions(X_test)
+        filepath = "output/RGF_save_temp/test_model_full_output/m-01.pred"
+        result = []
+        for line in open(filepath):
+            line = line.strip("\n")
+            try:
+                score = float(line)
+            except:
+                score = 1
+            if score > 3.0:
+                score = 3.0
+
+            if score < 1.0:
+                score = 1.0
+            result.append(score)
+        return result

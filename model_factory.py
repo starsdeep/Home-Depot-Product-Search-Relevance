@@ -13,6 +13,7 @@ class ModelFactory(object):
             'three': model.ThreePartRandomForestClassification(),
             'ridger': model.RidgeRegression(),
             'lassor': model.LassoRegression(),
+            'rgf': model.RegularizedGreedyForest()
         }
 
     def create_model(self, config):
