@@ -169,6 +169,21 @@ def build_feature(df, features):
                 tmpdf = compute_tsne(feature, source, svd_vecs[source])
                 df.merge(tmpdf, left_index=True, right_index=True)
 
+    # co-occur
+    if(set(features)):
+        for feature in list(CooccurFeatureFuncDict.keys()):
+            if feature in features:
+                print('[step]: calculating cooccur feature: '+feature+' ...')
+                feature_func = CooccurFeatureFuncDict[feature]
+                tmp = pd.DataFrame( feature_func(df) )
+                tmp.columns = ['cooccur_tfidf_svd'+str(i) for i in tmp.columns]
+                print(list(tmp.columns.values))
+                print(list(df.columns.values))
+                df = df.merge(tmp, left_index=True, right_index=True)
+                print(list(df.columns.values))
+                #df[feature] = df.applay(feature_func, axis=1)
+
+
     # iterate features in order (iterrows cannot update in time)
     if set(features) & set(PostagFeatureFuncDict.keys()):
         print('[step]: calculating pos_tag features...')
@@ -257,6 +272,9 @@ TextFeatureFuncDict = OrderedDict([
     ('numsize_of_title', lambda row: " ".join(numsize_of_str(row['title'])).replace('  ',' ')),
     ('numsize_of_main_title', lambda row: " ".join(numsize_of_str(row['main_title'])).replace('  ',' ')),
     ('numsize_of_description', lambda row: " ".join(numsize_of_str(row['description'])).replace('  ',' ')),
+
+    ('query_title_co_occur_11gram', lambda row: cooccur(row['ori_stem_search_term'], row['title'], 1, 1)),
+    ('query_title_co_occur_22gram', lambda row: cooccur(row['ori_stem_search_term'], row['title'], 2, 2)),
 ])
 
 # Features for matching words
@@ -326,6 +344,7 @@ MatchFeatureFuncDict = OrderedDict([
 
 
     ('query_is_general', lambda row: row['query_is_general']),
+
 ])
 
 # Features dependending on pos_tag dict
@@ -477,6 +496,12 @@ LastFeatureFuncDict = OrderedDict([
     ('ratio_numsize_match_title_exact', lambda row :row['numsize_match_title_exact'] / (row['len_of_numsize_query']+1)),
     ('ratio_numsize_match_description_exact', lambda row :row['numsize_match_description_exact'] / (row['len_of_numsize_query']+1)),
 ])
+
+
+CooccurFeatureFuncDict = OrderedDict([
+    ('tfidf_tsvd_cooccur_q_t_11gram', lambda df: tfidf_tsvd_cooccur(df['query_title_co_occur_11gram'])),
+])
+
 
 if __name__=='__main__':
     import doctest

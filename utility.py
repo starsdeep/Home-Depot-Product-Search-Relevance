@@ -619,6 +619,28 @@ def synonym(word):
         synonyms = synonyms.union(i.lemma_names())
     return synonyms
 
+def cooccur(str1, str2, gram1, gram2):
+    if gram1 == 2:
+        words1 = bigram_analyzer(str1)
+        words1 = [i.replace(' ', '_') for i in words1]
+    else:
+        words1 = str1.split()
+    if gram2 == 2:
+        words2 = bigram_analyzer(str2)
+        words2 = [i.replace(' ', '_') for i in words2]
+    else:
+        words2 = str2.split()
+    return ' '.join( [ i+'_'+j for i in words1 for j in words2] )
+
+def tfidf_tsvd_cooccur(X):
+    tfidf = TfidfVectorizer(ngram_range=(1, 1), stop_words='english')
+    tsvd = TruncatedSVD(n_components=4, random_state = 2016)
+    X_tfidf = tfidf.fit_transform(X)
+    X_svd = tsvd.fit_transform(X_tfidf)
+    return X_svd
+
+
+
 def stat_list(li, method):
     if len(li)==0:
         return 0
