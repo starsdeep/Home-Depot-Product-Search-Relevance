@@ -161,6 +161,8 @@ def str_stem(s, by_lemmatizer=False):
     s = s.replace(","," ") #could be number / segment later
     s = s.replace("$"," ")
     s = s.replace("?"," ")
+    s = s.replace(":"," ")
+    s = s.replace("'"," ")
     s = s.replace("-"," ") 
     s = s.replace("//","/")
     s = s.replace("..",".")
@@ -170,10 +172,12 @@ def str_stem(s, by_lemmatizer=False):
     s = re.sub(r"^(\.|/)", r"", s)
     s = re.sub(r"(\.|/)$", r"", s)
 
-    # remove seperators
+    # split words & remove seperators
     s = re.sub(r"(\w)\.([A-Z])", r"\1 \2", s) #Split words with a.A
     s = re.sub(r"([0-9])([a-z])", r"\1 \2", s)
     s = re.sub(r"([a-z])([0-9])", r"\1 \2", s)
+    s = re.sub(r"\((\w)", r"( \1", s)
+    s = re.sub(r"(\w)\)", r"\1 )", s)
     s = re.sub(r"([a-z])( *)\.( *)([a-z])", r"\1 \4", s)
     s = re.sub(r"([a-z])( *)/( *)([a-z])", r"\1 \4", s)
     s = re.sub(r"([0-9])( *)\.( *)([0-9])", r"\1.\4", s)

@@ -10,6 +10,7 @@ input/
 *.csv
 *.pkl
 *.mat
+*.txt
 
 # ignore mac system files
 .DS_Store

@@ -93,12 +93,15 @@ def build_feature(df, features):
     if set(features) & set(tSNEFeatureSourceDict.keys()):
         for feature in list(tSNEFeatureSourceDict.keys()):
             if feature in features:
-                print('Trying to load feature: '+feature+' ...')
+                print('Trying to load feature: '+feature+' ... ',end='')
                 source = tSNEFeatureSourceDict[feature]
                 tmpdf = load_tsne(feature)
                 if tmpdf is not None:
+                    print('loaded')
                     df = df.merge(tmpdf, left_index=True, right_index=True)
                     features.remove(feature)        
+                else:
+                    print('not found')
 
     # compute idf features
     idf_dicts = dict()
@@ -128,6 +131,9 @@ def build_feature(df, features):
         print('transforming tfidf vectors ...')
         idf_func = lambda vec_name, col: tfidf_vectorizer[vec_name].transform(df[col])
         tfidf_vecs = {
+            'indv_Q': idf_func('search_term', 'search_term'),
+            'indv_T': idf_func('title', 'title'),
+            'indv_D': idf_func('description', 'description'),
             'compo_Q': idf_func('composite', 'search_term'),
             'compo_T': idf_func('composite', 'title'),
             'compo_D': idf_func('composite', 'description'),
@@ -138,6 +144,9 @@ def build_feature(df, features):
         print('transforming svd vectors ...')
         svd_func = lambda name: compute_svd(tfidf_vecs[name])
         svd_vecs = {
+            'indv_Q': svd_func('indv_Q'),
+            'indv_T': svd_func('indv_T'),
+            'indv_D': svd_func('indv_D'),
             'compo_Q': svd_func('compo_Q'),
             'compo_T': svd_func('compo_T'),
             'compo_D': svd_func('compo_D'),
@@ -487,6 +496,9 @@ SvdSimFeatureFuncDict = OrderedDict([
 ])
 
 tSNEFeatureSourceDict = OrderedDict([
+    ('tSNE_indv_Q', 'indv_Q'),
+    ('tSNE_indv_T', 'indv_T'),
+    ('tSNE_indv_D', 'indv_D'),
     ('tSNE_compo_Q', 'compo_Q'),
     ('tSNE_compo_T', 'compo_T'),
     ('tSNE_compo_D', 'compo_D'),
