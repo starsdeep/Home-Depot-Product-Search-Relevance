@@ -387,6 +387,7 @@ class MultiClassifier(Model):
 class RegularizedGreedyForest(Model):
 
     def fit(self, X_train, y_train, df_train, column_names):
+        pass
         self.param_space = {
             'reg_L2': hp.choice('reg_L2', [0.01, 0.1, 1]), #required, default value is 1, Used to control the degree of L2 regularization
             'max_leaf_forest': hp.choice('max_leaf_forest', [10000,20000,30000]), #defalt value is 10000
@@ -398,9 +399,19 @@ class RegularizedGreedyForest(Model):
 
     def predict(self, X_test):
         makePredictions(X_test)
-        filepath = "output/RGF_save_temp/test_model_full_output/m-01.pred"
+        filepath = "output/RGF_save_temp/test_model_full_output/"
         result = []
-        for line in open(filepath):
+        filename = ""
+        filename_list = []
+        for name in os.listdir(filepath):
+            if name.endswith(".pred"):
+                filename_list.append(name)
+
+        filename_list.sort(reverse=True)
+        if len(filename_list) > 0:
+            filename = filename_list[0]
+
+        for line in open(filepath+filename):
             line = line.strip("\n")
             try:
                 score = float(line)

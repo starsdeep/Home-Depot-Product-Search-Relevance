@@ -6,9 +6,13 @@ import subprocess
 import os
 import numpy as np
 import pandas as pd
-
+import shutil
 # RGF path
 rgf_path = 'lib/rgf1.2'
+
+def myDeleteDir(dirname):
+    if os.path.exists(dirname):
+        shutil.rmtree(dirname)
 
 def myMakeDir(dirname):
     if not os.path.exists(dirname):
@@ -31,13 +35,13 @@ def start_RGF_train_test(xtrain,ytrain,wtrain,xtest,ytest,modelname,temp_dir,sav
 
     # write settings file
     output_dir = save_dir + '/' + modelname + '_output'
-    with open (data_dir+'/'+modelname+'.inp', 'w') as fp:
+    with open(data_dir+'/'+modelname+'.inp', 'w') as fp:
         fp.write('train_x_fn=' + data_dir + '/trainx.txt\n')
         fp.write('train_y_fn=' + data_dir + '/trainy.txt\n')
         fp.write('test_x_fn=' + data_dir + '/testx.txt\n')
         fp.write('test_y_fn=' + data_dir + '/testy.txt\n')
         fp.write('evaluation_fn=' + data_dir + '/output.evaluation\n')
-        fp.write('model_fn_prefix=' + data_dir + '/m\n')
+        fp.write('model_fn_prefix=' + output_dir + '/m\n')
         for p in param.items():
             fp.write("%s=%s\n" % p)
 
@@ -73,7 +77,6 @@ def start_RGF_train(xtrain,ytrain,wtrain,modelname,temp_dir,save_dir,param):
 
         for p in param.items():
             fp.write("%s=%s\n" % p)
-
         fp.write('SaveLastModelOnly\n')
         fp.write('Verbose')
         fp.close()
@@ -86,6 +89,9 @@ def start_RGF_train(xtrain,ytrain,wtrain,modelname,temp_dir,save_dir,param):
     return p
 
 def startTraining(train_dat,train_target,param, train_weights=None,modelname= "test_model",temp_dir="output/RGF_temp/",save_dir="output/RGF_save_temp/",predict_weights=False):
+
+    myDeleteDir(temp_dir)
+    myDeleteDir(save_dir)
 
     n = len(train_dat)
     # start full models
@@ -108,7 +114,7 @@ def startTraining(train_dat,train_target,param, train_weights=None,modelname= "t
             print(output)
 
 
-    print("all done")
+    print("rgf done")
 
 
 
@@ -138,7 +144,7 @@ def makePredictions(test_dat,temp_dir="output/RGF_temp/",save_dir="output/RGF_sa
                         print(output)
 
 if __name__ == '__main__':
-    train_dat = pd.DataFrame([
+    train_dat = [
         [1, 1, 1],
         [1, 0, 1],
         [0, 1, 1],
@@ -163,12 +169,12 @@ if __name__ == '__main__':
         [0, 0, 0],
         [0, 0, 0],
         [0, 0, 1],
-    ])
-    train_target = pd.DataFrame([
+    ]
+    train_target = [
         1, 1, 1, 1, 0, 0, 0,
         1, 1, 1, 1, 0, 0, 0,
         1, 1, 1, 1, 0, 0, 0,
-    ])
+    ]
     train_weights = None
     modelname = "test_model"
     temp_dir = "output/RGF_temp/"
@@ -176,11 +182,11 @@ if __name__ == '__main__':
     param = {"reg_L2": 1}
     predicts_weights = None
 
-    test_dat = pd.DataFrame([
+    test_dat = [
         [0, 0, 0],
         [0, 0, 0],
         [0, 0, 1],
-    ])
+    ]
     print(type(train_dat))
     startTraining(train_dat,train_target,train_weights,modelname,temp_dir,save_dir,param)
     makePredictions(test_dat,temp_dir,save_dir)
