@@ -137,12 +137,15 @@
         "title_description_jaccard_2",
         "title_description_dicedist_2",
 
-        "tfidf_tsvd_cooccur_q_t_11gram",
-        "query_title_co_occur_11gram"
+        "query_title_co_occur_11gram",
+        "query_title_co_occur_22gram",
+        "q_t_11gram",
+        "q_t_22gram"
 
     ],
     "not_save":[
-	"tfidf_tsvd_cooccur_q_t_11gram"
+        "q_t_11gram", 
+        "q_t_22gram"
     ],
     "recompute_features": [ ],
     "_feature_not_used": ["bigram_in_brand", "*_er_*", "ratio_bigram_*", "*_BM25", "numsize_word_*", "nnumsize_*_case*", "ratio_noun_*_ordered", "*_numsize_*_main_title", "ratio_numsize_(title|description)"] 

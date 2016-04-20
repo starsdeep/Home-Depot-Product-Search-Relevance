@@ -190,7 +190,7 @@ def build_feature(df, features):
                 print('[step]: calculating cooccur feature: '+feature+' ...')
                 feature_func = CooccurFeatureFuncDict[feature]
                 tmp = pd.DataFrame( feature_func(df) )
-                tmp.columns = ['cooccur_tfidf_svd'+str(i) for i in tmp.columns]
+                tmp.columns = ['cooccur_tfidf_svd_'+feature+str(i) for i in tmp.columns]
                 df = df.merge(tmp, left_index=True, right_index=True)
 
 
@@ -534,7 +534,8 @@ LastFeatureFuncDict = OrderedDict([
 
 
 CooccurFeatureFuncDict = OrderedDict([
-    ('tfidf_tsvd_cooccur_q_t_11gram', lambda df: tfidf_tsvd_cooccur(df['query_title_co_occur_11gram'])),
+    ('q_t_11gram', lambda df: tfidf_tsvd_cooccur(df['query_title_co_occur_11gram'])),
+    ('q_t_22gram', lambda df: tfidf_tsvd_cooccur(df['query_title_co_occur_22gram']))
 ])
 
 
