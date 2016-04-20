@@ -34,12 +34,11 @@ def load_feature(features):
     df.fillna('', inplace=True)
     return df
 
-def write_feature(df, features):
+def write_feature(df, features, config):
     not_save = set(config['not_save']) if 'not_save' in config else set()
     for feature in features:
         if feature in not_save:
             continue
-        if feature in 
         print("[step]: saving feature %s ..." % feature)
         tmp_df = df[[feature]]
         tmp_df.to_csv(os.path.join(feature_path, feature + '.csv'), encoding="utf8")
@@ -72,7 +71,7 @@ def get_feature(config):
     print("[step]: loading done")
     print("[step]: start computing feature: " + ' '.join(to_compute_features))
     df = build_feature(df, to_compute_features)
-    # write_feature(df, to_compute_features)
+    write_feature(df, to_compute_features, config)
     return df, num_train, num_test 
 
 def build_feature(df, features):
@@ -193,8 +192,6 @@ def build_feature(df, features):
                 tmp = pd.DataFrame( feature_func(df) )
                 tmp.columns = ['cooccur_tfidf_svd'+str(i) for i in tmp.columns]
                 df = df.merge(tmp, left_index=True, right_index=True)
-                print(list(df.columns.values))
-                #df[feature] = df.applay(feature_func, axis=1)
 
 
     # iterate features in order (iterrows cannot update in time)
