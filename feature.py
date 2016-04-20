@@ -185,11 +185,11 @@ def build_feature(df, features):
         for feature in list(CooccurFeatureFuncDict.keys()):
             if feature in features:
                 print('[step]: calculating cooccur feature: '+feature+' ...')
-                feature_func = CooccurFeatureFuncDict[feature]
-                tmp = pd.DataFrame( feature_func(df) )
+                #feature_func = CooccurFeatureFuncDict[feature]
+                X_co = tfidf_tsvd_cooccur(df['query_title_co_occur_11gram']))
+                #tmp = pd.DataFrame( feature_func(df) )
+                tmp = pd.DataFrame(X_co)
                 tmp.columns = ['cooccur_tfidf_svd'+str(i) for i in tmp.columns]
-                print(list(tmp.columns.values))
-                print(list(df.columns.values))
                 df = df.merge(tmp, left_index=True, right_index=True)
                 print(list(df.columns.values))
                 #df[feature] = df.applay(feature_func, axis=1)
