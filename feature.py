@@ -35,7 +35,11 @@ def load_feature(features):
     return df
 
 def write_feature(df, features):
+    not_save = set(config['not_save']) if 'not_save' in config else set()
     for feature in features:
+        if feature in not_save:
+            continue
+        if feature in 
         print("[step]: saving feature %s ..." % feature)
         tmp_df = df[[feature]]
         tmp_df.to_csv(os.path.join(feature_path, feature + '.csv'), encoding="utf8")
@@ -185,10 +189,8 @@ def build_feature(df, features):
         for feature in list(CooccurFeatureFuncDict.keys()):
             if feature in features:
                 print('[step]: calculating cooccur feature: '+feature+' ...')
-                #feature_func = CooccurFeatureFuncDict[feature]
-                X_co = tfidf_tsvd_cooccur(df['query_title_co_occur_11gram']))
-                #tmp = pd.DataFrame( feature_func(df) )
-                tmp = pd.DataFrame(X_co)
+                feature_func = CooccurFeatureFuncDict[feature]
+                tmp = pd.DataFrame( feature_func(df) )
                 tmp.columns = ['cooccur_tfidf_svd'+str(i) for i in tmp.columns]
                 df = df.merge(tmp, left_index=True, right_index=True)
                 print(list(df.columns.values))
