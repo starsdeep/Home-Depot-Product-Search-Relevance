@@ -119,6 +119,10 @@
         "tSNE_compo_Q",
         "tSNE_compo_T",
         "tSNE_compo_D",
+        "raw_svd_Q",
+        "raw_svd_T",
+        "raw_svd_D",
+        "raw_svd_B",
 
         "ratio_noun_match_title",
         "ratio_noun_match_title_ordered",

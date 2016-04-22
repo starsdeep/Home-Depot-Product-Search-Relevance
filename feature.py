@@ -48,18 +48,22 @@ def write_feature(df, features, config):
         tmp_df.to_csv(os.path.join(feature_path, feature + '.csv'), encoding="utf8")
     return
 
-def load_npmat_feature(df, features, feat_dict, data_dir):
+def load_npmat_feature(df, features, feat_dict, data_dir, weight_dict=False):
     if set(features) & set(feat_dict.keys()):
         for feature in list(feat_dict.keys()):
             if feature in features:
-                print('Trying to load feature: '+feature+' ... ',end='')
-                tmpdf = load_npmat(feature, data_dir)
+                print('[step]: trying to load feature: '+feature+' ... ',end='')
+                if weight_dict:
+                    tmpdf = load_npmat(feature, data_dir, feat_dict[feature])
+                else:
+                    tmpdf = load_npmat(feature, data_dir)
                 if tmpdf is not None:
-                    print('loaded')
+                    print('feature loaded.')
                     df = df.merge(tmpdf, left_index=True, right_index=True)
                     features.remove(feature)        
                 else:
-                    print('not found')
+                    print('feature not found.')
+    return df
 
 def get_feature(config):
     if "data_dir" in config:
@@ -88,8 +92,8 @@ def get_feature(config):
     else:
         df = df_basic
 
-    load_npmat_feature(df, to_compute_features, RawSvdFeatureWeightDict, feature_path)
-    load_npmat_feature(df, to_compute_features, tSNEFeatureSourceDict, feature_path)
+    df = load_npmat_feature(df, to_compute_features, RawSvdFeatureWeightDict, feature_path, weight_dict=True)
+    df = load_npmat_feature(df, to_compute_features, tSNEFeatureSourceDict, feature_path)
     print("[step]: loading done")
     print("[step]: start computing feature: " + ' '.join(to_compute_features))
     df = build_feature(df, to_compute_features, config)
@@ -116,12 +120,12 @@ def build_feature(df, features, config):
 
     # compute idf features
     idf_dicts = dict()
-    if (set(features) & set(IdfFeatureFuncDict.keys())) or (set(features) & set(IdfSimFeatureFuncDict.keys())) or (set(features) & set(SvdSimFeatureFuncDict.keys())) or (set(features) & set(tSNEFeatureSourceDict.keys())):
+    if (set(features) & set(IdfFeatureFuncDict.keys())) or (set(features) & set(IdfSimFeatureFuncDict.keys())) or (set(features) & set(SvdSimFeatureFuncDict.keys())) or (set(features) & set(tSNEFeatureSourceDict.keys())) or (set(features) & set(RawSvdFeatureWeightDict.keys())):
         # prepare idf_dicts, idf_dicts contains idf value for a given word
         search_terms = df['search_term'].unique()
         unique_prd = df.drop_duplicates(subset='product_uid')
         # fit idf vectorizer
-        print('fitting tfidf_vectorizer ...')
+        print('[step]: fitting tfidf_vectorizer ...')
         tfidf_vectorizer = {
             'search_term': fit_tfidf(search_terms),
             'title': fit_tfidf(unique_prd['title']),
@@ -139,7 +143,7 @@ def build_feature(df, features, config):
             'composite': compute_idf_dict(tfidf_vectorizer['composite'])
         }
         # get transformed tfidf values
-        print('transforming tfidf vectors ...')
+        print('[step]: transforming tfidf vectors ...')
         idf_func = lambda mat_name, col: tfidf_vectorizer[mat_name].transform(df[col])
         tfidf_mats = {
             'indv_Q': idf_func('search_term', 'search_term'),
@@ -148,53 +152,82 @@ def build_feature(df, features, config):
             'compo_Q': idf_func('composite', 'search_term'),
             'compo_T': idf_func('composite', 'title'),
             'compo_D': idf_func('composite', 'description'),
+            'compo_B': idf_func('composite', 'brand'),
             'origin_Q': idf_func('origin', 'origin_search_term'),
             'origin_T': idf_func('origin', 'product_title')
         }
         # get fitted & transformed svd values
-        print('transforming svd vectors ...')
-        svd_func = lambda name: compute_svd(tfidf_mats[name])
-        svd_mats = {
-            'indv_Q': svd_func('indv_Q'),
-            'indv_T': svd_func('indv_T'),
-            'indv_D': svd_func('indv_D'),
-            'compo_Q': svd_func('compo_Q'),
-            'compo_T': svd_func('compo_T'),
-            'compo_D': svd_func('compo_D'),
-            'origin_Q': svd_func('origin_Q'),
-            'origin_T': svd_func('origin_T')
-        }
 
         for feature in list(IdfFeatureFuncDict.keys()):
             if feature in features:
                 print('[step]: calculating feature: '+feature+' ...')
                 feature_func = IdfFeatureFuncDict[feature]
                 df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
+
         mat_to_ser = lambda x: pd.Series([row for row in x])
         tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in tfidf_mats.items()})
         for feature in list(IdfSimFeatureFuncDict.keys()):
             if feature in features:
-                print('calculating feature: '+feature+' ...')
+                print('[step]: calculating feature: '+feature+' ...')
                 feature_func = IdfSimFeatureFuncDict[feature]
                 df[feature] = tmpdf.apply(feature_func, axis=1)
-        tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in svd_mats.items()})
-        for feature in list(SvdSimFeatureFuncDict.keys()):
+
+        idx_dict = group_idx_by_relevance(df)
+        for feature in list(GroupStatFeatureDict.keys()):
             if feature in features:
-                print('calculating feature: '+feature+' ...')
-                feature_func = SvdSimFeatureFuncDict[feature]
-                df[feature] = tmpdf.apply(feature_func, axis=1)
+                feature_func = GroupStatFeatureDict[feature]
+                tmpdf = df.apply(feature_func, axis=1, idx_dict=idx_dict, tfidf_mats=tfidf_mats, prefix=feature)
+                df.merge(tmpdf, left_index=True, right_index=True)
 
         if 'data_dir' in config:
             data_dir = config['data_dir']
         else:
             data_fir = feature_path
 
-        for feature in list(tSNEFeatureSourceDict.keys()):
-            if feature in features:
-                print('calculating feature: '+feature+' ...')
-                source = tSNEFeatureSourceDict[feature]
-                tmpdf = compute_tsne(feature, source, svd_mats[source], data_dir)
-                df.merge(tmpdf, left_index=True, right_index=True)
+        if (set(features) & set(tSNEFeatureSourceDict.keys())) or (set(features) & set(SvdSimFeatureFuncDict.keys())):
+            print('[step]: transforming svd vectors ...')
+            svd_func = lambda name: compute_svd(tfidf_mats[name])
+            svd_mats = {
+                'indv_Q': svd_func('indv_Q'),
+                'indv_T': svd_func('indv_T'),
+                'indv_D': svd_func('indv_D'),
+                'compo_Q': svd_func('compo_Q'),
+                'compo_T': svd_func('compo_T'),
+                'compo_D': svd_func('compo_D'),
+                'origin_Q': svd_func('origin_Q'),
+                'origin_T': svd_func('origin_T')
+            }
+            tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in svd_mats.items()})
+            for feature in list(SvdSimFeatureFuncDict.keys()):
+                if feature in features:
+                    print('[step]: calculating feature: '+feature+' ...')
+                    feature_func = SvdSimFeatureFuncDict[feature]
+                    df[feature] = tmpdf.apply(feature_func, axis=1)
+            for feature in list(tSNEFeatureSourceDict.keys()):
+                if feature in features:
+                    print('[step]: calculating feature: '+feature+' ...')
+                    source = tSNEFeatureSourceDict[feature]
+                    tmpdf = compute_tsne(feature, source, svd_mats[source], data_dir)
+                    df.merge(tmpdf, left_index=True, right_index=True)
+                    features.remove(feature)
+
+        # get fitted & transformed raw svd values
+        if set(features) & set(RawSvdFeatureWeightDict.keys()):
+            print('[step]: transforming raw svd vectors ...')
+            svd_func = lambda name: compute_svd(tfidf_mats[name], n_components=10)
+            raw_svd_mats = {
+                'raw_svd_Q': svd_func('compo_Q'),
+                'raw_svd_T': svd_func('compo_T'),
+                'raw_svd_D': svd_func('compo_D'),
+                'raw_svd_B': svd_func('compo_B'),
+            }
+            for feature in list(RawSvdFeatureWeightDict.keys()):
+                if feature in features:
+                    print('[step]: calculating feature: '+feature+' ...')
+                    weight = RawSvdFeatureWeightDict[feature]
+                    tmpdf = patch_raw_svd(feature, raw_svd_mats[feature], weight, data_dir)
+                    df.merge(tmpdf, left_index=True, right_index=True)
+                    features.remove(feature)
 
     # co-occur
     if(set(features)):
@@ -509,6 +542,13 @@ SvdSimFeatureFuncDict = OrderedDict([
     ('svd_cos_sim_TD', lambda row: compute_distance([row['compo_T']], [row['compo_D']])),
 ])
 
+RawSvdFeatureWeightDict = OrderedDict([
+    ('raw_svd_Q', 1.0),
+    ('raw_svd_T', 1.0),
+    ('raw_svd_D', 1.0),
+    ('raw_svd_B', 1.0),
+])
+
 tSNEFeatureSourceDict = OrderedDict([
     ('tSNE_indv_Q', 'indv_Q'),
     ('tSNE_indv_T', 'indv_T'),
@@ -516,6 +556,12 @@ tSNEFeatureSourceDict = OrderedDict([
     ('tSNE_compo_Q', 'compo_Q'),
     ('tSNE_compo_T', 'compo_T'),
     ('tSNE_compo_D', 'compo_D'),
+])
+
+GroupStatFeatureDict = OrderedDict([
+    # TODO: how to load?
+    ('group_idf_cos_sim_T', lambda row, idx_dict, tfidf_mats, prefix: group_sim_list(row, idx_dict, tfidf_mats['compo_T'], prefix)),
+    ('group_idf_cos_sim_D', lambda row, idx_dict, tfidf_mats, prefix: group_sim_list(row, idx_dict, tfidf_mats['compo_D'], prefix)),
 ])
 
 # Idf - Pos_tag features, calculate after postag features!

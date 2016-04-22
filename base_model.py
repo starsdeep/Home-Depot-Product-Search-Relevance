@@ -163,30 +163,9 @@ class Model(object):
         column_names = X_drop.columns.values
         return X_features, column_names
 
-
     def feature_union_normal_(self, X, svdcomp=10):
-        tfidf = TfidfVectorizer(ngram_range=(1, 1), stop_words='english')
-        unique_tfidf = UniqueTfidfVectorizer()
-        tsvd = TruncatedSVD(n_components=svdcomp, random_state = 2016)
-
-        union_feature = FeatureUnion(
-            transformer_list=[
-                ('cst', CustRegressionVals(hd_col_drops)),
-                ('txt1', pipeline.Pipeline([('s1', CustTxtCol(key='search_term_fuzzy_match')), ('tfidf1', tfidf), ('tsvd1', tsvd)])),
-                # ('txt2', pipeline.Pipeline([('s2', CustTxtCol(key='title')), ('tfidf2', tfidf), ('tsvd2', tsvd)])),
-                #('txt3', pipeline.Pipeline([('s3', CustTxtCol(key='description')), ('tfidf3', tfidf), ('tsvd3', tsvd)])),
-                ('txt4', pipeline.Pipeline([('s4', CustTxtCol(key='brand')), ('tfidf4', tfidf), ('tsvd4', tsvd)])),
-                ('txt5', pipeline.Pipeline([('s5', CustTxtCol(key='main_title')), ('tfidf5', tfidf), ('tsvd5', tsvd)]))
-            ],
-            transformer_weights={
-                'cst': 1.0,
-                'txt1': 0.5,
-                'txt4': 0.5,
-                'txt5': 0.25  # split the 0.25 of txt2 get worse result
-            },
-            # n_jobs = -1
-        )
-        X_features = union_feature.fit(X).transform(X)
+        cutter = CustRegressionVals(hd_col_drops)
+        X_features = cutter.transform(X)
         column_names = list(X.drop(hd_col_drops, axis=1, errors='ignore').columns.values)
         i = 1
         while len(column_names) < X_features.shape[1]:

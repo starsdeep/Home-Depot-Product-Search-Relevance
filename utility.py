@@ -586,11 +586,12 @@ def compute_svd(matrix, n_components=100):
     vectorizer = TruncatedSVD(n_components=n_components, random_state=2016)
     return vectorizer.fit_transform(matrix)
 
-def load_npmat(name, data_dir):
+def load_npmat(name, data_dir, weight=1.0):
     filename = data_dir+'/'+name+'.mat'
     if os.path.isfile(filename):
-        x_tsne = np.load(filename, encoding='latin1')
-        tmpdf = pd.DataFrame(x_tsne)
+        mat = np.load(filename, encoding='latin1')
+        mat = mat * weight
+        tmpdf = pd.DataFrame(mat)
         col_names = []
         for i in range(len(tmpdf.columns)):
             col_names.append(name+'_'+str(i))
@@ -607,6 +608,9 @@ def compute_tsne(name, source, svd_mat, data_dir):
     os.system('python make_tsne.py ' + filename)
     return load_npmat(name, data_dir)
 
+def patch_raw_svd(name, svd_mat, weight, data_dir):
+    svd_mat.dump(data_dir+'/'+name+'.mat')
+    return load_npmat(name, data_dir, weight)
 
 def compute_distance(v1, v2, metric='cosine'):
     return pairwise_distances(v1, v2, metric=metric)[0][0]
@@ -654,12 +658,47 @@ def stat_list(li, method):
         }
         return func[method](tmp)
 
+def group_idx_by_relevance(df):
+    """
+        group into 7 groups by relevances and return their indices
+    """
+    range_dict = {  
+                    1: (0.99, 1.01),
+                    1.33: (1.24, 1.34),
+                    1.67: (1.49, 1.76),
+                    2: (1.99, 2.01),
+                    2.33: (2.24, 2.34),
+                    2.67: (2.49, 2.76),
+                    3: (2.99, 3.01)
+                }
+    idx_dict = dict()
+    for key, rg in range_dict.items():
+        low, high = rg
+        idx_dict[key] = list(df.loc[ (df.loc[:,'relevance']>low) & (df.loc[:,'relevance']<high), :].index)
+    return idx_dict
+
 def str_exclude(s, t):
     tokens = t.split('\t')
     for token in tokens:
         s = s.replace(token, '')
     s = re.sub(r' +', r' ', s)
     return s
+
+def group_sim_list(row, idx_dict, tfidf_vec, prefix):
+    """
+    1. Group samples by relevance, using df excluding current sample.
+    2. Calculate cosine similarity within same group for every pair
+    """
+    curr_row = row.name
+    idx = idx_dict[row['relevance']].copy().remove(curr_row)
+    curr_idf = tfidf_vec[curr_row][:]
+    mat_idf = tfidf_vec[idx, :]
+    cos_list = [compute_distance([curr_idf], [mat_idf[i]]) for i in range(mat_idf.shape[0])]
+    method = ['max', 'min', 'mean', 'std']
+    f = lambda name: stat_list(cos_list, name)
+    g = lambda name: prefix + name
+    result = pd.Series(list(map(f, method)), list(map(g, method)))
+    return result
 
 def compute_dist(str1, str2, dist_type = 'jaccard', ngram=1):
     """
