@@ -135,7 +135,7 @@ class RandomForestClassification(Model):
         if self.config['save_badcase']:
             self.print_badcase_(x_train, y_train, train_pred, 2000)
 
-        if self.config['print_importance']:
+        if 'print_importance' in self.config and self.config['print_importance']:
             self.print_importance_(x_train, self.model, 'rfc')
 
     def predict(self, x_test, need_transform_label=False):
@@ -195,7 +195,7 @@ subsample=0.7, colsample_bytree=0.48, colsample_bylevel=1, reg_alpha=0, reg_lamb
         # fit
         self.model.fit(X_train, y_train)
         imps = self.get_column_importance_()
-        if self.config['print_importance']:
+        if 'print_importance' in self.config and self.config['print_importance']:
             self.print_importance_(imps, column_names)
 
     def predict(self, x_test):
