@@ -15,7 +15,7 @@ total_test = 166693
 
 feature_path = './output/features/'
 
-def load_feature(features):
+def load_feature(features, config):
     """
     read features from existing files, and then concat those features into a big frame using pd.concat,
     concat a list of frames can improve efficiency see http://pandas.pydata.org/pandas-docs/stable/merging.html
@@ -26,6 +26,8 @@ def load_feature(features):
     if not features:
         return pd.DataFrame()
     frames = []
+    if "data_dir" in config:
+        feature_path = config['data_dir']
     files = [os.path.join(feature_path, feature + '.csv') for feature in features]
     frames = [pd.read_csv(file, encoding="ISO-8859-1", index_col=0) for file in files]
     df = pd.concat(frames, axis=1)
@@ -36,6 +38,8 @@ def load_feature(features):
 
 def write_feature(df, features, config):
     not_save = set(config['not_save']) if 'not_save' in config else set()
+    if "data_dir" in config:
+        feature_path = config['data_dir']
     for feature in features:
         if feature in not_save:
             continue
@@ -44,7 +48,22 @@ def write_feature(df, features, config):
         tmp_df.to_csv(os.path.join(feature_path, feature + '.csv'), encoding="utf8")
     return
 
+def load_npmat_feature(df, features, feat_dict, data_dir):
+    if set(features) & set(feat_dict.keys()):
+        for feature in list(feat_dict.keys()):
+            if feature in features:
+                print('Trying to load feature: '+feature+' ... ',end='')
+                tmpdf = load_npmat(feature, data_dir)
+                if tmpdf is not None:
+                    print('loaded')
+                    df = df.merge(tmpdf, left_index=True, right_index=True)
+                    features.remove(feature)        
+                else:
+                    print('not found')
+
 def get_feature(config):
+    if "data_dir" in config:
+        feature_path = config['data_dir']
     all_exist_features = set([os.path.splitext(f)[0] for f in os.listdir(feature_path) if os.path.isfile(os.path.join(feature_path,f)) and f.endswith('.csv')])
     total_features = set(config['features'])
     exist_features = total_features & all_exist_features
@@ -57,7 +76,7 @@ def get_feature(config):
     df_basic, num_train, num_test = load_data(config['num_train'])
     print("[step]: feature already exists, loading: \n" + ' '.join(to_load_features))
     if to_load_features:
-        df_all = load_feature(to_load_features)
+        df_all = load_feature(to_load_features, config)
         print("[info]: length of loaded datafame %d" % df_all.shape[0])
         df_train = df_all[:num_train]
         df_test = df_all[-num_test:]
@@ -68,13 +87,16 @@ def get_feature(config):
                 df[column] = df_basic[column].copy()
     else:
         df = df_basic
+
+    load_npmat_feature(df, to_compute_features, RawSvdFeatureWeightDict, feature_path)
+    load_npmat_feature(df, to_compute_features, tSNEFeatureSourceDict, feature_path)
     print("[step]: loading done")
     print("[step]: start computing feature: " + ' '.join(to_compute_features))
-    df = build_feature(df, to_compute_features)
+    df = build_feature(df, to_compute_features, config)
     write_feature(df, to_compute_features, config)
     return df, num_train, num_test 
 
-def build_feature(df, features):
+def build_feature(df, features, config):
     # iterate features in order, use apply() to update in time
     if not features:
         return df
@@ -91,20 +113,6 @@ def build_feature(df, features):
             print('[step]: calculating feature: '+feature+' ...')
             feature_func = MatchFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
-
-    # load tsne features
-    if set(features) & set(tSNEFeatureSourceDict.keys()):
-        for feature in list(tSNEFeatureSourceDict.keys()):
-            if feature in features:
-                print('Trying to load feature: '+feature+' ... ',end='')
-                source = tSNEFeatureSourceDict[feature]
-                tmpdf = load_tsne(feature)
-                if tmpdf is not None:
-                    print('loaded')
-                    df = df.merge(tmpdf, left_index=True, right_index=True)
-                    features.remove(feature)        
-                else:
-                    print('not found')
 
     # compute idf features
     idf_dicts = dict()
@@ -132,8 +140,8 @@ def build_feature(df, features):
         }
         # get transformed tfidf values
         print('transforming tfidf vectors ...')
-        idf_func = lambda vec_name, col: tfidf_vectorizer[vec_name].transform(df[col])
-        tfidf_vecs = {
+        idf_func = lambda mat_name, col: tfidf_vectorizer[mat_name].transform(df[col])
+        tfidf_mats = {
             'indv_Q': idf_func('search_term', 'search_term'),
             'indv_T': idf_func('title', 'title'),
             'indv_D': idf_func('description', 'description'),
@@ -145,8 +153,8 @@ def build_feature(df, features):
         }
         # get fitted & transformed svd values
         print('transforming svd vectors ...')
-        svd_func = lambda name: compute_svd(tfidf_vecs[name])
-        svd_vecs = {
+        svd_func = lambda name: compute_svd(tfidf_mats[name])
+        svd_mats = {
             'indv_Q': svd_func('indv_Q'),
             'indv_T': svd_func('indv_T'),
             'indv_D': svd_func('indv_D'),
@@ -163,24 +171,29 @@ def build_feature(df, features):
                 feature_func = IdfFeatureFuncDict[feature]
                 df[feature] = df.apply(feature_func, axis=1, idf_dicts=idf_dicts)
         mat_to_ser = lambda x: pd.Series([row for row in x])
-        tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in tfidf_vecs.items()})
+        tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in tfidf_mats.items()})
         for feature in list(IdfSimFeatureFuncDict.keys()):
             if feature in features:
                 print('calculating feature: '+feature+' ...')
                 feature_func = IdfSimFeatureFuncDict[feature]
                 df[feature] = tmpdf.apply(feature_func, axis=1)
-        tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in svd_vecs.items()})
+        tmpdf = pd.DataFrame({k: mat_to_ser(v) for k, v in svd_mats.items()})
         for feature in list(SvdSimFeatureFuncDict.keys()):
             if feature in features:
                 print('calculating feature: '+feature+' ...')
                 feature_func = SvdSimFeatureFuncDict[feature]
                 df[feature] = tmpdf.apply(feature_func, axis=1)
 
+        if 'data_dir' in config:
+            data_dir = config['data_dir']
+        else:
+            data_fir = feature_path
+
         for feature in list(tSNEFeatureSourceDict.keys()):
             if feature in features:
                 print('calculating feature: '+feature+' ...')
                 source = tSNEFeatureSourceDict[feature]
-                tmpdf = compute_tsne(feature, source, svd_vecs[source])
+                tmpdf = compute_tsne(feature, source, svd_mats[source], data_dir)
                 df.merge(tmpdf, left_index=True, right_index=True)
 
     # co-occur

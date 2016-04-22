@@ -1,5 +1,6 @@
 {   
     "model": "xgbr",
+    "data_dir": "./output/features/",
     "save_badcase": false,
     "print_importance": false,
     "num_train": -1,

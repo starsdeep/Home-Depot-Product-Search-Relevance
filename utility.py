@@ -586,9 +586,10 @@ def compute_svd(matrix, n_components=100):
     vectorizer = TruncatedSVD(n_components=n_components, random_state=2016)
     return vectorizer.fit_transform(matrix)
 
-def load_tsne(name):
-    if os.path.isfile(name+'.mat'):
-        x_tsne = np.load(name+'.mat', encoding='latin1')
+def load_npmat(name, data_dir):
+    filename = data_dir+'/'+name+'.mat'
+    if os.path.isfile(filename):
+        x_tsne = np.load(filename, encoding='latin1')
         tmpdf = pd.DataFrame(x_tsne)
         col_names = []
         for i in range(len(tmpdf.columns)):
@@ -598,12 +599,14 @@ def load_tsne(name):
     else:
         return None
 
-def compute_tsne(name, source, svd_vec):
+def compute_tsne(name, source, svd_mat, data_dir):
+    filename = data_dir+'/'+source+'.mat'
     print(name + ' tsne not computed, Dumpping ' + source + '.mat..')
-    svd_vec.dump(source+'.mat')
+    svd_mat.dump(filename)
     print('calculating tsne, make take very long...')
-    os.system('python make_tsne.py '+source)
-    return load_tsne(name)
+    os.system('python make_tsne.py ' + filename)
+    return load_npmat(name, data_dir)
+
 
 def compute_distance(v1, v2, metric='cosine'):
     return pairwise_distances(v1, v2, metric=metric)[0][0]
@@ -634,8 +637,6 @@ def tfidf_tsvd_cooccur(X):
     X_tfidf = tfidf.fit_transform(X)
     X_svd = tsvd.fit_transform(X_tfidf)
     return X_svd
-
-
 
 def stat_list(li, method):
     if len(li)==0:

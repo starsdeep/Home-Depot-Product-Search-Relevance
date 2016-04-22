@@ -43,7 +43,7 @@ if __name__ == '__main__':
     id_test = row_df['id'][-num_test:].values
 
     # feature extraction
-    df_features = load_feature(config['features'])
+    df_features = load_feature(config['features'], config)
     
     # load customize train preds
     model_names = []
