@@ -139,13 +139,19 @@
 
         "query_title_co_occur_11gram",
         "query_title_co_occur_22gram",
+        "query_title_co_occur_12gram",
+        "query_title_co_occur_21gram",
         "q_t_11gram",
-        "q_t_22gram"
+        "q_t_22gram",
+        "q_t_12gram",
+        "q_t_21gram"
 
     ],
     "not_save":[
         "q_t_11gram", 
-        "q_t_22gram"
+        "q_t_22gram",
+        "q_t_12gram",
+        "q_t_21gram"
     ],
     "recompute_features": [ ],
     "_feature_not_used": ["bigram_in_brand", "*_er_*", "ratio_bigram_*", "*_BM25", "numsize_word_*", "nnumsize_*_case*", "ratio_noun_*_ordered", "*_numsize_*_main_title", "ratio_numsize_(title|description)"] 
