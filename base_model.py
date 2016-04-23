@@ -198,6 +198,8 @@ class Model(object):
             feature_random_selection = True
             print("[info]: feature_random_selection: %r" % feature_random_selection)
         column_names = np.array(self.column_names)
+        result_list = []
+        file_path = os.path.join(os.path.abspath(sys.argv[1]), trails_filename)
         def hyperopt_score(params):
             #create a new model with parameters equals to params
             nonlocal clf
@@ -212,6 +214,8 @@ class Model(object):
             nonlocal feature_random_selection
             nonlocal column_names
             nonlocal save_result
+            nonlocal result_list
+            nonlocal file_path
             # randomly select K features from X_train
             new_X_train = X_train
             new_X_test = X_test
@@ -255,18 +259,19 @@ class Model(object):
                 df_test_pred = pd.DataFrame({'test_pred': test_pred})
                 df_test_pred.to_csv(os.path.join(os.path.abspath(sys.argv[1]), test_pred_filename_tpl % trial_counter), encoding="utf8")
                 trial_counter += 1
-            return {'loss': rmse, 'status': STATUS_OK, 'model': model_name, 'model_dir': model_dir, 'params': params, 'features': features, 'feature_index': feature_index, 'num_features':K}
-        
+
+            trial_result = {'loss': rmse, 'status': STATUS_OK, 'model': model_name, 'model_dir': model_dir, 'params': params, 'features': features, 'feature_index': feature_index, 'num_features':K}
+            result_list.append(trial_result)
+            with open(file_path, 'w') as outfile:
+                json.dump(result_list, outfile)
+            return trial_result
+
         #返回的并不是最优的结果，非常奇怪
         best_params = fmin(hyperopt_score, self.param_space, algo=tpe.suggest, trials=trials, max_evals=self.hyperopt_max_evals)
         
-        # save tirals result
-        #result_list = [{'loss': trials.results[idx]['loss'], 'status': trials.results[idx]['status'], 'model': trials.results[idx]['model'], 'model_dir': trials.results[idx]['model_dir'], 'params': trials.results[idx]['params']} for idx in range(len(trials.trials))]
         result_list = trials.results
-        #result_list = sorted(result_list, key=itemgetter('loss'), reverse=True)
-        file_path = os.path.join(os.path.abspath(sys.argv[1]), trails_filename)
-        with open(file_path, 'w') as outfile:
-            json.dump(result_list, outfile)
+        #with open(file_path, 'w') as outfile:
+        #    json.dump(result_list, outfile)
         index, trial_result = min(enumerate(result_list), key=lambda k: k[1]['loss']) # shallow copy
         print("[info]: best trial results")
         print(trial_result)

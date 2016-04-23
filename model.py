@@ -154,13 +154,13 @@ class XgboostRegression(Model):
         Model.__init__(self)
         self.hyperopt_max_evals = 300
         self.param_space = {
-            'n_estimators': hp.choice('n_estimators', [500,800,1000]),
+            'n_estimators': hp.choice('n_estimators', [800,1000,1200,1500,]),
             'learning_rate': hp.choice('learning_rate', [0.001,0.003,0.01,0.03,0.1]),
             'max_depth': hp.choice('max_depth',range(7,14)),
-            'min_child_weight': hp.uniform('min_child_weight', 1,5),
+            'min_child_weight': hp.uniform('min_child_weight', 1,8),
             #'max_delta_step': hp.choice('max_delta_step', [0,]),
-            'subsample': hp.uniform('subsample', 0.5,0.8),
-            'colsample_bytree': hp.uniform('colsample_bytree', 0.3,0.7),
+            'subsample': hp.uniform('subsample', 0.5,1.1),
+            'colsample_bytree': hp.uniform('colsample_bytree', 0.3,1.0),
             'colsample_bylevel': hp.uniform('colsample_bylevel', 0.3,0.7),
             #'reg_alpha': hp.choice('reg_alpha', [0,]),
             #'reg_lambda': hp.choice('reg_lambda', [1,]),
