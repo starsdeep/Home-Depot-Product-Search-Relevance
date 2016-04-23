@@ -233,7 +233,7 @@ def build_feature(df, features, config):
     if(set(features)):
         for feature in list(CooccurFeatureFuncDict.keys()):
             if feature in features:
-                co_feature_path = feature+'.mat'
+                co_feature_path = 'cooccur/'+feature+'.mat'
                 print('[step]: calculating cooccur feature: '+feature+' ...')
                 if os.path.isfile(co_feature_path):
                     tmp = pd.read_csv(co_feature_path)
