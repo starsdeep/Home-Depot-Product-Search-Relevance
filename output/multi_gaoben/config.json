@@ -1,7 +1,7 @@
 {   
     "model": "xgbr",
     "save_badcase": true,
-    "num_train": -1,
+    "num_train": 200,
     "print_importance": true,
     "features": [
         "origin_search_term",
@@ -141,18 +141,34 @@
         "query_title_co_occur_22gram",
         "query_title_co_occur_12gram",
         "query_title_co_occur_21gram",
+        "query_description_co_occur_11gram",
+        "query_description_co_occur_22gram",
+        "query_description_co_occur_12gram",
+        "query_description_co_occur_21gram",
+
         "q_t_11gram",
         "q_t_22gram",
         "q_t_12gram",
-        "q_t_21gram"
+        "q_t_21gram",
+
+        "q_d_11gram",
+        "q_d_22gram",
+        "q_d_12gram",
+        "q_d_21gram"
 
     ],
     "not_save":[
         "q_t_11gram", 
         "q_t_22gram",
         "q_t_12gram",
-        "q_t_21gram"
+        "q_t_21gram",
+
+        "q_d_11gram",
+        "q_d_22gram",
+        "q_d_12gram",
+        "q_d_21gram"
     ],
+    "data_dir":"output/features/",
     "recompute_features": [ ],
     "_feature_not_used": ["bigram_in_brand", "*_er_*", "ratio_bigram_*", "*_BM25", "numsize_word_*", "nnumsize_*_case*", "ratio_noun_*_ordered", "*_numsize_*_main_title", "ratio_numsize_(title|description)"] 
 }

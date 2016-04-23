@@ -359,6 +359,11 @@ TextFeatureFuncDict = OrderedDict([
     ('query_title_co_occur_22gram', lambda row: cooccur(row['ori_stem_search_term'], row['title'], 2, 2)),
     ('query_title_co_occur_12gram', lambda row: cooccur(row['ori_stem_search_term'], row['title'], 1, 2)),
     ('query_title_co_occur_21gram', lambda row: cooccur(row['ori_stem_search_term'], row['title'], 2, 1)),
+
+    ('query_description_co_occur_11gram', lambda row: cooccur(row['ori_stem_search_term'], row['description'], 1, 1)),
+    ('query_description_co_occur_22gram', lambda row: cooccur(row['ori_stem_search_term'], row['description'], 2, 2)),
+    ('query_description_co_occur_12gram', lambda row: cooccur(row['ori_stem_search_term'], row['description'], 1, 2)),
+    ('query_description_co_occur_21gram', lambda row: cooccur(row['ori_stem_search_term'], row['description'], 2, 1)),
 ])
 
 # Features for matching words
@@ -599,6 +604,12 @@ CooccurFeatureFuncDict = OrderedDict([
     ('q_t_22gram', lambda df: tfidf_tsvd_cooccur(df['query_title_co_occur_22gram'])),
     ('q_t_12gram', lambda df: tfidf_tsvd_cooccur(df['query_title_co_occur_12gram'])),
     ('q_t_21gram', lambda df: tfidf_tsvd_cooccur(df['query_title_co_occur_21gram'])),
+
+    ('q_d_11gram', lambda df: tfidf_tsvd_cooccur(df['query_description_co_occur_11gram'])),
+    ('q_d_22gram', lambda df: tfidf_tsvd_cooccur(df['query_description_co_occur_22gram'])),
+    ('q_d_12gram', lambda df: tfidf_tsvd_cooccur(df['query_description_co_occur_12gram'])),
+    ('q_d_21gram', lambda df: tfidf_tsvd_cooccur(df['query_description_co_occur_21gram'])),
+    
 ])
 
 
