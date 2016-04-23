@@ -233,10 +233,16 @@ def build_feature(df, features, config):
     if(set(features)):
         for feature in list(CooccurFeatureFuncDict.keys()):
             if feature in features:
+                co_feature_path = feature+'.mat'
                 print('[step]: calculating cooccur feature: '+feature+' ...')
-                feature_func = CooccurFeatureFuncDict[feature]
-                tmp = pd.DataFrame( feature_func(df) )
-                tmp.columns = ['cooccur_tfidf_svd_'+feature+str(i) for i in tmp.columns]
+                if os.path.isfile(co_feature_path):
+                    tmp = pd.read_csv(co_feature_path)
+                    print('[step]: loading cooccur feature MAT: '+feature+' ...')
+                else:
+                    feature_func = CooccurFeatureFuncDict[feature]
+                    tmp = pd.DataFrame( feature_func(df) )
+                    tmp.columns = ['cooccur_tfidf_svd_'+feature+str(i) for i in tmp.columns]
+                    tmp.to_csv(co_feature_path)
                 df = df.merge(tmp, left_index=True, right_index=True)
 
 
