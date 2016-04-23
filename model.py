@@ -159,7 +159,7 @@ class XgboostRegression(Model):
             'max_depth': hp.choice('max_depth',range(7,14)),
             'min_child_weight': hp.uniform('min_child_weight', 1,8),
             #'max_delta_step': hp.choice('max_delta_step', [0,]),
-            'subsample': hp.uniform('subsample', 0.5,1.1),
+            'subsample': hp.uniform('subsample', 0.5,1.0),
             'colsample_bytree': hp.uniform('colsample_bytree', 0.3,1.0),
             'colsample_bylevel': hp.uniform('colsample_bylevel', 0.3,0.7),
             #'reg_alpha': hp.choice('reg_alpha', [0,]),
@@ -217,7 +217,8 @@ class GbdtRegression(Model):
         Model.__init__(self)
         self.hyperopt_max_evals = 300
         self.param_space = {
-            'n_estimators': hp.choice('max_depth', [300,1000,2000,2400]),
+            'n_estimators': hp.choice('max_depth', [400,800, 1000,1500, 2000]),
+            'subsample': hp.uniform('subsample', 0.1,1.0),
             'learning_rate': hp.choice('learning_rates', [0.3, 1.0, 3.0]),
             'max_depth': hp.choice('max_depths', [3,5,10,20]),
         }
