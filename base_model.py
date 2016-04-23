@@ -342,11 +342,13 @@ class Model(object):
         rmse = fmean_squared_error_(y_train, train_pred)
         #self.save_train_pred(df_train, train_pred)
         print("\n[info]: offline rmse: %f\n" % rmse)
-        self.print_badcase_(df_train, y_train, train_pred, 2000)
+        if 'save_badcase' in self.config and self.config['save_badcase']:
+            self.print_badcase_(df_train, y_train, train_pred, 2000)
         # fit
         self.model.fit(X_train, y_train)
-        imps = self.get_column_importance_()
-        self.print_importance_(imps, column_names)
+        if 'print_importance' in self.config and self.config['print_importance']:
+            imps = self.get_column_importance_()
+            self.print_importance_(imps, column_names)
 
 
     def predict(self, X_test):

@@ -9,6 +9,7 @@ from utility import *
 from SpellCorrect import *
 from collections import OrderedDict
 from nltk import pos_tag
+from gensim.models import Word2Vec
 
 total_train = 74067
 total_test = 166693
@@ -26,9 +27,10 @@ def load_feature(features, config):
     if not features:
         return pd.DataFrame()
     frames = []
+    data_dir = feature_path
     if "data_dir" in config:
-        feature_path = config['data_dir']
-    files = [os.path.join(feature_path, feature + '.csv') for feature in features]
+        data_dir = config['data_dir']
+    files = [os.path.join(data_dir, feature + '.csv') for feature in features]
     frames = [pd.read_csv(file, encoding="ISO-8859-1", index_col=0) for file in files]
     df = pd.concat(frames, axis=1)
 
@@ -38,15 +40,31 @@ def load_feature(features, config):
 
 def write_feature(df, features, config):
     not_save = set(config['not_save']) if 'not_save' in config else set()
+    data_dir = feature_path
     if "data_dir" in config:
-        feature_path = config['data_dir']
+        data_dir = config['data_dir']
     for feature in features:
         if feature in not_save:
             continue
         print("[step]: saving feature %s ..." % feature)
         tmp_df = df[[feature]]
-        tmp_df.to_csv(os.path.join(feature_path, feature + '.csv'), encoding="utf8")
+        tmp_df.to_csv(os.path.join(data_dir, feature + '.csv'), encoding="utf8")
     return
+
+def load_group_feature(df, features, feat_dict, data_dir):
+    if set(features) & set(feat_dict.keys()):
+        for feature in list(feat_dict.keys()):
+            if feature in features:
+                print('[step]: trying to load feature: '+feature+' ... ',end='')
+                filename = os.path.join(data_dir, feature + '.csv')
+                if os.path.isfile(filename):
+                    tmpdf = pd.read_csv(filename, encoding="utf-8")
+                    df = df.merge(tmpdf, left_index=True, right_index=True)
+                    features.remove(feature)        
+                    print('feature loaded.')
+                else:
+                    print('feature not found.')
+    return df
 
 def load_npmat_feature(df, features, feat_dict, data_dir, weight_dict=False):
     if set(features) & set(feat_dict.keys()):
@@ -58,17 +76,18 @@ def load_npmat_feature(df, features, feat_dict, data_dir, weight_dict=False):
                 else:
                     tmpdf = load_npmat(feature, data_dir)
                 if tmpdf is not None:
-                    print('feature loaded.')
                     df = df.merge(tmpdf, left_index=True, right_index=True)
                     features.remove(feature)        
+                    print('feature loaded.')
                 else:
                     print('feature not found.')
     return df
 
 def get_feature(config):
+    data_dir = feature_path
     if "data_dir" in config:
-        feature_path = config['data_dir']
-    all_exist_features = set([os.path.splitext(f)[0] for f in os.listdir(feature_path) if os.path.isfile(os.path.join(feature_path,f)) and f.endswith('.csv')])
+        data_dir = config['data_dir']
+    all_exist_features = set([os.path.splitext(f)[0] for f in os.listdir(data_dir) if os.path.isfile(os.path.join(data_dir,f)) and f.endswith('.csv')])
     total_features = set(config['features'])
     exist_features = total_features & all_exist_features
     recompute_features = set(config['recompute_features']) if 'recompute_features' in config else set()
@@ -92,8 +111,10 @@ def get_feature(config):
     else:
         df = df_basic
 
-    df = load_npmat_feature(df, to_compute_features, RawSvdFeatureWeightDict, feature_path, weight_dict=True)
-    df = load_npmat_feature(df, to_compute_features, tSNEFeatureSourceDict, feature_path)
+    df = load_npmat_feature(df, to_compute_features, RawSvdFeatureWeightDict, data_dir, weight_dict=True)
+    df = load_npmat_feature(df, to_compute_features, tSNEFeatureSourceDict, data_dir)
+    df = load_group_feature(df, to_compute_features, GroupStatFeatureDict, data_dir)
+    df = load_group_feature(df, to_compute_features, CooccurFeatureFuncDict, data_dir)
     print("[step]: loading done")
     print("[step]: start computing feature: " + ' '.join(to_compute_features))
     df = build_feature(df, to_compute_features, config)
@@ -105,6 +126,9 @@ def build_feature(df, features, config):
     if not features:
         return df
 
+    data_dir = feature_path
+    if 'data_dir' in config:
+        data_dir = config['data_dir']
 
     for feature in list(TextFeatureFuncDict.keys()):
         if feature in features:
@@ -172,17 +196,15 @@ def build_feature(df, features, config):
                 feature_func = IdfSimFeatureFuncDict[feature]
                 df[feature] = tmpdf.apply(feature_func, axis=1)
 
+
         idx_dict = group_idx_by_relevance(df)
         for feature in list(GroupStatFeatureDict.keys()):
             if feature in features:
                 feature_func = GroupStatFeatureDict[feature]
                 tmpdf = df.apply(feature_func, axis=1, idx_dict=idx_dict, tfidf_mats=tfidf_mats, prefix=feature)
                 df.merge(tmpdf, left_index=True, right_index=True)
-
-        if 'data_dir' in config:
-            data_dir = config['data_dir']
-        else:
-            data_fir = feature_path
+                tmpdf.to_csv(os.path.join(data_dir, feature + '.csv'), encoding="utf8")
+                features.remove(feature)
 
         if (set(features) & set(tSNEFeatureSourceDict.keys())) or (set(features) & set(SvdSimFeatureFuncDict.keys())):
             print('[step]: transforming svd vectors ...')
@@ -230,21 +252,15 @@ def build_feature(df, features, config):
                     features.remove(feature)
 
     # co-occur
-    if(set(features)):
-        for feature in list(CooccurFeatureFuncDict.keys()):
-            if feature in features:
-                co_feature_path = 'cooccur/'+feature+'.mat'
-                print('[step]: calculating cooccur feature: '+feature+' ...')
-                if os.path.isfile(co_feature_path):
-                    tmp = pd.read_csv(co_feature_path)
-                    print('[step]: loading cooccur feature MAT: '+feature+' ...')
-                else:
-                    feature_func = CooccurFeatureFuncDict[feature]
-                    tmp = pd.DataFrame( feature_func(df) )
-                    tmp.columns = ['cooccur_tfidf_svd_'+feature+str(i) for i in tmp.columns]
-                    tmp.to_csv(co_feature_path)
-                df = df.merge(tmp, left_index=True, right_index=True)
-
+    for feature in list(CooccurFeatureFuncDict.keys()):
+        if feature in features:
+            print('[step]: calculating cooccur feature: '+feature+' ...')
+            feature_func = CooccurFeatureFuncDict[feature]
+            tmp = pd.DataFrame( feature_func(df) )
+            tmp.columns = ['cooccur_tfidf_svd_'+feature+str(i) for i in tmp.columns]
+            tmp.to_csv(os.path.join(data_dir, feature + '.csv'), encoding="utf8")
+            df = df.merge(tmp, left_index=True, right_index=True)
+            features.remove(feature)
 
     # iterate features in order (iterrows cannot update in time)
     if set(features) & set(PostagFeatureFuncDict.keys()):
@@ -267,6 +283,16 @@ def build_feature(df, features, config):
                     df.loc[index, feature] = feature_func(row_new, tags, idf_dicts)
             if index%300==0:
                 print("[step]: " + str(index)+' rows calculated...')
+
+    # compute W2v features
+    if set(features) & set(W2vFeatureFuncDict.keys()):
+        path_w2v_pretrained_model = './input/GoogleNews-vectors-negative300.bin'
+        embedder = Word2Vec.load_word2vec_format(path_w2v_pretrained_model, binary=True)
+        for feature in list(W2vFeatureFuncDict.keys()):
+            if feature in features:
+                print('calculating feature: '+feature+' ...')
+                feature_func = W2vFeatureFuncDict[feature]
+                df[feature] = df.apply(feature_func, axis=1, embedder=embedder)
 
     # iterate features in order (iterrows cannot update in time)
     if set(features) & set(StatFeatureFuncDict.keys()):
@@ -390,8 +416,8 @@ MatchFeatureFuncDict = OrderedDict([
     ('word_in_title_weighted', lambda row: num_common_word(row['search_term'], row['title'], weighted=True)),
     
     ('word_in_title_exact', lambda row: num_common_word(row['search_term'], row['title'], exact_matching=True)),
-    ('ori_word_in_title_ordered', lambda row: num_common_word_ordered(row['ori_stem_search_term'], row['title'])),
     ('word_in_title_ordered', lambda row: num_common_word_ordered(row['search_term'], row['title'])),
+    ('ori_word_in_title_ordered', lambda row: num_common_word_ordered(row['ori_stem_search_term'], row['title'])),
     ('word_in_description', lambda row: num_common_word(row['search_term'], row['description'])),
     ('word_in_description_exact', lambda row: num_common_word(row['search_term'], row['description'], exact_matching=True)),
     ('word_in_brand', lambda row: num_common_word(row['search_term'], row['brand'])),
@@ -418,14 +444,16 @@ MatchFeatureFuncDict = OrderedDict([
     ('chars_of_query', lambda row: len(row['search_term'])),
 
     ('ratio_main_title', lambda row :row['word_in_main_title'] / (row['len_of_query']+1.0)),
-    ('ratio_title', lambda row :row['word_in_title'] / (row['len_of_query']+1.0)),
     ('ratio_main_title_exact', lambda row :row['word_in_main_title_exact'] / (row['len_of_query']+1.0)),
-    ('ratio_title_exact', lambda row :row['word_in_title_exact'] / (row['len_of_query']+1.0)),
     ('ratio_main_title_ordered', lambda row :row['word_in_main_title_ordered'] / (row['len_of_query']+1.0)),
+    ('ratio_title', lambda row :row['word_in_title'] / (row['len_of_query']+1.0)),
+    ('ratio_title_exact', lambda row :row['word_in_title_exact'] / (row['len_of_query']+1.0)),
     ('ratio_title_ordered', lambda row :row['word_in_title_ordered'] / (row['len_of_query']+1.0)),
+    ('ratio_ori_title_ordered', lambda row :row['ori_word_in_title_ordered'] / (row['len_of_query']+1.0)),
     ('ratio_description', lambda row :row['word_in_description'] / (row['len_of_query']+1.0)),
     ('ratio_description_exact', lambda row :row['word_in_description_exact'] / (row['len_of_query']+1.0)),
     ('ratio_brand', lambda row :row['word_in_brand'] / (row['len_of_query']+1.0)),
+    ('ratio_typeid', lambda row :row['word_in_typeid'] / (row['len_of_query']+1.0)),
 
     ('ratio_bigram_title', lambda row: row['bigram_in_title'] / (row['len_of_query']+1.0)),
     ('ratio_bigram_main_title', lambda row: row['bigram_in_main_title'] / (row['len_of_query']+1.0)),
@@ -570,7 +598,6 @@ tSNEFeatureSourceDict = OrderedDict([
 ])
 
 GroupStatFeatureDict = OrderedDict([
-    # TODO: how to load?
     ('group_idf_cos_sim_T', lambda row, idx_dict, tfidf_mats, prefix: group_sim_list(row, idx_dict, tfidf_mats['compo_T'], prefix)),
     ('group_idf_cos_sim_D', lambda row, idx_dict, tfidf_mats, prefix: group_sim_list(row, idx_dict, tfidf_mats['compo_D'], prefix)),
 ])
@@ -584,6 +611,11 @@ IdfPostagFeatureFuncDict = OrderedDict([
     ('idf_max_2_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 2)),
     ('idf_max_3_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 3)),
     ('idf_max_5_noun_match_title', lambda row, tags, idf_dicts: idf_max_noun_match(row['search_term'], tags['title'], idf_dicts['composite'], 5)),
+])
+
+W2vFeatureFuncDict = OrderedDict([
+    ('w2v_query_title_avgmax_sim', lambda row, embedder: w2v_avgmax_similarity(row['search_term'], row['title'], embedder)),
+    ('w2v_query_title_avgmin_dist', lambda row, embedder: w2v_avgmin_dist(row['search_term'], row['title'], embedder)),
 ])
 
 # Statistical Features

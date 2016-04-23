@@ -643,6 +643,11 @@ def tfidf_tsvd_cooccur(X):
     return X_svd
 
 def stat_list(li, method):
+    """
+        statistical information of a python list
+        input: python list, python string
+        output: numpy float
+    """
     if len(li)==0:
         return 0
     elif method=='std' and len(li)==1:

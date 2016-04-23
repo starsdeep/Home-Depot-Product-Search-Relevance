@@ -191,11 +191,12 @@ subsample=0.7, colsample_bytree=0.48, colsample_bylevel=1, reg_alpha=0, reg_lamb
         rmse = fmean_squared_error_(y_train, train_pred)
         print("\n======= offline rmse: %f =========" % rmse)
         #self.save_train_pred(df_train, train_pred)
-        self.print_badcase_(df_train, y_train, train_pred, 2000)
+        if 'save_badcase' in self.config and self.config['save_badcase']:
+            self.print_badcase_(df_train, y_train, train_pred, 2000)
         # fit
         self.model.fit(X_train, y_train)
-        imps = self.get_column_importance_()
         if 'print_importance' in self.config and self.config['print_importance']:
+            imps = self.get_column_importance_()
             self.print_importance_(imps, column_names)
 
     def predict(self, x_test):
