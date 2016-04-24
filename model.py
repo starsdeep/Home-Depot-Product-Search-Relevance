@@ -388,7 +388,7 @@ class MultiClassifier(Model):
 
 class RegularizedGreedyForest(Model):
 
-    def fit(self, X_train, y_train, df_train, column_names):
+    def fit(self, X_train, y_train, df_train, column_names, X_test=None):
         pass
         self.param_space = {
             'reg_L2': hp.choice('reg_L2', [0.01, 0.1, 1]), #required, default value is 1, Used to control the degree of L2 regularization
@@ -396,7 +396,7 @@ class RegularizedGreedyForest(Model):
             'reg_depth': hp.choice('reg_depth', [1, 2, 10]), # no small than 1, A larger value penalizes deeper nodes more severely. default value is 1
             'test_interval': hp.choice('test_interval', [500, 1000, 2000]), # default value is 500, every time 500 leaf nodes are newly added to the forest,
         }
-        param = {"reg_L2": 1}
+        param = {"reg_L2": 10}
         startTraining(X_train, y_train, param)
 
     def predict(self, X_test):

@@ -10,6 +10,7 @@ from SpellCorrect import *
 from collections import OrderedDict
 from nltk import pos_tag
 from gensim.models import Word2Vec
+import config.project
 
 total_train = 74067
 total_test = 166693
@@ -328,7 +329,7 @@ def build_feature(df, features, config):
     return df
 
 chkr = SpellCheckGoogleOffline()
-f_ed = open('ed_clean_comment.txt')
+f_ed = open('%s/ed_clean_comment.txt' % project.project_path)
 f_ed.readline()
 line = f_ed.readline()
 query_title_dic = {}

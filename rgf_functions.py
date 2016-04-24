@@ -99,13 +99,7 @@ def startTraining(train_dat,train_target,param, train_weights=None,modelname= "t
     procs = []
     procs.append(start_RGF_train(train_dat, train_target ,train_weights,modelname+'_full',temp_dir,save_dir,param))
 
-    # start cross-validation
-    cv_ind = np.mod(np.arange(n),7)
     procs=[]
-    for i in range(7):
-        w_cv = None
-        procs.append(start_RGF_train_test(train_dat[cv_ind!=i], train_target[cv_ind!=i],w_cv,train_dat[cv_ind==i], train_target[cv_ind==i] ,modelname+'_cv'+repr(i),temp_dir,save_dir,param))
-
     # display output & wait to finish
     print("will print RGF output to console")
     for p in procs:
@@ -124,7 +118,6 @@ def makePredictions(test_dat,temp_dir="output/RGF_temp/",save_dir="output/RGF_sa
     data_dir = temp_dir + '/test_data'
     myMakeDir(data_dir)
     np.savetxt(data_dir + '/testx.txt', test_dat, delimiter=' ')
-
 
     # make predictions for each model file in the model output folder
     for root, dirs, files in os.walk(save_dir):
