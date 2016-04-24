@@ -2,8 +2,7 @@
 import re
 from nltk.corpus import stopwords
 from nltk.stem.porter import *
-#from nltk.stem.snowball import SnowballStemmer #0.003 improvement but takes twice as long as PorterStemmer
-#stemmer = SnowballStemmer('english')
+from nltk.stem.snowball import SnowballStemmer #0.003 improvement but takes twice as long as PorterStemmer
 from nltk.metrics import edit_distance
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk import pos_tag
@@ -15,8 +14,10 @@ from sklearn.metrics import pairwise_distances
 import pandas as pd
 import numpy as np
 import os
+import random
 
-stemmer = PorterStemmer()
+#stemmer = PorterStemmer()
+stemmer = SnowballStemmer('english')
 lemmatizer = WordNetLemmatizer()
 
 stop_w = {'for', 'xbi', 'and', 'in', 'th','on','sku','with','what','from','that','less','er','ing'} #'electr','paint','pipe','light','kitchen','wood','outdoor','door','bathroom'
@@ -280,7 +281,7 @@ def segmentit(s, txt_arr, t):
     return r
 
 
-def num_common_word(str1, str2, ngram=1, exact_matching=False, use_editdis=True, weighted=False):
+def num_common_word(str1, str2, ngram=1, exact_matching=False, use_editdis=False, weighted=False):
     """
     number of words in str1 that also in str2
     :param str1:
@@ -433,7 +434,7 @@ def match_last_k_noun(s, tags, k, exact_matching=False):
             cnt += 1
     return cnt
 
-def num_common_noun(s, tags, use_editdis=True):
+def num_common_noun(s, tags, use_editdis=False):
     """
     number of nouns in s that also in str2(tags is pos_tag of str2)
     :param str1:
@@ -663,24 +664,59 @@ def stat_list(li, method):
         }
         return func[method](tmp)
 
+range_dict = {  
+                1: (0.99, 1.01),
+                1.33: (1.24, 1.34),
+                1.67: (1.49, 1.76),
+                2: (1.99, 2.01),
+                2.33: (2.24, 2.34),
+                2.67: (2.49, 2.76),
+                3: (2.99, 3.01)
+            }
 def group_idx_by_relevance(df):
     """
         group into 7 groups by relevances and return their indices
     """
-    range_dict = {  
-                    1: (0.99, 1.01),
-                    1.33: (1.24, 1.34),
-                    1.67: (1.49, 1.76),
-                    2: (1.99, 2.01),
-                    2.33: (2.24, 2.34),
-                    2.67: (2.49, 2.76),
-                    3: (2.99, 3.01)
-                }
     idx_dict = dict()
     for key, rg in range_dict.items():
         low, high = rg
         idx_dict[key] = list(df.loc[ (df.loc[:,'relevance']>low) & (df.loc[:,'relevance']<high), :].index)
     return idx_dict
+
+called = 0
+group_sim_cache = dict()
+def group_sim_list(row, idx_dict, tfidf_vec, prefix):
+    """
+    1. Group samples by relevance, using df excluding current sample.
+    2. Calculate cosine similarity within same group for every pair
+    input: row (Series), idx_dict (dict), tfidf_vec (csr_matrix), prefix (string)
+    output: statistical attributes of cosine similarity list (Series)
+    """
+    global called, group_sim_cache
+    called += 1
+    if called%300==0:
+        print(str(called) + ' rows calculated')
+    pid = row['product_uid']
+    if pid in group_sim_cache:
+        return group_sim_cache[pid]
+    curr_row = row.name
+    rel = row['relevance']
+    for key, rg in range_dict.items():
+        low, high = rg
+        if rel>low and rel<high:
+            rel = key
+            break
+    idx = idx_dict[rel].copy()
+    idx.remove(curr_row)
+    curr_idf = tfidf_vec[curr_row][:]
+    mat_idf = tfidf_vec[idx, :]
+    cos_list = [compute_distance(curr_idf, mat_idf[i]) for i in range(mat_idf.shape[0])]
+    method = ['max', 'min', 'mean', 'std']
+    f = lambda name: stat_list(cos_list, name)
+    g = lambda name: prefix + name
+    result = pd.Series(list(map(f, method)), list(map(g, method)))
+    group_sim_cache[pid] = result
+    return result
 
 def str_exclude(s, t):
     tokens = t.split('\t')
@@ -688,22 +724,6 @@ def str_exclude(s, t):
         s = s.replace(token, '')
     s = re.sub(r' +', r' ', s)
     return s
-
-def group_sim_list(row, idx_dict, tfidf_vec, prefix):
-    """
-    1. Group samples by relevance, using df excluding current sample.
-    2. Calculate cosine similarity within same group for every pair
-    """
-    curr_row = row.name
-    idx = idx_dict[row['relevance']].copy().remove(curr_row)
-    curr_idf = tfidf_vec[curr_row][:]
-    mat_idf = tfidf_vec[idx, :]
-    cos_list = [compute_distance([curr_idf], [mat_idf[i]]) for i in range(mat_idf.shape[0])]
-    method = ['max', 'min', 'mean', 'std']
-    f = lambda name: stat_list(cos_list, name)
-    g = lambda name: prefix + name
-    result = pd.Series(list(map(f, method)), list(map(g, method)))
-    return result
 
 def compute_dist(str1, str2, dist_type = 'jaccard', ngram=1):
     """
@@ -743,6 +763,49 @@ def try_divide(x, y, val=0.0):
     if y != 0.0:
         val = float(x) / y
     return val
+
+def generate_qid(queries, border):
+    """
+        Generate query id randomly, with common id in the middle of distribution
+        input: queries(Series), border(int)
+        output: qid(Series)
+    """
+    pass
+    set_train = set(queries[:border])
+    set_test = set(queries[border:])
+    set_itsc = set_train.intersection(set_test)
+    set_uniq = set_train.union(set_test).difference(set_itsc)
+    len_unique = len(set_train) + len(set_test) - len(set_itsc)
+    half = round((len_unique)/2)
+    id_itsc = list([x+half for x in range(len(set_itsc))])
+    id_uniq = list([x if x<half else x+len(set_itsc) for x in range(len_unique)])
+    random.shuffle(id_itsc)
+    random.shuffle(id_uniq)
+    dic_itsc = dict(zip(list(set_itsc), id_itsc))
+    dic_uniq = dict(zip(list(set_uniq), id_uniq))
+    func = lambda q: dic_itsc[q] if q in dic_itsc else dic_uniq[q]
+    return queries.apply(func)
+
+def w2v_avgmax_similarity(s1, s2, embedder):
+    t1 = [x for x in s1.split() if x in embedder.vocab]
+    t2 = [x for x in s2.split() if x in embedder.vocab]
+    total = 0
+    for w1 in t1:
+        sim = [embedder.similarity(w1, w2) for w2 in t2]
+        if len(sim)>0:
+            total += max(sim)
+    return total/(len(s1)+1)
+
+def w2v_avgmin_dist(s1, s2, embedder):
+    t1 = [x for x in s1.split() if x in embedder.vocab]
+    t2 = [x for x in s2.split() if x in embedder.vocab]
+    total = 0
+    for w1 in t1:
+        v1 = embedder[w1]
+        dist = [np.sqrt(np.sum((v1 - embedder[w2])**2)) for w2 in t2]
+        if len(dist)>0:
+            total += min(dist)
+    return total/(len(s1)+1)
 
 if __name__=='__main__':
     import doctest

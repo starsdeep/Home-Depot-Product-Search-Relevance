@@ -143,9 +143,14 @@ def build_feature(df, features, config):
             feature_func = MatchFeatureFuncDict[feature]
             df[feature] = df.apply(feature_func, axis=1)
 
+    for feature in list(WorldFeatureFuncDict.keys()):
+        if feature in features:
+            print('[step]: calculating feature: '+feature+' ...')
+            feature_func = WorldFeatureFuncDict[feature]
+            df[feature] = feature_func(df)
+
     # compute idf features
-    idf_dicts = dict()
-    if (set(features) & set(IdfFeatureFuncDict.keys())) or (set(features) & set(IdfSimFeatureFuncDict.keys())) or (set(features) & set(SvdSimFeatureFuncDict.keys())) or (set(features) & set(tSNEFeatureSourceDict.keys())) or (set(features) & set(RawSvdFeatureWeightDict.keys())):
+    if (set(features) & set(IdfFeatureFuncDict.keys())) or (set(features) & set(IdfSimFeatureFuncDict.keys())) or (set(features) & set(SvdSimFeatureFuncDict.keys())) or (set(features) & set(tSNEFeatureSourceDict.keys())) or (set(features) & set(RawSvdFeatureWeightDict.keys())) or (set(features) & set(GroupStatFeatureDict)):
         # prepare idf_dicts, idf_dicts contains idf value for a given word
         search_terms = df['search_term'].unique()
         unique_prd = df.drop_duplicates(subset='product_uid')
@@ -181,7 +186,6 @@ def build_feature(df, features, config):
             'origin_Q': idf_func('origin', 'origin_search_term'),
             'origin_T': idf_func('origin', 'product_title')
         }
-        # get fitted & transformed svd values
 
         for feature in list(IdfFeatureFuncDict.keys()):
             if feature in features:
@@ -197,10 +201,11 @@ def build_feature(df, features, config):
                 feature_func = IdfSimFeatureFuncDict[feature]
                 df[feature] = tmpdf.apply(feature_func, axis=1)
 
-
+        # group statistical features
         idx_dict = group_idx_by_relevance(df)
         for feature in list(GroupStatFeatureDict.keys()):
             if feature in features:
+                print('[step]: calculating feature: '+feature+' ...')
                 feature_func = GroupStatFeatureDict[feature]
                 tmpdf = df.apply(feature_func, axis=1, idx_dict=idx_dict, tfidf_mats=tfidf_mats, prefix=feature)
                 df.merge(tmpdf, left_index=True, right_index=True)
@@ -208,6 +213,7 @@ def build_feature(df, features, config):
                 features.remove(feature)
 
         if (set(features) & set(tSNEFeatureSourceDict.keys())) or (set(features) & set(SvdSimFeatureFuncDict.keys())):
+            # get fitted & transformed svd values
             print('[step]: transforming svd vectors ...')
             svd_func = lambda name: compute_svd(tfidf_mats[name])
             svd_mats = {
@@ -601,6 +607,10 @@ tSNEFeatureSourceDict = OrderedDict([
 GroupStatFeatureDict = OrderedDict([
     ('group_idf_cos_sim_T', lambda row, idx_dict, tfidf_mats, prefix: group_sim_list(row, idx_dict, tfidf_mats['compo_T'], prefix)),
     ('group_idf_cos_sim_D', lambda row, idx_dict, tfidf_mats, prefix: group_sim_list(row, idx_dict, tfidf_mats['compo_D'], prefix)),
+])
+
+WorldFeatureFuncDict = OrderedDict([
+    ('query_id', lambda df: generate_qid(df['search_term'], total_train)),
 ])
 
 # Idf - Pos_tag features, calculate after postag features!
