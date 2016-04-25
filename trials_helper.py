@@ -62,12 +62,31 @@ class TrialsList():
         #del self.train_pred_list[n]
         self.train_pred_list[n] = np.zeros(len(self.train_pred_list[n]))
 
-    def best_trial(self, verbose=False):
-        index, trial_result = min(enumerate(self.trial_result_list), key=lambda k: k[1]['loss']) # shallow copy
+    def plus_with_index(self, random_model_index, num=10):
+        for idx in random_model_index:
+            self.train_pred_list[idx] = self.train_pred_list[idx] + num
+
+    def minus_with_index(self, random_model_index, num=10):
+        for idx in random_model_index:
+            self.train_pred_list[idx] = self.train_pred_list[idx] - num
+    
+    def best_trial(self, valid_models=set(), verbose=False):
+        valid_models = set(valid_models)
+        min_index = -1
+        min_value=1000
+        for idx,value in enumerate(self.trial_result_list):
+            if idx not in valid_models:
+                continue
+            if self.trial_result_list[idx]['loss'] < min_value:
+                min_value = self.trial_result_list[idx]['loss']
+                min_index = idx
         if verbose:
-            print("\nbest trials index is: %d" % index)
-            print(trial_result)
-        return index, trial_result, self.train_pred_list[index], self.test_pred_list[index]  # return does deep copy
+            print("\nbest trials index is: %d" % min_index)
+            print(min_value)
+        r1 = copy.deepcopy(self.trial_result_list[min_index])
+        r2 = copy.deepcopy(self.train_pred_list[min_index])
+        r3 = copy.deepcopy(self.test_pred_list[min_index])
+        return min_index, r1, r2, r3  # return does deep copy
 
 
 if __name__ == '__main__':

@@ -278,7 +278,7 @@ class SVR(Model):
         self.param_space = {
             'C': hp.loguniform('C', math.log(0.0001), math.log(20)),
             'epsilon': hp.loguniform('epsilon', math.log(0.0001), math.log(20)),
-            'kernel': hp.choice('kernel',['rbf', 'sigmoid', 'linear', 'poly']),
+            'kernel': hp.choice('kernel',['rbf', ]),
             'degree': hp.choice('degree', [1,2,3]),
             'gamma' : hp.choice('gamma',['auto',hp.loguniform('the_gamma', math.log(0.0001), math.log(0.2))]),
             'shrinking': hp.choice('shrinking', [True, False]),
