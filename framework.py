@@ -35,8 +35,14 @@ if __name__ == '__main__':
     model = mf.create_model(config)
 
     X_all, column_names = model.feature_union(df_all)
+    if config['model'] == 'svr':
+        X_all = (X_all - X_all.min(0)) / X_all.ptp(0)
+
     X_train = X_all[:num_train]
     X_test = X_all[-num_test:]
+    
+    n_rows = X_train.shape[0]
+    n_columns = X_train.shape[1]
 
     model.fit(X_train, y_train, df_train, column_names, X_test)
     if config['model']=='multi':
