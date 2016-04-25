@@ -1,0 +1,5 @@
+{   
+    "model_library_path_list": [ "./output/rfr_hyperopt3/", "./output/xgbr_hyperopt3/", "./output/ridger_hyperopt3/", "./output/lassor_hyperopt3/", "./output/etr_hyperopt3/" ],
+    "replace": false,
+    "max_ensemble": 100
+}
