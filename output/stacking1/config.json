@@ -1,11 +1,37 @@
 {   
-    "model": "linear",
+    "model": "ridger",
     "param_space_name": "",
     "hyperopt_fit": true,
-    "hyperopt_max_evals": 20,
+    "hyperopt_max_evals": 100,
     "features": [],
-    "train_pred_files": [],
-    "test_pred_files": [],
-    "model_names": [],
-    "model_library_path_list": [ "./output/xgbr_hyperopt2/", "./output/ridge_hyperopt2/", "./output/lasso_hyperopt2/" ]
+    "model_index":[279, 655,492,1264,147,1005,26],
+    "train_pred_files": [
+        "./output/rfr_hyperopt3/train_pred_trial_26.csv",
+        "./output/xgbr_hyperopt3/train_pred_trial_229.csv",
+        "./output/xgbr_hyperopt3/train_pred_trial_97.csv",
+        "./output/ridger_hyperopt3/train_pred_trial_205.csv",
+        "./output/ridger_hyperopt3/train_pred_trial_42.csv",
+        "./output/lassor_hyperopt3/train_pred_trial_155.csv",
+        "./output/etr_hyperopt3/train_pred_trial_14.csv"
+    ],
+    "test_pred_files": [
+        "./output/rfr_hyperopt3/test_pred_trial_26.csv",
+        "./output/xgbr_hyperopt3/test_pred_trial_229.csv",
+        "./output/xgbr_hyperopt3/test_pred_trial_97.csv",
+        "./output/ridger_hyperopt3/test_pred_trial_205.csv",
+        "./output/ridger_hyperopt3/test_pred_trial_42.csv",
+        "./output/lassor_hyperopt3/test_pred_trial_155.csv",
+        "./output/etr_hyperopt3/test_pred_trial_14.csv"
+    ],
+    "model_names": [
+        "./output/rfr_hyperopt3/train_pred_trial_26.csv",
+        "./output/xgbr_hyperopt3/train_pred_trial_229.csv",
+        "./output/xgbr_hyperopt3/train_pred_trial_97.csv",
+        "./output/ridger_hyperopt3/train_pred_trial_205.csv",
+        "./output/ridger_hyperopt3/train_pred_trial_42.csv",
+        "./output/lassor_hyperopt3/train_pred_trial_155.csv",
+        "./output/etr_hyperopt3/train_pred_trial_14.csv"
+    ],
+    "model_library_path_list": [ "./output/rfr_hyperopt3/", "./output/xgbr_hyperopt3/", "./output/ridger_hyperopt3/", "./output/lassor_hyperopt3/", "./output/etr_hyperopt3/" ],
+    "_model_library_path_list": [ "./output/xgbr_hyperopt2/", "./output/ridge_hyperopt2/", "./output/lasso_hyperopt2/" ]
 }

@@ -9,7 +9,7 @@ import json
 import random
 random.seed(2016)
 from load_data import load_data
-from trials_helper import load_trials
+from trials_helper import * 
 from feature import load_feature
 import sys
 import os
@@ -46,26 +46,26 @@ if __name__ == '__main__':
     df_features = load_feature(config['features'], config)
     
     # load customize train preds
-    model_names = []
     train_preds = []
     test_preds = []
-
-    train_preds += [pd.read_csv(file, encoding="ISO-8859-1", index_col=0).values for file in config['train_pred_files']]
-    test_preds += [pd.read_csv(file, encoding="ISO-8859-1", index_col=0).values for file in config['test_pred_files']]
+    model_names = []
+    train_preds += [pd.read_csv(file, encoding="ISO-8859-1", index_col=0)['train_pred'].values for file in config['train_pred_files']]
+    test_preds += [pd.read_csv(file, encoding="ISO-8859-1", index_col=0)['test_pred'].values for file in config['test_pred_files']]
     model_names += config['model_names']
-    
-    # load model library:
+    """ 
+    Trials = TrialsList()
     for dir_path in config['model_library_path_list']:
-        tmp_trial_results, tmp_train_preds, tmp_test_preds = load_trials(dir_path)
-        train_preds += tmp_train_preds 
-        test_preds += tmp_test_preds 
-        model_names += ["%s_%d" % (trial['model'],idx)  for idx, trial in enumerate(tmp_trial_results)]
-        rmses = [trial['loss'] for trial in tmp_trial_results]
-        min_index, min_value = min(enumerate(rmses), key=operator.itemgetter(1))
-        print("load dir %s done., model library size %d, best rmse %f" % (dir_path, len(tmp_trial_results), min_value))
-        print("test rmse %f", fmean_squared_error_(y_train, train_preds[min_index]))
-        break
-
+        trial_result_list, train_pred_list, test_pred_list = load_trials(dir_path)
+        print("load dir %s done, model library size %d" % (dir_path, len(trial_result_list)))
+        Trials.append(trial_result_list, train_pred_list, test_pred_list)
+    train_preds = []
+    test_preds = []
+    model_names = []
+    for idx in config['model_index']:
+        train_preds.append(Trials.train_pred_list[idx])
+        test_preds.append(Trials.test_pred_list[idx])
+        model_names.append(str(idx))
+    """
     print("total train_preds %d, total test_preds %d, total model_names %d" % (len(train_preds), len(test_preds), len(model_names)))
     df_train_preds = pd.DataFrame()
     df_test_preds = pd.DataFrame()

@@ -234,7 +234,7 @@ class RidgeRegression(Model):
         Model.__init__(self)
         self.hyperopt_max_evals = 5
         self.param_space = {
-            'alpha': hp.loguniform('alpha', math.log(0.0001), math.log(10)),
+            'alpha': hp.loguniform('alpha', math.log(0.001), math.log(100)),
             'normalize': hp.choice('normalize', [True, False]),
         }
         self.model = linear_model.Ridge(alpha = .5)
