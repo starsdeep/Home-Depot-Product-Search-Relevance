@@ -121,7 +121,7 @@ beidouwang
 * query是树，product是修理树的工具, query是mower，product是mower的布
 
 
-###典型bad case
+### 典型bad case
 
 注意有些badcase就是数据里面的噪音，就是标错了，可能同样的情况很多sample是３分就它是１分，不必强行分析
 
