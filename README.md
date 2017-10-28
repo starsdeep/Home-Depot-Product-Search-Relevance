@@ -1,4 +1,4 @@
-#Home Depot Product Search Relevance Competition
+# Home Depot Product Search Relevance Competition
 
 [Home Depot Product Search Relevance](https://www.kaggle.com/c/home-depot-product-search-relevance) on Kaggle
 
@@ -229,7 +229,7 @@ beidouwang
 * match_last_noun_main, 对于main_title当中的最后一个名词，是否在search_term中可以找到
 * match_last_2_noun_main,对于main_title当中的最后两个名词，有多少个可以在search_term中找到
 * match_last_3_noun_main,对于main_title当中的最后三个名词，有多少个可以在search_term中找到
-* match_last_5_noun_main,对于main_title当中的最后五个名词，有多少个可以在search_term中找到 
+* match_last_5_noun_main,对于main_title当中的最后五个名词，有多少个可以在search_term中找到
 
 
 
